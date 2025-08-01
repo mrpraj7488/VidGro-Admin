@@ -1,47 +1,197 @@
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = 'https://placeholder-project.supabase.co'
-const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.placeholder'
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://placeholder-project.supabase.co'
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.placeholder'
+const supabaseServiceKey = import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+// Regular client for auth and basic operations
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: true
+  },
+  realtime: {
+    params: {
+      eventsPerSecond: 10
+    }
+  }
+})
 
-// Mock data for demo purposes
+// Admin client with service role key for admin operations
+export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey || supabaseAnonKey, {
+  auth: {
+    autoRefreshToken: false,
+    persistSession: false
+  }
+})
+
+// Database types
+export interface Profile {
+  id: string
+  username: string
+  email: string
+  coins: number
+  is_vip: boolean
+  avatar_url?: string
+  referral_code?: string
+  referred_by?: string
+  total_earned: number
+  total_spent: number
+  created_at: string
+  updated_at: string
+  last_active: string
+  videos_posted: number
+  fcm_token?: string
+}
+
+export interface Video {
+  id: string
+  user_id: string
+  username?: string
+  title: string
+  description?: string
+  youtube_url: string
+  youtube_video_id: string
+  status: 'pending' | 'active' | 'paused' | 'completed' | 'rejected' | 'repromoted'
+  target_views: number
+  current_views: number
+  views_count: number
+  completion_rate: number
+  coin_cost: number
+  coin_reward: number
+  coins_earned_total: number
+  total_watch_time: number
+  min_watch_duration: number
+  created_at: string
+  updated_at: string
+  completed_at?: string
+  promoted_until?: string
+  thumbnail_url: string
+  video_id: string
+  video_url: string
+  spent_coins: number
+  refund_amount?: number
+  refund_percent?: number
+}
+
+export interface Transaction {
+  id: string
+  user_id: string
+  type: 'earned' | 'spent' | 'bonus' | 'refund' | 'admin_adjustment'
+  amount: number
+  description: string
+  reference_type?: string
+  reference_id?: string
+  balance_after: number
+  created_at: string
+}
+
+export interface AdminProfile {
+  id: string
+  user_id: string
+  email: string
+  role: 'super_admin' | 'content_moderator' | 'analytics_viewer' | 'user_support'
+  permissions: Record<string, boolean>
+  is_active: boolean
+  last_login?: string
+  created_at: string
+  updated_at: string
+}
+
+export interface AdminLog {
+  id: string
+  admin_id: string
+  action: string
+  target_type?: string
+  target_id?: string
+  old_values?: Record<string, any>
+  new_values?: Record<string, any>
+  ip_address?: string
+  user_agent?: string
+  details?: Record<string, any>
+  created_at: string
+}
+
+// Real-time subscriptions
+export const subscribeToAdminNotifications = (callback: (payload: any) => void) => {
+  return supabase
+    .channel('admin-notifications')
+    .on('postgres_changes', 
+      { event: '*', schema: 'public', table: 'profiles' }, 
+      callback
+    )
+    .on('postgres_changes',
+      { event: '*', schema: 'public', table: 'videos' },
+      callback
+    )
+    .on('postgres_changes',
+      { event: 'INSERT', schema: 'public', table: 'transactions' },
+      callback
+    )
+    .subscribe()
+}
+
+// Mock data for demo purposes (when Supabase is not configured)
 export const mockDashboardStats = {
   totalUsers: 45732,
   activeVideos: 8924,
   vipUsers: 3247,
   monthlyRevenue: 89500,
-  userGrowthRate: 12.5
+  userGrowthRate: 12.5,
+  dailyActiveUsers: 12453,
+  coinTransactions: 8924,
+  totalCoinsDistributed: 2500000,
+  videoCompletionRate: 78.5,
+  averageWatchTime: 145,
+  totalTransactions: 156789,
+  pendingVideos: 234
 }
 
-export const mockUsers = Array.from({ length: 20 }, (_, i) => ({
-  user_id: `user-${i + 1}`,
+export const mockUsers: Profile[] = Array.from({ length: 20 }, (_, i) => ({
+  id: `user-${i + 1}`,
   username: `user${i + 1}`,
   email: `user${i + 1}@example.com`,
   coins: Math.floor(Math.random() * 10000),
   is_vip: Math.random() > 0.7,
   created_at: new Date(Date.now() - Math.random() * 365 * 24 * 60 * 60 * 1000).toISOString(),
+  updated_at: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString(),
   last_active: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString(),
   videos_posted: Math.floor(Math.random() * 50),
-  avatar_url: `https://images.pexels.com/photos/${1000 + i}/pexels-photo-${1000 + i}.jpeg?auto=compress&cs=tinysrgb&w=100&h=100&fit=crop`
+  avatar_url: `https://images.pexels.com/photos/${1000 + i}/pexels-photo-${1000 + i}.jpeg?auto=compress&cs=tinysrgb&w=100&h=100&fit=crop`,
+  referral_code: `REF${String(i + 1).padStart(4, '0')}`,
+  total_earned: Math.floor(Math.random() * 50000),
+  total_spent: Math.floor(Math.random() * 30000)
 }))
 
-export const mockVideos = Array.from({ length: 15 }, (_, i) => ({
+export const mockVideos: Video[] = Array.from({ length: 15 }, (_, i) => ({
+  id: `video-${i + 1}`,
   video_id: `VID${String(i + 1).padStart(6, '0')}`,
   user_id: `user-${Math.floor(Math.random() * 20) + 1}`,
   username: `user${Math.floor(Math.random() * 20) + 1}`,
   video_url: `https://example.com/video/${i + 1}.mp4`,
+  youtube_url: `https://youtube.com/watch?v=example${i + 1}`,
+  youtube_video_id: `example${i + 1}`,
   title: `Amazing Video Content ${i + 1}`,
+  description: `This is a description for video ${i + 1}`,
   thumbnail_url: `https://images.pexels.com/photos/${2000 + i}/pexels-photo-${2000 + i}.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop`,
-  status: ['active', 'completed', 'hold', 'repromote', 'deleted'][Math.floor(Math.random() * 5)] as any,
-  view_criteria: `${Math.floor(Math.random() * 50) + 1}/${Math.floor(Math.random() * 100) + 50}`,
+  status: ['pending', 'active', 'paused', 'completed', 'rejected', 'repromoted'][Math.floor(Math.random() * 6)] as any,
+  target_views: Math.floor(Math.random() * 10000) + 1000,
+  current_views: Math.floor(Math.random() * 5000),
+  views_count: Math.floor(Math.random() * 100000),
+  completion_rate: Math.floor(Math.random() * 100),
+  coin_cost: Math.floor(Math.random() * 5000) + 100,
+  coin_reward: Math.floor(Math.random() * 100) + 10,
+  coins_earned_total: Math.floor(Math.random() * 10000),
   spent_coins: Math.floor(Math.random() * 5000),
   total_watch_time: Math.floor(Math.random() * 10000),
-  completion_rate: Math.floor(Math.random() * 100),
-  views_count: Math.floor(Math.random() * 100000),
+  min_watch_duration: 60,
   refund_amount: Math.random() > 0.8 ? Math.floor(Math.random() * 1000) : undefined,
   refund_percent: Math.random() > 0.8 ? Math.floor(Math.random() * 100) : undefined,
-  created_at: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString()
+  created_at: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString(),
+  updated_at: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString(),
+  completed_at: Math.random() > 0.5 ? new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString() : undefined,
+  promoted_until: Math.random() > 0.5 ? new Date(Date.now() + Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString() : undefined
 }))
 
 export const mockChartData = Array.from({ length: 30 }, (_, i) => ({
@@ -79,66 +229,110 @@ export const mockAnalyticsData = {
   }))
 }
 
-export const mockBugReportData = {
-  newBugs: 12,
-  bugsFixedToday: 8,
-  bugReports: Array.from({ length: 15 }, (_, i) => ({
-    bug_id: `BUG${String(i + 1).padStart(4, '0')}`,
-    title: `Bug Report ${i + 1}: ${['Login Issue', 'Video Upload Error', 'Coin Transaction Failed', 'App Crash', 'UI Glitch'][Math.floor(Math.random() * 5)]}`,
-    description: `Detailed description of bug ${i + 1}. This is a sample bug report that describes the issue in detail.`,
-    status: ['new', 'in_progress', 'fixed', 'wont_fix'][Math.floor(Math.random() * 4)] as any,
-    priority: ['low', 'medium', 'high', 'critical'][Math.floor(Math.random() * 4)] as any,
-    reported_by: `user${Math.floor(Math.random() * 100) + 1}`,
-    assigned_to: Math.random() > 0.5 ? `dev${Math.floor(Math.random() * 5) + 1}` : undefined,
-    category: ['UI/UX', 'Backend', 'Mobile App', 'Payment', 'Video Processing'][Math.floor(Math.random() * 5)],
-    created_at: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString(),
-    updated_at: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString()
-  }))
+// API functions
+export const getDashboardStats = async () => {
+  try {
+    const { data, error } = await supabaseAdmin.rpc('get_admin_dashboard_stats')
+    if (error) throw error
+    return data || mockDashboardStats
+  } catch (error) {
+    console.warn('Using mock data for dashboard stats:', error)
+    return mockDashboardStats
+  }
 }
 
-export const mockSystemSettings = {
-  environment: {
-    EXPO_PUBLIC_SUPABASE_URL: 'https://your-project.supabase.co',
-    EXPO_PUBLIC_SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
-    EXPO_PUBLIC_SUPABASE_SERVICE_ROLE_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
-    EXPO_PUBLIC_ADMOB_APP_ID: 'ca-app-pub-1234567890123456~1234567890',
-    EXPO_PUBLIC_ADMOB_BANNER_ID: 'ca-app-pub-1234567890123456/1234567890',
-    EXPO_PUBLIC_ADMOB_INTERSTITIAL_ID: 'ca-app-pub-1234567890123456/1234567890',
-    EXPO_PUBLIC_ADMOB_REWARDED_ID: 'ca-app-pub-1234567890123456/1234567890'
-  },
-  ads: {
-    bannerAdsEnabled: true,
-    interstitialAdsEnabled: true,
-    rewardedAdsEnabled: true,
-    adFrequencyMinutes: 5,
-    revenueSharePercent: 70
-  },
-  general: {
-    platformName: 'VidGro',
-    supportEmail: 'support@vidgro.com',
-    maxVideoSize: 100,
-    allowedVideoFormats: ['mp4', 'mov', 'avi'],
-    maintenanceMode: false
-  },
-  users: {
-    registrationEnabled: true,
-    emailVerificationRequired: true,
-    maxCoinsPerUser: 100000,
-    vipUpgradePrice: 9.99,
-    referralReward: 50
-  },
-  videos: {
-    maxVideosPerUser: 10,
-    autoModerationEnabled: true,
-    minVideoLength: 10,
-    maxVideoLength: 300,
-    thumbnailRequired: true
-  },
-  economy: {
-    coinPrice: 0.01,
-    videoReward: 10,
-    dailyBonusCoins: 5,
-    vipMultiplier: 2.0,
-    withdrawalMinimum: 1000
+export const getUsers = async (limit = 50, offset = 0) => {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('profiles')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .range(offset, offset + limit - 1)
+    
+    if (error) throw error
+    return data || mockUsers
+  } catch (error) {
+    console.warn('Using mock data for users:', error)
+    return mockUsers
+  }
+}
+
+export const getVideos = async (limit = 50, offset = 0) => {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('videos')
+      .select(`
+        *,
+        profiles:user_id (username)
+      `)
+      .order('created_at', { ascending: false })
+      .range(offset, offset + limit - 1)
+    
+    if (error) throw error
+    
+    // Transform data to match expected format
+    const transformedData = data?.map(video => ({
+      ...video,
+      username: video.profiles?.username || 'Unknown',
+      video_id: video.id,
+      video_url: video.youtube_url,
+      spent_coins: video.coin_cost
+    })) || mockVideos
+    
+    return transformedData
+  } catch (error) {
+    console.warn('Using mock data for videos:', error)
+    return mockVideos
+  }
+}
+
+export const adjustUserCoins = async (userId: string, amount: number, reason: string, adminId: string) => {
+  try {
+    const { data, error } = await supabaseAdmin.rpc('admin_adjust_user_coins', {
+      user_uuid: userId,
+      coin_adjustment: amount,
+      reason,
+      admin_id: adminId
+    })
+    
+    if (error) throw error
+    return data
+  } catch (error) {
+    console.error('Failed to adjust user coins:', error)
+    throw error
+  }
+}
+
+export const updateVideoStatus = async (videoId: string, status: string, adminId: string, reason?: string) => {
+  try {
+    const { data, error } = await supabaseAdmin.rpc('admin_update_video_status', {
+      video_uuid: videoId,
+      new_status: status,
+      admin_id: adminId,
+      reason
+    })
+    
+    if (error) throw error
+    return data
+  } catch (error) {
+    console.error('Failed to update video status:', error)
+    throw error
+  }
+}
+
+export const getRealtimeAnalytics = async () => {
+  try {
+    const { data, error } = await supabaseAdmin.rpc('get_realtime_analytics')
+    if (error) throw error
+    return data
+  } catch (error) {
+    console.warn('Failed to get realtime analytics:', error)
+    return {
+      onlineUsers: Math.floor(Math.random() * 1000) + 500,
+      videosWatchedLastHour: Math.floor(Math.random() * 500) + 100,
+      coinsEarnedLastHour: Math.floor(Math.random() * 10000) + 1000,
+      newUsersToday: Math.floor(Math.random() * 100) + 20,
+      activePromotions: Math.floor(Math.random() * 50) + 10
+    }
   }
 }

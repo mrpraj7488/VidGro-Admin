@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { subscript } from 'zustand/middleware'
 import { 
   DashboardStats, 
   User, 
@@ -14,29 +15,37 @@ import {
   AdsConfiguration
 } from '../types/admin'
 import { 
-  mockDashboardStats, 
-  mockUsers, 
-  mockVideos, 
+  getDashboardStats,
+  getUsers,
+  getVideos,
+  adjustUserCoins,
+  updateVideoStatus as updateVideoStatusAPI,
+  getRealtimeAnalytics,
   mockChartData,
   mockAnalyticsData,
   mockBugReportData,
-  mockSystemSettings
+  mockSystemSettings,
+  Profile,
+  Video as VideoType
 } from '../lib/supabase'
+import { realtimeService, RealtimeEvent, createCoinAdjustmentNotification, createVideoStatusNotification } from '../services/realtimeService'
 
 interface AdminStore {
   // Dashboard data
   dashboardStats: DashboardStats | null
   chartData: ChartDataPoint[]
   isLoading: boolean
+  realtimeStats: any
+  connectionStatus: boolean
   
   // User management
-  users: User[]
+  users: Profile[]
   userFilters: UserFilters
   
   // Video management
-  videos: Video[]
+  videos: VideoType[]
   videoFilters: VideoFilters
-  selectedVideo: Video | null
+  selectedVideo: VideoType | null
   
   // Analytics data
   analyticsData: AnalyticsData | null
@@ -54,14 +63,17 @@ interface AdminStore {
   fetchAnalytics: (dateRange?: [Date | null, Date | null]) => Promise<void>
   fetchBugReports: () => Promise<void>
   fetchSystemSettings: () => Promise<void>
+  initializeRealtime: () => void
+  disconnectRealtime: () => void
   
   // User actions
   updateUserCoins: (userId: string, coins: number) => Promise<void>
+  adjustUserCoins: (userId: string, amount: number, reason: string) => Promise<void>
   toggleUserVip: (userId: string) => Promise<void>
   
   // Video actions
   updateVideoStatus: (videoId: string, status: string) => Promise<void>
-  getVideoDetails: (videoId: string) => Promise<Video | null>
+  getVideoDetails: (videoId: string) => Promise<VideoType | null>
   processRefund: (videoId: string, amount: number, percent: number) => Promise<void>
   
   // Bug report actions
@@ -88,7 +100,8 @@ interface AdminStore {
   copyToClipboard: (text: string) => void
   setUserFilters: (filters: Partial<UserFilters>) => void
   setVideoFilters: (filters: Partial<VideoFilters>) => void
-  setSelectedVideo: (video: Video | null) => void
+  setSelectedVideo: (video: VideoType | null) => void
+  handleRealtimeEvent: (event: RealtimeEvent) => void
 }
 
 export const useAdminStore = create<AdminStore>((set, get) => ({
@@ -96,6 +109,8 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
   dashboardStats: null,
   chartData: [],
   isLoading: false,
+  realtimeStats: {},
+  connectionStatus: false,
   users: [],
   userFilters: {
     search: '',
@@ -118,64 +133,160 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
   // Dashboard actions
   fetchDashboardStats: async () => {
     set({ isLoading: true })
-    await new Promise(resolve => setTimeout(resolve, 500))
-    set({ 
-      dashboardStats: mockDashboardStats,
-      chartData: mockChartData,
-      isLoading: false 
-    })
+    try {
+      const [stats, realtimeStats] = await Promise.all([
+        getDashboardStats(),
+        getRealtimeAnalytics()
+      ])
+      
+      set({ 
+        dashboardStats: stats,
+        realtimeStats,
+        chartData: mockChartData,
+        isLoading: false 
+      })
+    } catch (error) {
+      console.error('Failed to fetch dashboard stats:', error)
+      set({ isLoading: false })
+    }
   },
 
   // User actions
   fetchUsers: async () => {
     set({ isLoading: true })
-    await new Promise(resolve => setTimeout(resolve, 300))
-    set({ users: mockUsers, isLoading: false })
+    try {
+      const users = await getUsers()
+      set({ users, isLoading: false })
+    } catch (error) {
+      console.error('Failed to fetch users:', error)
+      set({ isLoading: false })
+    }
   },
 
   updateUserCoins: async (userId: string, coins: number) => {
-    const users = get().users.map(user => 
-      user.user_id === userId ? { ...user, coins } : user
-    )
-    set({ users })
+    try {
+      // Update local state immediately for better UX
+      const users = get().users.map(user => 
+        user.id === userId ? { ...user, coins } : user
+      )
+      set({ users })
+      
+      // TODO: Implement actual API call to update coins
+      console.log('Updated user coins:', { userId, coins })
+    } catch (error) {
+      console.error('Failed to update user coins:', error)
+      // Revert local state on error
+      get().fetchUsers()
+    }
+  },
+
+  adjustUserCoins: async (userId: string, amount: number, reason: string) => {
+    try {
+      const adminId = 'current-admin-id' // TODO: Get from auth context
+      const result = await adjustUserCoins(userId, amount, reason, adminId)
+      
+      if (result.success) {
+        // Update local state
+        const users = get().users.map(user => 
+          user.id === userId ? { ...user, coins: result.newBalance } : user
+        )
+        set({ users })
+        
+        // Send notification to user
+        await realtimeService.sendUserNotification(
+          userId, 
+          createCoinAdjustmentNotification(amount, reason)
+        )
+        
+        console.log('Coins adjusted successfully:', result)
+      }
+    } catch (error) {
+      console.error('Failed to adjust user coins:', error)
+      throw error
+    }
   },
 
   toggleUserVip: async (userId: string) => {
-    const users = get().users.map(user => 
-      user.user_id === userId ? { ...user, is_vip: !user.is_vip } : user
-    )
-    set({ users })
+    try {
+      const users = get().users.map(user => 
+        user.id === userId ? { ...user, is_vip: !user.is_vip } : user
+      )
+      set({ users })
+      
+      // TODO: Implement actual API call to toggle VIP status
+      console.log('Toggled VIP status for user:', userId)
+    } catch (error) {
+      console.error('Failed to toggle VIP status:', error)
+      // Revert local state on error
+      get().fetchUsers()
+    }
   },
 
   // Video actions
   fetchVideos: async () => {
     set({ isLoading: true })
-    await new Promise(resolve => setTimeout(resolve, 300))
-    set({ videos: mockVideos, isLoading: false })
+    try {
+      const videos = await getVideos()
+      set({ videos, isLoading: false })
+    } catch (error) {
+      console.error('Failed to fetch videos:', error)
+      set({ isLoading: false })
+    }
   },
 
   updateVideoStatus: async (videoId: string, status: string) => {
-    const videos = get().videos.map(video => 
-      video.video_id === videoId ? { ...video, status: status as any } : video
-    )
-    set({ videos })
+    try {
+      const adminId = 'current-admin-id' // TODO: Get from auth context
+      const result = await updateVideoStatusAPI(videoId, status, adminId)
+      
+      if (result.success) {
+        // Update local state
+        const videos = get().videos.map(video => 
+          video.id === videoId ? { ...video, status: status as any } : video
+        )
+        set({ videos })
+        
+        // Find the video to get user info
+        const video = get().videos.find(v => v.id === videoId)
+        if (video) {
+          // Send notification to video owner
+          await realtimeService.sendUserNotification(
+            video.user_id,
+            createVideoStatusNotification(video.title, status)
+          )
+        }
+        
+        console.log('Video status updated successfully:', result)
+      }
+    } catch (error) {
+      console.error('Failed to update video status:', error)
+      throw error
+    }
   },
 
   getVideoDetails: async (videoId: string) => {
-    const video = get().videos.find(v => v.video_id === videoId)
+    const video = get().videos.find(v => v.id === videoId)
     return video || null
   },
 
   processRefund: async (videoId: string, amount: number, percent: number) => {
-    const videos = get().videos.map(video => 
-      video.video_id === videoId ? { 
-        ...video, 
-        refund_amount: amount, 
-        refund_percent: percent,
-        status: 'deleted' as any
-      } : video
-    )
-    set({ videos })
+    try {
+      const videos = get().videos.map(video => 
+        video.id === videoId ? { 
+          ...video, 
+          refund_amount: amount, 
+          refund_percent: percent,
+          status: 'rejected' as any
+        } : video
+      )
+      set({ videos })
+      
+      // TODO: Implement actual API call for refund processing
+      console.log('Processed refund:', { videoId, amount, percent })
+    } catch (error) {
+      console.error('Failed to process refund:', error)
+      throw error
+    }
   },
 
   // Analytics actions
@@ -365,6 +476,126 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
     set({ systemSettings: newSettings })
   },
 
+  // Realtime actions
+  initializeRealtime: () => {
+    console.log('🚀 Initializing realtime connections...')
+    
+    // Subscribe to admin updates
+    realtimeService.subscribeToAdminUpdates((event) => {
+      get().handleRealtimeEvent(event)
+    })
+    
+    // Store callback for reconnection
+    realtimeService.storeCallback('admin-dashboard', (event) => {
+      get().handleRealtimeEvent(event)
+    })
+    
+    // Update connection status
+    set({ connectionStatus: realtimeService.getConnectionStatus() })
+    
+    // Periodically check connection status
+    setInterval(() => {
+      set({ connectionStatus: realtimeService.getConnectionStatus() })
+    }, 5000)
+  },
+
+  disconnectRealtime: () => {
+    console.log('🔌 Disconnecting realtime connections...')
+    realtimeService.unsubscribeAll()
+    set({ connectionStatus: false })
+  },
+
+  handleRealtimeEvent: (event: RealtimeEvent) => {
+    console.log('📡 Handling realtime event:', event)
+    
+    const { table, eventType, new: newData, old: oldData } = event
+    
+    switch (table) {
+      case 'profiles':
+        if (eventType === 'INSERT') {
+          // New user registered
+          const currentStats = get().dashboardStats
+          if (currentStats) {
+            set({
+              dashboardStats: {
+                ...currentStats,
+                totalUsers: currentStats.totalUsers + 1
+              }
+            })
+          }
+          
+          // Add to users list if we're on the users page
+          const currentUsers = get().users
+          if (currentUsers.length > 0) {
+            set({
+              users: [newData, ...currentUsers]
+            })
+          }
+        } else if (eventType === 'UPDATE') {
+          // User updated
+          const users = get().users.map(user => 
+            user.id === newData.id ? { ...user, ...newData } : user
+          )
+          set({ users })
+        }
+        break
+        
+      case 'videos':
+        if (eventType === 'INSERT') {
+          // New video submitted
+          const currentStats = get().dashboardStats
+          if (currentStats) {
+            set({
+              dashboardStats: {
+                ...currentStats,
+                activeVideos: currentStats.activeVideos + 1
+              }
+            })
+          }
+          
+          // Add to videos list
+          const currentVideos = get().videos
+          if (currentVideos.length > 0) {
+            set({
+              videos: [newData, ...currentVideos]
+            })
+          }
+        } else if (eventType === 'UPDATE') {
+          // Video updated
+          const videos = get().videos.map(video => 
+            video.id === newData.id ? { ...video, ...newData } : video
+          )
+          set({ videos })
+          
+          // Update selected video if it's the one being updated
+          const selectedVideo = get().selectedVideo
+          if (selectedVideo && selectedVideo.id === newData.id) {
+            set({ selectedVideo: { ...selectedVideo, ...newData } })
+          }
+        }
+        break
+        
+      case 'transactions':
+        if (eventType === 'INSERT') {
+          // New transaction
+          console.log('💰 New transaction:', newData)
+          
+          // Update realtime stats
+          const currentRealtime = get().realtimeStats
+          set({
+            realtimeStats: {
+              ...currentRealtime,
+              lastTransaction: {
+                amount: newData.amount,
+                type: newData.type,
+                timestamp: newData.created_at
+              }
+            }
+          })
+        }
+        break
+    }
+  },
   // Utility actions
   copyToClipboard: (text: string) => {
     navigator.clipboard.writeText(text)

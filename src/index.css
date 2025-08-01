@@ -112,3 +112,138 @@
     display: none;
   }
 }
+
+/* Gaming-style animations and effects */
+@layer utilities {
+  .gaming-glow {
+    filter: drop-shadow(0 0 2px currentColor);
+  }
+  
+  .gaming-pulse {
+    animation: gaming-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+  
+  .gaming-float {
+    animation: gaming-float 6s ease-in-out infinite;
+  }
+  
+  .gaming-skeleton {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: gaming-skeleton 1.5s infinite;
+  }
+  
+  .dark .gaming-skeleton {
+    background: linear-gradient(90deg, #374151 25%, #4b5563 50%, #374151 75%);
+    background-size: 200% 100%;
+  }
+  
+  .gaming-interactive {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  .gaming-interactive:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  }
+  
+  .gaming-card {
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+  
+  .dark .gaming-card {
+    background: rgba(30, 41, 59, 0.8);
+    border: 1px solid rgba(148, 163, 184, 0.1);
+  }
+  
+  .gaming-modal {
+    background: linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.95) 100%);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(139, 92, 246, 0.3);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  }
+  
+  .gaming-input {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(139, 92, 246, 0.3);
+    backdrop-filter: blur(10px);
+  }
+  
+  .gaming-input:focus {
+    border-color: rgba(139, 92, 246, 0.6);
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+  }
+  
+  .gaming-table th {
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(168, 85, 247, 0.1) 100%);
+    border-bottom: 2px solid rgba(139, 92, 246, 0.2);
+    padding: 1rem 1.5rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.05em;
+    color: rgba(139, 92, 246, 0.8);
+  }
+  
+  .gaming-table tbody tr {
+    border-bottom: 1px solid rgba(139, 92, 246, 0.1);
+    transition: all 0.2s ease;
+  }
+  
+  .gaming-table tbody tr:hover {
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.05) 0%, rgba(168, 85, 247, 0.05) 100%);
+    transform: scale(1.01);
+  }
+  
+  .gaming-metric {
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(168, 85, 247, 0.1) 100%);
+    border: 1px solid rgba(139, 92, 246, 0.2);
+    backdrop-filter: blur(10px);
+  }
+  
+  .gaming-metric-value {
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-weight: 800;
+  }
+}
+
+@keyframes gaming-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+@keyframes gaming-float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes gaming-skeleton {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* Dark mode improvements */
+.dark .gaming-glow {
+  filter: drop-shadow(0 0 4px currentColor);
+}
+
+.dark .gaming-interactive:hover {
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
+}

@@ -57,6 +57,14 @@ export function VideoManagement() {
     setIsModalOpen(true)
   }
 
+  const handleStatusChange = async (videoId: string, newStatus: string) => {
+    try {
+      await updateVideoStatus(videoId, newStatus)
+      console.log(`Video ${videoId} status changed to ${newStatus}`)
+    } catch (error) {
+      console.error('Failed to update video status:', error)
+    }
+  }
   if (isLoading) {
     return (
       <div className="space-y-6">
@@ -107,11 +115,12 @@ export function VideoManagement() {
               className="px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm min-w-[140px] dark:bg-slate-800 dark:border-slate-600 dark:text-white"
             >
               <option value="all">All Status</option>
+              <option value="pending">Pending</option>
               <option value="active">Active</option>
+              <option value="paused">Paused</option>
               <option value="completed">Completed</option>
-              <option value="hold">On Hold</option>
-              <option value="repromote">Repromote</option>
-              <option value="deleted">Deleted</option>
+              <option value="rejected">Rejected</option>
+              <option value="repromoted">Repromoted</option>
             </select>
           </div>
         </CardContent>
@@ -128,12 +137,13 @@ export function VideoManagement() {
                   <th className="text-left">Video Status</th>
                   <th className="text-left">View Criteria</th>
                   <th className="text-left">Video ID</th>
+                  <th className="text-left">Quick Actions</th>
                   <th className="text-right">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredVideos.map((video) => (
-                  <tr key={video.video_id} className="group">
+                  <tr key={video.id} className="group">
                     <td className="py-4 px-6">
                       <div className="flex items-center space-x-3">
                         <div className="w-10 h-10 bg-gradient-to-br from-violet-400 to-purple-600 rounded-full flex items-center justify-center text-white font-medium text-sm gaming-pulse">
@@ -151,20 +161,64 @@ export function VideoManagement() {
                     <td className="py-4 px-6">
                       <div className="flex items-center space-x-2">
                         <Eye className="w-4 h-4 text-gray-400 gaming-glow" />
-                        <span className="font-mono text-sm font-medium">{video.view_criteria}</span>
+                        <span className="font-mono text-sm font-medium">{video.current_views}/{video.target_views}</span>
                       </div>
                     </td>
                     <td className="py-4 px-6">
                       <div className="flex items-center space-x-2">
-                        <code className="bg-violet-500/10 border border-violet-500/20 px-2 py-1 rounded text-sm font-mono text-violet-600 dark:text-violet-400 gaming-glow">{video.video_id}</code>
+                        <code className="bg-violet-500/10 border border-violet-500/20 px-2 py-1 rounded text-sm font-mono text-violet-600 dark:text-violet-400 gaming-glow">{video.id.slice(0, 8)}</code>
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => copyToClipboard(video.video_id)}
+                          onClick={() => copyToClipboard(video.id)}
                           className="opacity-0 group-hover:opacity-100 transition-opacity gaming-glow"
                         >
                           <Copy className="w-3 h-3" />
                         </Button>
+                      </div>
+                    </td>
+                    <td className="py-4 px-6">
+                      <div className="flex items-center space-x-2">
+                        {video.status === 'pending' && (
+                          <>
+                            <Button
+                              size="sm"
+                              variant="success"
+                              onClick={() => handleStatusChange(video.id, 'active')}
+                              className="text-xs"
+                            >
+                              Approve
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="danger"
+                              onClick={() => handleStatusChange(video.id, 'rejected')}
+                              className="text-xs"
+                            >
+                              Reject
+                            </Button>
+                          </>
+                        )}
+                        {video.status === 'active' && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleStatusChange(video.id, 'paused')}
+                            className="text-xs"
+                          >
+                            Pause
+                          </Button>
+                        )}
+                        {video.status === 'paused' && (
+                          <Button
+                            size="sm"
+                            variant="success"
+                            onClick={() => handleStatusChange(video.id, 'active')}
+                            className="text-xs"
+                          >
+                            Resume
+                          </Button>
+                        )}
                       </div>
                     </td>
                     <td className="py-4 px-6 text-right">

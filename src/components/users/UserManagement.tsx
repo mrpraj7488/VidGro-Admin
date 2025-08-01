@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { Search, Filter, MoreHorizontal, Crown, Coins, Calendar } from 'lucide-react'
+import { Search, Filter, MoreHorizontal, Crown, Coins, Calendar, Plus, Minus, DollarSign } from 'lucide-react'
 import { useAdminStore } from '../../stores/adminStore'
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card'
 import { Button } from '../ui/Button'
@@ -8,9 +8,118 @@ import { Badge } from '../ui/Badge'
 import { formatNumber } from '../../lib/utils'
 import { format } from 'date-fns'
 
+interface CoinAdjustmentModalProps {
+  isOpen: boolean
+  onClose: () => void
+  user: any
+  onAdjust: (amount: number, reason: string) => Promise<void>
+}
+
+function CoinAdjustmentModal({ isOpen, onClose, user, onAdjust }: CoinAdjustmentModalProps) {
+  const [amount, setAmount] = useState<number>(0)
+  const [reason, setReason] = useState<string>('')
+  const [isLoading, setIsLoading] = useState(false)
+
+  if (!isOpen || !user) return null
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!amount || !reason.trim()) return
+
+    setIsLoading(true)
+    try {
+      await onAdjust(amount, reason)
+      onClose()
+      setAmount(0)
+      setReason('')
+    } catch (error) {
+      console.error('Failed to adjust coins:', error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl max-w-md w-full">
+        <div className="p-6 border-b border-gray-200 dark:border-slate-700">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+            Adjust Coins for {user.username}
+          </h3>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+            Current balance: {formatNumber(user.coins)} coins
+          </p>
+        </div>
+        
+        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Amount (use negative for deduction)
+            </label>
+            <div className="relative">
+              <Input
+                type="number"
+                value={amount || ''}
+                onChange={(e) => setAmount(Number(e.target.value))}
+                placeholder="Enter amount..."
+                className="pr-20"
+                required
+              />
+              <div className="absolute right-3 top-1/2 transform -translate-y-1/2 flex space-x-1">
+                <button
+                  type="button"
+                  onClick={() => setAmount(Math.abs(amount) * -1)}
+                  className="p-1 text-red-500 hover:bg-red-50 rounded"
+                >
+                  <Minus className="w-4 h-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAmount(Math.abs(amount))}
+                  className="p-1 text-green-500 hover:bg-green-50 rounded"
+                >
+                  <Plus className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Reason
+            </label>
+            <textarea
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              placeholder="Explain the reason for this adjustment..."
+              rows={3}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500 dark:bg-slate-700 dark:text-white"
+              required
+            />
+          </div>
+          
+          <div className="flex items-center justify-end space-x-3 pt-4">
+            <Button type="button" variant="outline" onClick={onClose}>
+              Cancel
+            </Button>
+            <Button 
+              type="submit" 
+              disabled={isLoading || !amount || !reason.trim()}
+              className="flex items-center space-x-2"
+            >
+              <DollarSign className="w-4 h-4" />
+              <span>{isLoading ? 'Adjusting...' : 'Adjust Coins'}</span>
+            </Button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
 export function UserManagement() {
-  const { users, userFilters, isLoading, fetchUsers, updateUserCoins, setUserFilters } = useAdminStore()
-  const [editingCoins, setEditingCoins] = useState<{ userId: string; coins: number } | null>(null)
+  const { users, userFilters, isLoading, fetchUsers, adjustUserCoins, toggleUserVip, setUserFilters } = useAdminStore()
+  const [selectedUser, setSelectedUser] = useState<any>(null)
+  const [isAdjustModalOpen, setIsAdjustModalOpen] = useState(false)
 
   useEffect(() => {
     fetchUsers()
@@ -27,9 +136,23 @@ export function UserManagement() {
     return matchesSearch && matchesVip && matchesCoins
   })
 
-  const handleCoinsUpdate = async (userId: string, newCoins: number) => {
-    await updateUserCoins(userId, newCoins)
-    setEditingCoins(null)
+  const handleCoinAdjustment = async (amount: number, reason: string) => {
+    if (!selectedUser) return
+    await adjustUserCoins(selectedUser.id, amount, reason)
+  }
+
+  const handleVipToggle = async (userId: string) => {
+    await toggleUserVip(userId)
+  }
+
+  const openAdjustModal = (user: any) => {
+    setSelectedUser(user)
+    setIsAdjustModalOpen(true)
+  }
+
+  const closeAdjustModal = () => {
+    setSelectedUser(null)
+    setIsAdjustModalOpen(false)
   }
 
   if (isLoading) {
@@ -99,7 +222,7 @@ export function UserManagement() {
               </thead>
               <tbody>
                 {filteredUsers.map((user) => (
-                  <tr key={user.user_id} className="border-b border-gray-200 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
+                  <tr key={user.id} className="border-b border-gray-200 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
                     <td className="py-4 px-6">
                       <div className="flex items-center space-x-3">
                         <div className="w-10 h-10 bg-gradient-to-br from-violet-400 to-purple-600 rounded-full flex items-center justify-center text-white font-medium text-sm">
@@ -112,47 +235,28 @@ export function UserManagement() {
                       </div>
                     </td>
                     <td className="py-4 px-6">
-                      {user.is_vip ? (
-                        <Badge variant="vip" className="flex items-center space-x-1">
-                          <Crown className="w-3 h-3" strokeWidth={2} />
-                          <span>VIP</span>
-                        </Badge>
-                      ) : (
-                        <Badge variant="default">Regular</Badge>
-                      )}
+                      <button
+                        onClick={() => handleVipToggle(user.id)}
+                        className="transition-all duration-200"
+                      >
+                        {user.is_vip ? (
+                          <Badge variant="vip" className="flex items-center space-x-1 hover:scale-105">
+                            <Crown className="w-3 h-3" strokeWidth={2} />
+                            <span>VIP</span>
+                          </Badge>
+                        ) : (
+                          <Badge variant="default" className="hover:bg-violet-100 hover:text-violet-700">Regular</Badge>
+                        )}
+                      </button>
                     </td>
                     <td className="py-4 px-6">
-                      {editingCoins?.userId === user.user_id ? (
-                        <div className="flex items-center space-x-2">
-                          <Input
-                            type="number"
-                            value={editingCoins.coins}
-                            onChange={(e) => setEditingCoins({ ...editingCoins, coins: Number(e.target.value) })}
-                            className="w-24 h-8"
-                          />
-                          <Button
-                            size="sm"
-                            onClick={() => handleCoinsUpdate(user.user_id, editingCoins.coins)}
-                          >
-                            Save
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setEditingCoins(null)}
-                          >
-                            Cancel
-                          </Button>
-                        </div>
-                      ) : (
-                        <button
-                          onClick={() => setEditingCoins({ userId: user.user_id, coins: user.coins })}
-                          className="flex items-center space-x-1 text-orange-600 hover:text-orange-700 font-medium transition-colors"
-                        >
-                          <Coins className="w-4 h-4" strokeWidth={2} />
-                          <span>{formatNumber(user.coins)}</span>
-                        </button>
-                      )}
+                      <button
+                        onClick={() => openAdjustModal(user)}
+                        className="flex items-center space-x-1 text-orange-600 hover:text-orange-700 font-medium transition-colors hover:bg-orange-50 dark:hover:bg-orange-900/20 px-2 py-1 rounded"
+                      >
+                        <Coins className="w-4 h-4" strokeWidth={2} />
+                        <span>{formatNumber(user.coins)}</span>
+                      </button>
                     </td>
                     <td className="py-4 px-6">
                       <span className="text-gray-900 dark:text-white">{user.videos_posted}</span>
@@ -206,6 +310,14 @@ export function UserManagement() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Coin Adjustment Modal */}
+      <CoinAdjustmentModal
+        isOpen={isAdjustModalOpen}
+        onClose={closeAdjustModal}
+        user={selectedUser}
+        onAdjust={handleCoinAdjustment}
+      />
     </div>
   )
 }

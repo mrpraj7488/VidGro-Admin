@@ -1,20 +1,48 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Users, Video, Crown, DollarSign, TrendingUp, Activity } from 'lucide-react'
 import { LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts'
 import { useAdminStore } from '../../stores/adminStore'
 import { StatsCard } from './StatsCard'
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card'
+import { Badge } from '../ui/Badge'
 
 export function DashboardView() {
-  const { dashboardStats, chartData, isLoading, fetchDashboardStats } = useAdminStore()
+  const { 
+    dashboardStats, 
+    chartData, 
+    realtimeStats, 
+    connectionStatus, 
+    isLoading, 
+    fetchDashboardStats,
+    initializeRealtime,
+    disconnectRealtime
+  } = useAdminStore()
+  
+  const [lastUpdate, setLastUpdate] = useState<string>('')
 
   useEffect(() => {
     fetchDashboardStats()
+    initializeRealtime()
+    
+    // Update timestamp periodically
+    const interval = setInterval(() => {
+      setLastUpdate(new Date().toLocaleTimeString())
+    }, 1000)
+    
+    return () => {
+      clearInterval(interval)
+      disconnectRealtime()
+    }
   }, [fetchDashboardStats])
 
   if (isLoading || !dashboardStats) {
     return (
       <div className="space-y-6">
+        {/* Connection Status */}
+        <div className="flex justify-between items-center">
+          <div className="h-8 w-48 gaming-skeleton rounded" />
+          <div className="h-6 w-32 gaming-skeleton rounded" />
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {[1, 2, 3, 4].map((i) => (
             <div key={i} className="h-32 gaming-skeleton rounded-xl" />
@@ -30,6 +58,76 @@ export function DashboardView() {
 
   return (
     <div className="space-y-6">
+      {/* Real-time Status Bar */}
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
+          <p className="text-gray-600 dark:text-gray-300">Real-time overview of your VidGro platform</p>
+        </div>
+        <div className="flex items-center space-x-4">
+          <Badge 
+            variant={connectionStatus ? "success" : "danger"}
+            className="flex items-center space-x-2"
+          >
+            <div className={`w-2 h-2 rounded-full ${connectionStatus ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'}`} />
+            <span>{connectionStatus ? 'Live' : 'Disconnected'}</span>
+          </Badge>
+          {lastUpdate && (
+            <span className="text-sm text-gray-500 dark:text-gray-400">
+              Updated: {lastUpdate}
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* Real-time Metrics */}
+      {realtimeStats && Object.keys(realtimeStats).length > 0 && (
+        <div className="bg-gradient-to-r from-violet-50 to-purple-50 dark:from-violet-900/20 dark:to-purple-900/20 border border-violet-200 dark:border-violet-800/50 rounded-xl p-4">
+          <h3 className="text-lg font-semibold text-violet-800 dark:text-violet-300 mb-3 flex items-center">
+            <Activity className="w-5 h-5 mr-2 animate-pulse" />
+            Live Activity
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="text-center">
+              <div className="text-2xl font-bold text-violet-600 dark:text-violet-400">
+                {realtimeStats.onlineUsers || 0}
+              </div>
+              <div className="text-sm text-violet-600 dark:text-violet-400">Online Now</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
+                {realtimeStats.videosWatchedLastHour || 0}
+              </div>
+              <div className="text-sm text-emerald-600 dark:text-emerald-400">Videos/Hour</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">
+                {realtimeStats.coinsEarnedLastHour || 0}
+              </div>
+              <div className="text-sm text-orange-600 dark:text-orange-400">Coins/Hour</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                {realtimeStats.newUsersToday || 0}
+              </div>
+              <div className="text-sm text-blue-600 dark:text-blue-400">New Today</div>
+            </div>
+          </div>
+          {realtimeStats.lastTransaction && (
+            <div className="mt-3 pt-3 border-t border-violet-200 dark:border-violet-800/50">
+              <div className="flex items-center space-x-2 text-sm">
+                <span className="w-2 h-2 bg-orange-400 rounded-full animate-pulse"></span>
+                <span className="text-gray-600 dark:text-gray-300">
+                  Latest: {realtimeStats.lastTransaction.type} of {realtimeStats.lastTransaction.amount} coins
+                </span>
+                <span className="text-gray-500 dark:text-gray-400">
+                  {new Date(realtimeStats.lastTransaction.timestamp).toLocaleTimeString()}
+                </span>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
       {/* Clean Stats Cards - Only 4 Essential Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatsCard
