@@ -11,8 +11,6 @@ export const mockDashboardStats = {
   activeVideos: 8924,
   vipUsers: 3247,
   monthlyRevenue: 89500,
-  dailyActiveUsers: 12453,
-  totalCoinsDistributed: 892450,
   userGrowthRate: 12.5
 }
 
@@ -54,10 +52,10 @@ export const mockChartData = Array.from({ length: 30 }, (_, i) => ({
 }))
 
 export const mockAnalyticsData = {
-  revenueGrowth: 23.5,
+  dailyActiveUsers: 12453,
   userRetention: 78.2,
   avgCompletionRate: 65.8,
-  coinVelocity: 4.2,
+  coinTransactions: 8924,
   userGrowthData: Array.from({ length: 30 }, (_, i) => ({
     date: new Date(Date.now() - (29 - i) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     newUsers: Math.floor(Math.random() * 200) + 50,
@@ -98,7 +96,6 @@ export const mockAnalyticsData = {
 export const mockBugReportData = {
   newBugs: 12,
   bugsFixedToday: 8,
-  totalBugs: 156,
   bugReports: Array.from({ length: 15 }, (_, i) => ({
     bug_id: `BUG${String(i + 1).padStart(4, '0')}`,
     title: `Bug Report ${i + 1}: ${['Login Issue', 'Video Upload Error', 'Coin Transaction Failed', 'App Crash', 'UI Glitch'][Math.floor(Math.random() * 5)]}`,
@@ -110,13 +107,7 @@ export const mockBugReportData = {
     category: ['UI/UX', 'Backend', 'Mobile App', 'Payment', 'Video Processing'][Math.floor(Math.random() * 5)],
     created_at: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString(),
     updated_at: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString()
-  })),
-  stats: {
-    totalReported: 156,
-    fixRate: 87,
-    avgResponseTime: 4.2,
-    criticalBugs: 3
-  }
+  }))
 }
 
 export const mockSystemSettings = {

@@ -1,0 +1,426 @@
+import React, { useState, useEffect } from 'react'
+import { 
+  Mail, 
+  User, 
+  Clock, 
+  Send, 
+  Paperclip, 
+  AlertTriangle, 
+  ArrowUp, 
+  ArrowDown, 
+  Minus,
+  Search,
+  Filter
+} from 'lucide-react'
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card'
+import { Button } from '../ui/Button'
+import { Input } from '../ui/Input'
+import { Badge } from '../ui/Badge'
+import { format, formatDistanceToNow } from 'date-fns'
+
+interface SupportTicket {
+  id: string
+  userId: string
+  username: string
+  email: string
+  subject: string
+  message: string
+  status: 'new' | 'in_progress' | 'resolved' | 'closed'
+  priority: 'low' | 'medium' | 'high' | 'urgent'
+  category: 'technical' | 'billing' | 'feature_request' | 'bug_report' | 'general'
+  createdAt: string
+  updatedAt: string
+  adminReplies: AdminReply[]
+}
+
+interface AdminReply {
+  id: string
+  adminId: string
+  adminName: string
+  message: string
+  timestamp: string
+  isInternal: boolean
+}
+
+const mockTickets: SupportTicket[] = Array.from({ length: 12 }, (_, i) => ({
+  id: `ticket-${i + 1}`,
+  userId: `user-${i + 1}`,
+  username: `user${i + 1}`,
+  email: `user${i + 1}@example.com`,
+  subject: [
+    'Unable to upload video',
+    'Coin transaction failed',
+    'VIP upgrade not working',
+    'App crashes on startup',
+    'Video promotion not showing',
+    'Payment processing error',
+    'Account verification issue',
+    'Feature request: Dark mode',
+    'Bug: Video thumbnail missing',
+    'Help with coin withdrawal',
+    'Profile picture upload fails',
+    'Notification settings broken'
+  ][i],
+  message: `Detailed description of the issue for ticket ${i + 1}. This is a comprehensive explanation of what the user is experiencing and what they need help with.`,
+  status: ['new', 'in_progress', 'resolved', 'closed'][Math.floor(Math.random() * 4)] as any,
+  priority: ['low', 'medium', 'high', 'urgent'][Math.floor(Math.random() * 4)] as any,
+  category: ['technical', 'billing', 'feature_request', 'bug_report', 'general'][Math.floor(Math.random() * 5)] as any,
+  createdAt: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString(),
+  updatedAt: new Date(Date.now() - Math.random() * 24 * 60 * 60 * 1000).toISOString(),
+  adminReplies: Math.random() > 0.5 ? [
+    {
+      id: `reply-${i + 1}-1`,
+      adminId: 'admin-1',
+      adminName: 'Admin Support',
+      message: 'Thank you for contacting us. We are looking into this issue and will get back to you shortly.',
+      timestamp: new Date(Date.now() - Math.random() * 12 * 60 * 60 * 1000).toISOString(),
+      isInternal: false
+    }
+  ] : []
+}))
+
+const getPriorityIcon = (priority: string) => {
+  switch (priority) {
+    case 'urgent': return <AlertTriangle className="h-3 w-3 text-red-500" />
+    case 'high': return <ArrowUp className="h-3 w-3 text-orange-500" />
+    case 'medium': return <Minus className="h-3 w-3 text-yellow-500" />
+    case 'low': return <ArrowDown className="h-3 w-3 text-green-500" />
+    default: return <Minus className="h-3 w-3 text-gray-500" />
+  }
+}
+
+const getStatusVariant = (status: string) => {
+  switch (status) {
+    case 'new': return 'danger'
+    case 'in_progress': return 'warning'
+    case 'resolved': return 'success'
+    case 'closed': return 'default'
+    default: return 'default'
+  }
+}
+
+const getPriorityVariant = (priority: string) => {
+  switch (priority) {
+    case 'urgent': return 'danger'
+    case 'high': return 'warning'
+    case 'medium': return 'default'
+    case 'low': return 'success'
+    default: return 'default'
+  }
+}
+
+export function InboxView() {
+  const [tickets, setTickets] = useState<SupportTicket[]>(mockTickets)
+  const [selectedTicket, setSelectedTicket] = useState<SupportTicket | null>(null)
+  const [replyMessage, setReplyMessage] = useState('')
+  const [filterStatus, setFilterStatus] = useState<string>('all')
+  const [isInternal, setIsInternal] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+
+  const filteredTickets = tickets.filter(ticket => {
+    const matchesStatus = filterStatus === 'all' || ticket.status === filterStatus
+    const matchesSearch = ticket.subject.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         ticket.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         ticket.email.toLowerCase().includes(searchQuery.toLowerCase())
+    return matchesStatus && matchesSearch
+  })
+
+  const updateTicketStatus = (ticketId: string, status: string) => {
+    setTickets(prev => prev.map(ticket => 
+      ticket.id === ticketId ? { ...ticket, status: status as any, updatedAt: new Date().toISOString() } : ticket
+    ))
+    if (selectedTicket?.id === ticketId) {
+      setSelectedTicket(prev => prev ? { ...prev, status: status as any, updatedAt: new Date().toISOString() } : null)
+    }
+  }
+
+  const sendReply = (ticketId: string, message: string) => {
+    if (!message.trim()) return
+
+    const newReply: AdminReply = {
+      id: `reply-${Date.now()}`,
+      adminId: 'admin-1',
+      adminName: 'Admin Support',
+      message: message.trim(),
+      timestamp: new Date().toISOString(),
+      isInternal
+    }
+
+    setTickets(prev => prev.map(ticket => 
+      ticket.id === ticketId 
+        ? { 
+            ...ticket, 
+            adminReplies: [...ticket.adminReplies, newReply],
+            status: ticket.status === 'new' ? 'in_progress' : ticket.status,
+            updatedAt: new Date().toISOString()
+          } 
+        : ticket
+    ))
+
+    if (selectedTicket?.id === ticketId) {
+      setSelectedTicket(prev => prev ? {
+        ...prev,
+        adminReplies: [...prev.adminReplies, newReply],
+        status: prev.status === 'new' ? 'in_progress' : prev.status,
+        updatedAt: new Date().toISOString()
+      } : null)
+    }
+
+    setReplyMessage('')
+    setIsInternal(false)
+  }
+
+  return (
+    <div className="h-[calc(100vh-8rem)] flex">
+      {/* Ticket List Sidebar */}
+      <div className="w-1/3 border-r bg-muted/30 flex flex-col">
+        <div className="p-4 border-b bg-white/50">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold flex items-center gap-2">
+              <Mail className="h-5 w-5 text-blue-500" />
+              Support Inbox
+            </h2>
+            <Badge variant="danger" className="bg-red-100 text-red-800">
+              {tickets.filter(t => t.status === 'new').length} New
+            </Badge>
+          </div>
+          
+          {/* Search */}
+          <div className="relative mb-3">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <Input
+              placeholder="Search tickets..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+          
+          {/* Status Filter */}
+          <select
+            value={filterStatus}
+            onChange={(e) => setFilterStatus(e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm"
+          >
+            <option value="all">All Tickets</option>
+            <option value="new">New</option>
+            <option value="in_progress">In Progress</option>
+            <option value="resolved">Resolved</option>
+            <option value="closed">Closed</option>
+          </select>
+        </div>
+        
+        {/* Ticket List */}
+        <div className="flex-1 overflow-y-auto">
+          {filteredTickets.map((ticket) => (
+            <div
+              key={ticket.id}
+              onClick={() => setSelectedTicket(ticket)}
+              className={`p-4 border-b cursor-pointer hover:bg-muted/50 transition-colors ${
+                selectedTicket?.id === ticket.id ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''
+              }`}
+            >
+              <div className="flex items-start justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1">
+                    {getPriorityIcon(ticket.priority)}
+                    <Badge variant={getStatusVariant(ticket.status)} className="text-xs">
+                      {ticket.status.replace('_', ' ')}
+                    </Badge>
+                  </div>
+                </div>
+                <span className="text-xs text-muted-foreground">
+                  {formatDistanceToNow(new Date(ticket.createdAt))} ago
+                </span>
+              </div>
+              
+              <h3 className="font-medium text-sm mb-1 line-clamp-1">
+                {ticket.subject}
+              </h3>
+              
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <User className="h-3 w-3" />
+                <span>{ticket.username}</span>
+                <span>•</span>
+                <span className="capitalize">{ticket.category.replace('_', ' ')}</span>
+              </div>
+              
+              <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                {ticket.message}
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
+      
+      {/* Ticket Detail View */}
+      <div className="flex-1 flex flex-col">
+        {selectedTicket ? (
+          <>
+            {/* Ticket Header */}
+            <div className="p-6 border-b bg-gradient-to-r from-blue-50 to-purple-50">
+              <div className="flex items-start justify-between mb-4">
+                <div>
+                  <h1 className="text-xl font-semibold mb-2">{selectedTicket.subject}</h1>
+                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                    <div className="flex items-center gap-1">
+                      <User className="h-4 w-4" />
+                      <span>{selectedTicket.username}</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Mail className="h-4 w-4" />
+                      <span>{selectedTicket.email}</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Clock className="h-4 w-4" />
+                      <span>{format(new Date(selectedTicket.createdAt), 'MMM dd, yyyy HH:mm')}</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  <Badge variant={getStatusVariant(selectedTicket.status)}>
+                    {selectedTicket.status.replace('_', ' ')}
+                  </Badge>
+                  <Badge variant={getPriorityVariant(selectedTicket.priority)}>
+                    {selectedTicket.priority}
+                  </Badge>
+                  <select 
+                    value={selectedTicket.status} 
+                    onChange={(e) => updateTicketStatus(selectedTicket.id, e.target.value)}
+                    className="px-3 py-1 border border-gray-300 rounded text-sm bg-white"
+                  >
+                    <option value="new">New</option>
+                    <option value="in_progress">In Progress</option>
+                    <option value="resolved">Resolved</option>
+                    <option value="closed">Closed</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            
+            {/* Conversation Thread */}
+            <div className="flex-1 p-6 overflow-y-auto">
+              <div className="space-y-6">
+                {/* Original Message */}
+                <div className="bg-muted/30 rounded-lg p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                      <span className="text-blue-600 font-medium text-sm">
+                        {selectedTicket.username.charAt(0).toUpperCase()}
+                      </span>
+                    </div>
+                    <div>
+                      <p className="font-medium text-sm">{selectedTicket.username}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {format(new Date(selectedTicket.createdAt), 'MMM dd, yyyy HH:mm')}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="prose prose-sm max-w-none">
+                    <p>{selectedTicket.message}</p>
+                  </div>
+                </div>
+                
+                {/* Admin Replies */}
+                {selectedTicket.adminReplies.map((reply) => (
+                  <div key={reply.id} className={`rounded-lg p-4 ${
+                    reply.isInternal 
+                      ? 'bg-orange-50 border-l-4 border-l-orange-400' 
+                      : 'bg-green-50 border-l-4 border-l-green-400'
+                  }`}>
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                        reply.isInternal 
+                          ? "bg-orange-100" 
+                          : "bg-green-100"
+                      }`}>
+                        <span className={`font-medium text-sm ${
+                          reply.isInternal 
+                            ? "text-orange-600" 
+                            : "text-green-600"
+                        }`}>
+                          {reply.adminName.charAt(0).toUpperCase()}
+                        </span>
+                      </div>
+                      <div>
+                        <p className="font-medium text-sm flex items-center gap-2">
+                          {reply.adminName}
+                          {reply.isInternal && (
+                            <Badge variant="warning" className="text-xs">
+                              Internal Note
+                            </Badge>
+                          )}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {format(new Date(reply.timestamp), 'MMM dd, yyyy HH:mm')}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="prose prose-sm max-w-none">
+                      <p>{reply.message}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            
+            {/* Reply Section */}
+            <div className="p-6 border-t bg-muted/20">
+              <div className="space-y-4">
+                <div className="flex items-center gap-4">
+                  <h3 className="font-medium">Reply to {selectedTicket.username}</h3>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="internal-note"
+                      checked={isInternal}
+                      onChange={(e) => setIsInternal(e.target.checked)}
+                      className="rounded border-gray-300"
+                    />
+                    <label htmlFor="internal-note" className="text-sm">
+                      Internal note only
+                    </label>
+                  </div>
+                </div>
+                
+                <textarea
+                  placeholder="Type your response..."
+                  value={replyMessage}
+                  onChange={(e) => setReplyMessage(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500 min-h-[100px]"
+                />
+                
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Button variant="outline" size="sm">
+                      <Paperclip className="h-4 w-4 mr-1" />
+                      Attach File
+                    </Button>
+                  </div>
+                  
+                  <div className="flex items-center gap-2">
+                    <Button variant="outline" onClick={() => setReplyMessage('')}>
+                      Cancel
+                    </Button>
+                    <Button onClick={() => sendReply(selectedTicket.id, replyMessage)}>
+                      <Send className="h-4 w-4 mr-1" />
+                      Send Reply
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </>
+        ) : (
+          <div className="flex-1 flex items-center justify-center text-muted-foreground">
+            <div className="text-center">
+              <Mail className="h-12 w-12 mb-4 mx-auto opacity-50" />
+              <p>Select a ticket to view details</p>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}

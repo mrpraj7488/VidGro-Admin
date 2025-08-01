@@ -123,34 +123,6 @@ export function BugReportsView() {
             </div>
           </CardContent>
         </Card>
-
-        <Card className="bg-gradient-to-br from-red-50 to-red-100 border-red-200">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-red-700 mb-1">Critical Bugs</p>
-                <p className="text-3xl font-bold text-red-600">{bugReportData.stats.criticalBugs}</p>
-              </div>
-              <div className="w-12 h-12 bg-gradient-to-br from-red-500 to-red-600 rounded-lg flex items-center justify-center">
-                <AlertTriangle className="w-6 h-6 text-white" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gradient-to-br from-violet-50 to-violet-100 border-violet-200">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-violet-700 mb-1">Fix Rate</p>
-                <p className="text-3xl font-bold text-violet-600">{bugReportData.stats.fixRate}%</p>
-              </div>
-              <div className="w-12 h-12 bg-gradient-to-br from-violet-500 to-violet-600 rounded-lg flex items-center justify-center">
-                <Clock className="w-6 h-6 text-white" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
       </div>
 
       {/* Filters */}

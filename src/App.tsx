@@ -7,6 +7,7 @@ import { VideoManagement } from './components/videos/VideoManagement'
 import { AnalyticsView } from './components/analytics/AnalyticsView'
 import { BugReportsView } from './components/reports/BugReportsView'
 import { SystemConfigView } from './components/settings/SystemConfigView'
+import { InboxView } from './components/inbox/InboxView'
 
 function App() {
   const [activeTab, setActiveTab] = useState('dashboard')
@@ -23,6 +24,8 @@ function App() {
         return <AnalyticsView />
       case 'reports':
         return <BugReportsView />
+      case 'inbox':
+        return <InboxView />
       case 'settings':
         return <SystemConfigView />
       default:

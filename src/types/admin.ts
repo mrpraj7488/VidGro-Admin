@@ -4,8 +4,6 @@ export interface DashboardStats {
   vipUsers: number
   monthlyRevenue: number
   userGrowthRate: number
-  dailyActiveUsers: number
-  totalCoinsDistributed: number
 }
 
 export interface User {
@@ -89,10 +87,10 @@ export interface ChartDataPoint {
 }
 
 export interface AnalyticsData {
-  revenueGrowth: number
+  dailyActiveUsers: number
   userRetention: number
   avgCompletionRate: number
-  coinVelocity: number
+  coinTransactions: number
   userGrowthData: Array<{
     date: string
     newUsers: number
@@ -131,14 +129,7 @@ export interface AnalyticsData {
 export interface BugReportData {
   newBugs: number
   bugsFixedToday: number
-  totalBugs: number
   bugReports: BugReport[]
-  stats: {
-    totalReported: number
-    fixRate: number
-    avgResponseTime: number
-    criticalBugs: number
-  }
 }
 
 export interface SystemSettings {

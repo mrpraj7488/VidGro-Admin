@@ -135,19 +135,18 @@ export function VideoEditModal({ video, isOpen, onClose }: VideoEditModalProps) 
                 </label>
                 <Input
                   value={editedVideo.title}
-                  onChange={(e) => setEditedVideo({ ...editedVideo, title: e.target.value })}
+                  readOnly
+                  className="bg-gray-50"
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  View Criteria
+                  Criteria
                 </label>
-                <Input
-                  value={editedVideo.view_criteria}
-                  onChange={(e) => setEditedVideo({ ...editedVideo, view_criteria: e.target.value })}
-                  className="font-mono"
-                />
+                <div className="px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg">
+                  <span className="font-mono text-sm">{video.view_criteria}</span>
+                </div>
               </div>
             </div>
 
@@ -157,11 +156,9 @@ export function VideoEditModal({ video, isOpen, onClose }: VideoEditModalProps) 
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Spent Coins
                 </label>
-                <Input
-                  type="number"
-                  value={editedVideo.spent_coins}
-                  onChange={(e) => setEditedVideo({ ...editedVideo, spent_coins: Number(e.target.value) })}
-                />
+                <div className="px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg">
+                  <span className="font-mono text-sm">{formatNumber(video.spent_coins)}</span>
+                </div>
               </div>
 
               <div>
@@ -185,24 +182,18 @@ export function VideoEditModal({ video, isOpen, onClose }: VideoEditModalProps) 
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Total Watch Time (seconds)
                 </label>
-                <Input
-                  type="number"
-                  value={editedVideo.total_watch_time}
-                  onChange={(e) => setEditedVideo({ ...editedVideo, total_watch_time: Number(e.target.value) })}
-                />
+                <div className="px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg">
+                  <span className="font-mono text-sm">{Math.floor(video.total_watch_time / 60)}m {video.total_watch_time % 60}s</span>
+                </div>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Completion Rate (%)
                 </label>
-                <Input
-                  type="number"
-                  min="0"
-                  max="100"
-                  value={editedVideo.completion_rate}
-                  onChange={(e) => setEditedVideo({ ...editedVideo, completion_rate: Number(e.target.value) })}
-                />
+                <div className="px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg">
+                  <span className="font-mono text-sm">{video.completion_rate}%</span>
+                </div>
               </div>
             </div>
           </div>
@@ -240,6 +231,23 @@ export function VideoEditModal({ video, isOpen, onClose }: VideoEditModalProps) 
                   />
                 </div>
               </div>
+              {(video.refund_amount || video.refund_percent) && (
+                <div className="mt-4 pt-4 border-t border-red-200">
+                  <h5 className="font-medium text-red-700 mb-2">Current Refund Status:</h5>
+                  <div className="flex items-center space-x-4 text-sm">
+                    {video.refund_amount && (
+                      <span className="text-green-600 font-semibold">
+                        {formatNumber(video.refund_amount)} coins refunded
+                      </span>
+                    )}
+                    {video.refund_percent && (
+                      <span className="text-green-600 font-semibold">
+                        {video.refund_percent}% refund applied
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

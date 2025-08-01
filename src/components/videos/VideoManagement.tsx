@@ -186,32 +186,6 @@ export function VideoManagement() {
         </CardContent>
       </Card>
 
-      {/* Summary Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card className="text-center p-6">
-          <div className="text-2xl font-bold text-gray-900">{filteredVideos.length}</div>
-          <div className="text-sm text-gray-500">Total Videos Shown</div>
-        </Card>
-        <Card className="text-center p-6">
-          <div className="text-2xl font-bold text-emerald-600">
-            {formatNumber(filteredVideos.reduce((sum, v) => sum + v.views_count, 0))}
-          </div>
-          <div className="text-sm text-gray-500">Total Views</div>
-        </Card>
-        <Card className="text-center p-6">
-          <div className="text-2xl font-bold text-orange-600">
-            {formatNumber(filteredVideos.reduce((sum, v) => sum + v.spent_coins, 0))}
-          </div>
-          <div className="text-sm text-gray-500">Coins Spent</div>
-        </Card>
-        <Card className="text-center p-6">
-          <div className="text-2xl font-bold text-violet-600">
-            {Math.round(filteredVideos.reduce((sum, v) => sum + v.completion_rate, 0) / filteredVideos.length || 0)}%
-          </div>
-          <div className="text-sm text-gray-500">Avg Completion</div>
-        </Card>
-      </div>
-
       {/* Video Edit Modal */}
       <VideoEditModal
         video={selectedVideo}

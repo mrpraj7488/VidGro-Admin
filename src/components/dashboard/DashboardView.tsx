@@ -30,21 +30,6 @@ export function DashboardView() {
 
   return (
     <div className="space-y-6">
-      {/* Welcome Section */}
-      <div className="bg-gradient-to-r from-violet-600 via-purple-600 to-violet-700 rounded-2xl p-8 text-white shadow-xl">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold mb-2">Welcome back, Admin! 👋</h1>
-            <p className="text-violet-100 text-lg">Here's what's happening with VidGro today</p>
-          </div>
-          <div className="hidden md:block">
-            <div className="w-24 h-24 bg-white/10 rounded-full flex items-center justify-center backdrop-blur-sm">
-              <TrendingUp className="w-12 h-12 text-white" />
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatsCard
@@ -55,18 +40,18 @@ export function DashboardView() {
           color="violet"
         />
         <StatsCard
-          title="VIP Users"
-          value={dashboardStats.vipUsers}
-          change={8.3}
-          icon={Crown}
-          color="emerald"
-        />
-        <StatsCard
           title="Active Videos"
           value={dashboardStats.activeVideos}
           change={15.2}
           icon={Video}
           color="orange"
+        />
+        <StatsCard
+          title="VIP Users"
+          value={dashboardStats.vipUsers}
+          change={8.3}
+          icon={Crown}
+          color="emerald"
         />
         <StatsCard
           title="Monthly Revenue"
@@ -75,24 +60,6 @@ export function DashboardView() {
           icon={DollarSign}
           format="currency"
           color="blue"
-        />
-      </div>
-
-      {/* Secondary Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <StatsCard
-          title="Daily Active Users"
-          value={dashboardStats.dailyActiveUsers}
-          change={-2.1}
-          icon={UserCheck}
-          color="violet"
-        />
-        <StatsCard
-          title="Coins Distributed"
-          value={dashboardStats.totalCoinsDistributed}
-          change={18.5}
-          icon={Coins}
-          color="orange"
         />
       </div>
 

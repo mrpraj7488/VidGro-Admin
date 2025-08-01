@@ -1,7 +1,44 @@
 import React from 'react'
-import { Bell, Search, User, Settings } from 'lucide-react'
+import { Bell, Search, User, Moon, Sun } from 'lucide-react'
 import { Button } from '../ui/Button'
 import { Input } from '../ui/Input'
+
+function ThemeToggle() {
+  const [isDark, setIsDark] = React.useState(false)
+  
+  const toggleTheme = () => {
+    setIsDark(!isDark)
+    document.documentElement.classList.toggle('dark')
+  }
+
+  return (
+    <div className="relative">
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={toggleTheme}
+        className="relative h-9 w-16 rounded-full bg-gradient-to-r from-slate-200 to-slate-300 dark:from-slate-700 dark:to-slate-800 border-2 border-slate-300 dark:border-slate-600 transition-all duration-300 hover:shadow-lg hover:scale-105"
+      >
+        <div className={`absolute top-0.5 left-0.5 h-7 w-7 rounded-full bg-white dark:bg-slate-900 shadow-lg transition-all duration-300 flex items-center justify-center ${
+          isDark ? 'translate-x-7' : 'translate-x-0'
+        }`}>
+          {isDark ? (
+            <Moon className="h-4 w-4 text-blue-400" />
+          ) : (
+            <Sun className="h-4 w-4 text-orange-400" />
+          )}
+        </div>
+        
+        {/* Gaming-style glow effect */}
+        <div className={`absolute inset-0 rounded-full transition-all duration-300 ${
+          isDark 
+            ? 'shadow-[0_0_20px_rgba(59,130,246,0.5)]' 
+            : 'shadow-[0_0_20px_rgba(251,146,60,0.3)]'
+        }`} />
+      </Button>
+    </div>
+  )
+}
 
 export function Header() {
   return (
@@ -22,9 +59,7 @@ export function Header() {
           <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
         </Button>
         
-        <Button variant="ghost" size="icon" className="hover:bg-gray-100/70">
-          <Settings className="w-5 h-5" />
-        </Button>
+        <ThemeToggle />
         
         <div className="flex items-center space-x-3 pl-3 border-l border-gray-200/60">
           <div className="w-8 h-8 bg-gradient-to-br from-violet-500 to-purple-600 rounded-full flex items-center justify-center shadow-sm">

@@ -63,11 +63,11 @@ export function AnalyticsView() {
       {/* Key Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatsCard
-          title="Revenue Growth"
-          value={analyticsData.revenueGrowth}
+          title="Daily Active Users"
+          value={analyticsData.dailyActiveUsers}
           change={12.5}
-          icon={TrendingUp}
-          format="percentage"
+          icon={Users}
+          format="number"
           color="violet"
         />
         <StatsCard
@@ -87,8 +87,8 @@ export function AnalyticsView() {
           color="orange"
         />
         <StatsCard
-          title="Coin Velocity"
-          value={analyticsData.coinVelocity}
+          title="Coin Transactions"
+          value={analyticsData.coinTransactions}
           change={15.7}
           icon={Coins}
           format="number"
