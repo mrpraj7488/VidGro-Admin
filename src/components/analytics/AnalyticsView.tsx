@@ -45,8 +45,8 @@ export function AnalyticsView() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Analytics Dashboard</h1>
-          <p className="text-gray-600">Comprehensive insights into your platform performance</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Analytics Dashboard</h1>
+          <p className="text-gray-600 dark:text-gray-300">Comprehensive insights into your platform performance</p>
         </div>
         <div className="flex items-center space-x-3">
           <DateRangePicker
@@ -83,7 +83,7 @@ export function AnalyticsView() {
       {/* Charts Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Daily Active Users Chart */}
-        <Card>
+        <Card className="dark:bg-slate-800/95">
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <TrendingUp className="w-5 h-5" />
@@ -123,7 +123,7 @@ export function AnalyticsView() {
         </Card>
 
         {/* Coin Transactions Chart */}
-        <Card>
+        <Card className="dark:bg-slate-800/95">
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <Coins className="w-5 h-5" />
@@ -155,14 +155,14 @@ export function AnalyticsView() {
       {/* Detailed Tables */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Top Performing Videos */}
-        <Card>
+        <Card className="dark:bg-slate-800/95">
           <CardHeader>
             <CardTitle>Top Performing Videos</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               {analyticsData.topVideos.map((video, index) => (
-                <div key={video.id} className="flex items-center space-x-4 p-3 rounded-lg hover:bg-gray-50 transition-colors">
+                <div key={video.id} className="flex items-center space-x-4 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors">
                   <div className="w-8 h-8 bg-gradient-to-br from-violet-500 to-purple-600 rounded-lg flex items-center justify-center text-white font-bold text-sm">
                     {index + 1}
                   </div>
@@ -172,12 +172,12 @@ export function AnalyticsView() {
                     className="w-16 h-12 object-cover rounded"
                   />
                   <div className="flex-1">
-                    <p className="font-medium text-gray-900 line-clamp-1">{video.title}</p>
-                    <p className="text-sm text-gray-500">{video.views} views • {video.completionRate}% completion</p>
+                    <p className="font-medium text-gray-900 dark:text-white line-clamp-1">{video.title}</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">{video.views} views • {video.completionRate}% completion</p>
                   </div>
                   <div className="text-right">
-                    <p className="font-medium text-orange-600">{video.coinsEarned}</p>
-                    <p className="text-xs text-gray-500">coins</p>
+                    <p className="font-medium text-orange-600 dark:text-orange-400">{video.coinsEarned}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">coins</p>
                   </div>
                 </div>
               ))}
@@ -186,24 +186,24 @@ export function AnalyticsView() {
         </Card>
 
         {/* Recent Activity */}
-        <Card>
+        <Card className="dark:bg-slate-800/95">
           <CardHeader>
             <CardTitle>Platform Activity</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               {analyticsData.recentActivity.map((activity, index) => (
-                <div key={index} className="flex items-center space-x-4 p-3 rounded-lg hover:bg-gray-50 transition-colors">
+                <div key={index} className="flex items-center space-x-4 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors">
                   <div className={`w-2 h-2 rounded-full ${
                     activity.type === 'user' ? 'bg-violet-500' :
                     activity.type === 'video' ? 'bg-emerald-500' :
                     activity.type === 'coin' ? 'bg-orange-500' : 'bg-blue-500'
                   }`} />
                   <div className="flex-1">
-                    <p className="text-sm font-medium text-gray-900">{activity.description}</p>
-                    <p className="text-xs text-gray-500">{activity.timestamp}</p>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">{activity.description}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">{activity.timestamp}</p>
                   </div>
-                  <span className="text-xs text-gray-400">{activity.value}</span>
+                  <span className="text-xs text-gray-400 dark:text-gray-500">{activity.value}</span>
                 </div>
               ))}
             </div>

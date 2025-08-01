@@ -68,8 +68,8 @@ export function SystemConfigView() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">System Configuration</h1>
-          <p className="text-gray-600">Configure platform settings and environment variables</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">System Configuration</h1>
+          <p className="text-gray-600 dark:text-gray-300">Configure platform settings and environment variables</p>
         </div>
         {hasChanges && (
           <Button onClick={handleSave} className="flex items-center space-x-2">
@@ -92,8 +92,8 @@ export function SystemConfigView() {
                     onClick={() => setActiveTab(tab.id)}
                     className={`w-full flex items-center space-x-3 px-4 py-3 text-left transition-all duration-200 ${
                       activeTab === tab.id
-                        ? 'bg-gradient-to-r from-violet-500/10 to-purple-500/10 text-violet-700 border-r-2 border-violet-600'
-                        : 'text-gray-600 hover:bg-gray-50'
+                        ? 'bg-gradient-to-r from-violet-500/10 to-purple-500/10 text-violet-700 dark:text-violet-400 border-r-2 border-violet-600 dark:from-violet-500/20 dark:to-purple-500/20'
+                        : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700/50'
                     }`}
                   >
                     <Icon className="w-5 h-5" />
@@ -118,14 +118,14 @@ export function SystemConfigView() {
               {/* Environment Variables */}
               {activeTab === 'environment' && (
                 <div className="space-y-6">
-                  <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-                    <h4 className="font-semibold text-blue-800 mb-2 flex items-center">
+                  <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/50 rounded-xl p-4">
+                    <h4 className="font-semibold text-blue-800 dark:text-blue-300 mb-2 flex items-center">
                       <Database className="w-4 h-4 mr-2" />
                       Supabase Configuration
                     </h4>
                     <div className="grid grid-cols-1 gap-4">
                       <div>
-                        <label className="block text-sm font-medium text-blue-700 mb-2">
+                        <label className="block text-sm font-medium text-blue-700 dark:text-blue-300 mb-2">
                           EXPO_PUBLIC_SUPABASE_URL
                         </label>
                         <Input
@@ -136,7 +136,7 @@ export function SystemConfigView() {
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-blue-700 mb-2">
+                        <label className="block text-sm font-medium text-blue-700 dark:text-blue-300 mb-2">
                           EXPO_PUBLIC_SUPABASE_ANON_KEY
                         </label>
                         <Input
@@ -148,7 +148,7 @@ export function SystemConfigView() {
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-blue-700 mb-2">
+                        <label className="block text-sm font-medium text-blue-700 dark:text-blue-300 mb-2">
                           EXPO_PUBLIC_SUPABASE_SERVICE_ROLE_KEY
                         </label>
                         <Input
@@ -162,14 +162,14 @@ export function SystemConfigView() {
                     </div>
                   </div>
 
-                  <div className="bg-green-50 border border-green-200 rounded-xl p-4">
-                    <h4 className="font-semibold text-green-800 mb-2 flex items-center">
+                  <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800/50 rounded-xl p-4">
+                    <h4 className="font-semibold text-green-800 dark:text-green-300 mb-2 flex items-center">
                       <Smartphone className="w-4 h-4 mr-2" />
                       AdMob Configuration
                     </h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-sm font-medium text-green-700 mb-2">
+                        <label className="block text-sm font-medium text-green-700 dark:text-green-300 mb-2">
                           EXPO_PUBLIC_ADMOB_APP_ID
                         </label>
                         <Input
@@ -180,7 +180,7 @@ export function SystemConfigView() {
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-green-700 mb-2">
+                        <label className="block text-sm font-medium text-green-700 dark:text-green-300 mb-2">
                           EXPO_PUBLIC_ADMOB_BANNER_ID
                         </label>
                         <Input
@@ -191,7 +191,7 @@ export function SystemConfigView() {
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-green-700 mb-2">
+                        <label className="block text-sm font-medium text-green-700 dark:text-green-300 mb-2">
                           EXPO_PUBLIC_ADMOB_INTERSTITIAL_ID
                         </label>
                         <Input
@@ -202,7 +202,7 @@ export function SystemConfigView() {
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-green-700 mb-2">
+                        <label className="block text-sm font-medium text-green-700 dark:text-green-300 mb-2">
                           EXPO_PUBLIC_ADMOB_REWARDED_ID
                         </label>
                         <Input
@@ -222,7 +222,7 @@ export function SystemConfigView() {
                 <div className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-4">
-                      <h4 className="font-semibold text-gray-800">Ad Status Controls</h4>
+                      <h4 className="font-semibold text-gray-800 dark:text-white">Ad Status Controls</h4>
                       
                       <div className="space-y-4">
                         {Object.entries({
@@ -230,10 +230,10 @@ export function SystemConfigView() {
                           interstitialAdsEnabled: 'Interstitial Ads',
                           rewardedAdsEnabled: 'Rewarded Ads'
                         }).map(([key, label]) => (
-                          <div key={key} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+                          <div key={key} className="flex items-center justify-between p-4 border border-gray-200 dark:border-slate-600 rounded-lg dark:bg-slate-800/50">
                             <div>
-                              <h5 className="font-medium text-gray-900">{label}</h5>
-                              <p className="text-sm text-gray-500">
+                              <h5 className="font-medium text-gray-900 dark:text-white">{label}</h5>
+                              <p className="text-sm text-gray-500 dark:text-gray-400">
                                 {key === 'bannerAdsEnabled' && 'Display banner ads in the app'}
                                 {key === 'interstitialAdsEnabled' && 'Show full-screen ads between content'}
                                 {key === 'rewardedAdsEnabled' && 'Offer rewarded video ads for coins'}
@@ -251,10 +251,10 @@ export function SystemConfigView() {
                     </div>
 
                     <div className="space-y-4">
-                      <h4 className="font-semibold text-gray-800">Ad Settings</h4>
+                      <h4 className="font-semibold text-gray-800 dark:text-white">Ad Settings</h4>
                       
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                           Ad Frequency (minutes)
                         </label>
                         <Input
@@ -264,11 +264,11 @@ export function SystemConfigView() {
                           value={settings.ads.adFrequencyMinutes}
                           onChange={(e) => handleSettingChange('ads', 'adFrequencyMinutes', Number(e.target.value))}
                         />
-                        <p className="text-xs text-gray-500 mt-1">Minimum time between interstitial ads</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Minimum time between interstitial ads</p>
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                           Revenue Share (%)
                         </label>
                         <Input
@@ -278,7 +278,7 @@ export function SystemConfigView() {
                           value={settings.ads.revenueSharePercent}
                           onChange={(e) => handleSettingChange('ads', 'revenueSharePercent', Number(e.target.value))}
                         />
-                        <p className="text-xs text-gray-500 mt-1">Percentage of ad revenue shared with users</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Percentage of ad revenue shared with users</p>
                       </div>
                     </div>
                   </div>
@@ -290,7 +290,7 @@ export function SystemConfigView() {
                 <div className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Platform Name
                       </label>
                       <Input
@@ -299,7 +299,7 @@ export function SystemConfigView() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Support Email
                       </label>
                       <Input
@@ -309,7 +309,7 @@ export function SystemConfigView() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Max Video Size (MB)
                       </label>
                       <Input
@@ -319,7 +319,7 @@ export function SystemConfigView() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Maintenance Mode
                       </label>
                       <div className="flex items-center space-x-3">
@@ -329,7 +329,7 @@ export function SystemConfigView() {
                           onChange={(e) => handleSettingChange('general', 'maintenanceMode', e.target.checked)}
                           className="rounded border-gray-300 text-violet-600 focus:ring-violet-500"
                         />
-                        <span className="text-sm text-gray-600">Enable maintenance mode</span>
+                        <span className="text-sm text-gray-600 dark:text-gray-300">Enable maintenance mode</span>
                       </div>
                     </div>
                   </div>
@@ -341,7 +341,7 @@ export function SystemConfigView() {
                 <div className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Coin Price (USD)
                       </label>
                       <Input
@@ -352,7 +352,7 @@ export function SystemConfigView() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Video Reward (Coins)
                       </label>
                       <Input
@@ -362,7 +362,7 @@ export function SystemConfigView() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Daily Bonus Coins
                       </label>
                       <Input
@@ -372,7 +372,7 @@ export function SystemConfigView() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         VIP Multiplier
                       </label>
                       <Input
@@ -389,16 +389,16 @@ export function SystemConfigView() {
               {/* Security Settings */}
               {activeTab === 'security' && (
                 <div className="space-y-6">
-                  <div className="bg-red-50 border border-red-200 rounded-xl p-4">
-                    <h4 className="font-semibold text-red-800 mb-3 flex items-center">
+                  <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50 rounded-xl p-4">
+                    <h4 className="font-semibold text-red-800 dark:text-red-300 mb-3 flex items-center">
                       <Shield className="w-4 h-4 mr-2" />
                       Security Configuration
                     </h4>
                     <div className="space-y-4">
                       <div className="flex items-center justify-between">
                         <div>
-                          <h5 className="font-medium text-red-700">Two-Factor Authentication</h5>
-                          <p className="text-sm text-red-600">Require 2FA for all admin accounts</p>
+                          <h5 className="font-medium text-red-700 dark:text-red-300">Two-Factor Authentication</h5>
+                          <p className="text-sm text-red-600 dark:text-red-400">Require 2FA for all admin accounts</p>
                         </div>
                         <input
                           type="checkbox"
@@ -408,7 +408,7 @@ export function SystemConfigView() {
                       
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                          <label className="block text-sm font-medium text-red-700 mb-2">
+                          <label className="block text-sm font-medium text-red-700 dark:text-red-300 mb-2">
                             Session Timeout (hours)
                           </label>
                           <Input
@@ -418,7 +418,7 @@ export function SystemConfigView() {
                           />
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-red-700 mb-2">
+                          <label className="block text-sm font-medium text-red-700 dark:text-red-300 mb-2">
                             Max Login Attempts
                           </label>
                           <Input

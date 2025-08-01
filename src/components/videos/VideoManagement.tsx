@@ -79,10 +79,10 @@ export function VideoManagement() {
       {/* Status Overview */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         {Object.entries(statusCounts).map(([status, count]) => (
-          <Card key={status} className="text-center p-4 hover:shadow-md transition-shadow cursor-pointer"
+          <Card key={status} className="text-center p-4 hover:shadow-md dark:hover:shadow-slate-900/40 transition-shadow cursor-pointer"
                 onClick={() => setVideoFilters({ status: status === videoFilters.status ? 'all' : status })}>
-            <div className="text-2xl font-bold text-gray-900">{count}</div>
-            <div className="text-sm text-gray-500 capitalize">{status}</div>
+            <div className="text-2xl font-bold text-gray-900 dark:text-white">{count}</div>
+            <div className="text-sm text-gray-500 dark:text-gray-400 capitalize">{status}</div>
           </Card>
         ))}
       </div>
@@ -104,7 +104,7 @@ export function VideoManagement() {
             <select
               value={videoFilters.status}
               onChange={(e) => setVideoFilters({ status: e.target.value })}
-              className="px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm min-w-[140px]"
+              className="px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm min-w-[140px] dark:bg-slate-800 dark:border-slate-600 dark:text-white"
             >
               <option value="all">All Status</option>
               <option value="active">Active</option>
@@ -122,26 +122,26 @@ export function VideoManagement() {
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-200">
+              <thead className="bg-gray-50 border-b border-gray-200 dark:bg-slate-800/50 dark:border-slate-700">
                 <tr>
-                  <th className="text-left py-4 px-6 text-sm font-medium text-gray-900">User</th>
-                  <th className="text-left py-4 px-6 text-sm font-medium text-gray-900">Video Status</th>
-                  <th className="text-left py-4 px-6 text-sm font-medium text-gray-900">View Criteria</th>
-                  <th className="text-left py-4 px-6 text-sm font-medium text-gray-900">Video ID</th>
-                  <th className="text-right py-4 px-6 text-sm font-medium text-gray-900">Actions</th>
+                  <th className="text-left py-4 px-6 text-sm font-medium text-gray-900 dark:text-white">User</th>
+                  <th className="text-left py-4 px-6 text-sm font-medium text-gray-900 dark:text-white">Video Status</th>
+                  <th className="text-left py-4 px-6 text-sm font-medium text-gray-900 dark:text-white">View Criteria</th>
+                  <th className="text-left py-4 px-6 text-sm font-medium text-gray-900 dark:text-white">Video ID</th>
+                  <th className="text-right py-4 px-6 text-sm font-medium text-gray-900 dark:text-white">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
+              <tbody className="divide-y divide-gray-200 dark:divide-slate-700">
                 {filteredVideos.map((video) => (
-                  <tr key={video.video_id} className="hover:bg-gray-50 transition-colors group">
+                  <tr key={video.video_id} className="hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors group">
                     <td className="py-4 px-6">
                       <div className="flex items-center space-x-3">
                         <div className="w-10 h-10 bg-gradient-to-br from-violet-400 to-purple-600 rounded-full flex items-center justify-center text-white font-medium text-sm">
                           {video.username.charAt(0).toUpperCase()}
                         </div>
                         <div>
-                          <p className="font-medium text-gray-900">{video.username}</p>
-                          <p className="text-sm text-gray-500 line-clamp-1">{video.title}</p>
+                          <p className="font-medium text-gray-900 dark:text-white">{video.username}</p>
+                          <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-1">{video.title}</p>
                         </div>
                       </div>
                     </td>
@@ -156,7 +156,7 @@ export function VideoManagement() {
                     </td>
                     <td className="py-4 px-6">
                       <div className="flex items-center space-x-2">
-                        <code className="bg-gray-100 px-2 py-1 rounded text-sm font-mono">{video.video_id}</code>
+                        <code className="bg-gray-100 dark:bg-slate-700 px-2 py-1 rounded text-sm font-mono dark:text-white">{video.video_id}</code>
                         <Button
                           variant="ghost"
                           size="sm"

@@ -50,7 +50,7 @@ export function DateRangePicker({ value, onChange }: DateRangePickerProps) {
       </Button>
 
       {isOpen && (
-        <div className="absolute top-full left-0 mt-2 w-64 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+        <div className="absolute top-full left-0 mt-2 w-64 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-600 rounded-lg shadow-lg z-50">
           <div className="p-3 space-y-2">
             {presets.map((preset) => (
               <button
@@ -59,7 +59,7 @@ export function DateRangePicker({ value, onChange }: DateRangePickerProps) {
                   onChange(preset.range)
                   setIsOpen(false)
                 }}
-                className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 rounded transition-colors"
+                className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 dark:hover:bg-slate-700 rounded transition-colors dark:text-white"
               >
                 {preset.label}
               </button>

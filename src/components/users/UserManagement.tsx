@@ -63,7 +63,7 @@ export function UserManagement() {
             <select
               value={userFilters.vipStatus}
               onChange={(e) => setUserFilters({ vipStatus: e.target.value as any })}
-              className="px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm"
+              className="px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm dark:bg-slate-800 dark:border-slate-600 dark:text-white"
             >
               <option value="all">All Users</option>
               <option value="vip">VIP Only</option>
@@ -86,28 +86,28 @@ export function UserManagement() {
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-200">
+              <thead className="bg-gray-50 border-b border-gray-200 dark:bg-slate-800/50 dark:border-slate-700">
                 <tr>
-                  <th className="text-left py-4 px-6 text-sm font-medium text-gray-900">User</th>
-                  <th className="text-left py-4 px-6 text-sm font-medium text-gray-900">Status</th>
-                  <th className="text-left py-4 px-6 text-sm font-medium text-gray-900">Coins</th>
-                  <th className="text-left py-4 px-6 text-sm font-medium text-gray-900">Videos</th>
-                  <th className="text-left py-4 px-6 text-sm font-medium text-gray-900">Joined</th>
-                  <th className="text-left py-4 px-6 text-sm font-medium text-gray-900">Last Active</th>
-                  <th className="text-right py-4 px-6 text-sm font-medium text-gray-900">Actions</th>
+                  <th className="text-left py-4 px-6 text-sm font-medium text-gray-900 dark:text-white">User</th>
+                  <th className="text-left py-4 px-6 text-sm font-medium text-gray-900 dark:text-white">Status</th>
+                  <th className="text-left py-4 px-6 text-sm font-medium text-gray-900 dark:text-white">Coins</th>
+                  <th className="text-left py-4 px-6 text-sm font-medium text-gray-900 dark:text-white">Videos</th>
+                  <th className="text-left py-4 px-6 text-sm font-medium text-gray-900 dark:text-white">Joined</th>
+                  <th className="text-left py-4 px-6 text-sm font-medium text-gray-900 dark:text-white">Last Active</th>
+                  <th className="text-right py-4 px-6 text-sm font-medium text-gray-900 dark:text-white">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
+              <tbody className="divide-y divide-gray-200 dark:divide-slate-700">
                 {filteredUsers.map((user) => (
-                  <tr key={user.user_id} className="hover:bg-gray-50 transition-colors">
+                  <tr key={user.user_id} className="hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors">
                     <td className="py-4 px-6">
                       <div className="flex items-center space-x-3">
                         <div className="w-10 h-10 bg-gradient-to-br from-violet-400 to-purple-600 rounded-full flex items-center justify-center text-white font-medium text-sm">
                           {user.username.charAt(0).toUpperCase()}
                         </div>
                         <div>
-                          <p className="font-medium text-gray-900">{user.username}</p>
-                          <p className="text-sm text-gray-500">{user.email}</p>
+                          <p className="font-medium text-gray-900 dark:text-white">{user.username}</p>
+                          <p className="text-sm text-gray-500 dark:text-gray-400">{user.email}</p>
                         </div>
                       </div>
                     </td>
@@ -155,16 +155,16 @@ export function UserManagement() {
                       )}
                     </td>
                     <td className="py-4 px-6">
-                      <span className="text-gray-900">{user.videos_posted}</span>
+                      <span className="text-gray-900 dark:text-white">{user.videos_posted}</span>
                     </td>
                     <td className="py-4 px-6">
-                      <div className="flex items-center space-x-1 text-gray-500 text-sm">
+                      <div className="flex items-center space-x-1 text-gray-500 dark:text-gray-400 text-sm">
                         <Calendar className="w-4 h-4" />
                         <span>{format(new Date(user.created_at), 'MMM dd, yyyy')}</span>
                       </div>
                     </td>
                     <td className="py-4 px-6">
-                      <span className="text-sm text-gray-500">
+                      <span className="text-sm text-gray-500 dark:text-gray-400">
                         {format(new Date(user.last_active), 'MMM dd, HH:mm')}
                       </span>
                     </td>
@@ -185,24 +185,24 @@ export function UserManagement() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card>
           <CardContent className="p-6 text-center">
-            <div className="text-2xl font-bold text-gray-900">{filteredUsers.length}</div>
-            <div className="text-sm text-gray-500">Total Users Shown</div>
+            <div className="text-2xl font-bold text-gray-900 dark:text-white">{filteredUsers.length}</div>
+            <div className="text-sm text-gray-500 dark:text-gray-400">Total Users Shown</div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-6 text-center">
-            <div className="text-2xl font-bold text-violet-600">
+            <div className="text-2xl font-bold text-violet-600 dark:text-violet-400">
               {filteredUsers.filter(u => u.is_vip).length}
             </div>
-            <div className="text-sm text-gray-500">VIP Users</div>
+            <div className="text-sm text-gray-500 dark:text-gray-400">VIP Users</div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-6 text-center">
-            <div className="text-2xl font-bold text-orange-600">
+            <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">
               {formatNumber(filteredUsers.reduce((sum, u) => sum + u.coins, 0))}
             </div>
-            <div className="text-sm text-gray-500">Total Coins</div>
+            <div className="text-sm text-gray-500 dark:text-gray-400">Total Coins</div>
           </CardContent>
         </Card>
       </div>

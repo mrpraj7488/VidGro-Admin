@@ -96,12 +96,12 @@ export function BugReportsView() {
 
       {/* Stats Overview */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200">
+        <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200 dark:from-orange-900/20 dark:to-orange-800/20 dark:border-orange-700/50">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-orange-700 mb-1">New Bugs</p>
-                <p className="text-3xl font-bold text-orange-600">{bugReportData.newBugs}</p>
+                <p className="text-sm font-medium text-orange-700 dark:text-orange-300 mb-1">New Bugs</p>
+                <p className="text-3xl font-bold text-orange-600 dark:text-orange-400">{bugReportData.newBugs}</p>
               </div>
               <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg flex items-center justify-center">
                 <Bug className="w-6 h-6 text-white" />
@@ -110,12 +110,12 @@ export function BugReportsView() {
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-emerald-50 to-emerald-100 border-emerald-200">
+        <Card className="bg-gradient-to-br from-emerald-50 to-emerald-100 border-emerald-200 dark:from-emerald-900/20 dark:to-emerald-800/20 dark:border-emerald-700/50">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-emerald-700 mb-1">Bugs Fixed Today</p>
-                <p className="text-3xl font-bold text-emerald-600">{bugReportData.bugsFixedToday}</p>
+                <p className="text-sm font-medium text-emerald-700 dark:text-emerald-300 mb-1">Bugs Fixed Today</p>
+                <p className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">{bugReportData.bugsFixedToday}</p>
               </div>
               <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-lg flex items-center justify-center">
                 <CheckCircle className="w-6 h-6 text-white" />
@@ -142,7 +142,7 @@ export function BugReportsView() {
             <select
               value={filters.status}
               onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-              className="px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm"
+              className="px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm dark:bg-slate-800 dark:border-slate-600 dark:text-white"
             >
               <option value="all">All Status</option>
               <option value="new">New</option>
@@ -154,7 +154,7 @@ export function BugReportsView() {
             <select
               value={filters.priority}
               onChange={(e) => setFilters({ ...filters, priority: e.target.value })}
-              className="px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm"
+              className="px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm dark:bg-slate-800 dark:border-slate-600 dark:text-white"
             >
               <option value="all">All Priority</option>
               <option value="critical">Critical</option>
@@ -166,7 +166,7 @@ export function BugReportsView() {
             <select
               value={filters.category}
               onChange={(e) => setFilters({ ...filters, category: e.target.value })}
-              className="px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm"
+              className="px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm dark:bg-slate-800 dark:border-slate-600 dark:text-white"
             >
               <option value="all">All Categories</option>
               <option value="UI/UX">UI/UX</option>
@@ -182,19 +182,19 @@ export function BugReportsView() {
       {/* Bug Reports List */}
       <div className="space-y-4">
         {filteredBugs.map((bug) => (
-          <Card key={bug.bug_id} className="hover:shadow-md transition-shadow">
+          <Card key={bug.bug_id} className="hover:shadow-md transition-shadow dark:hover:shadow-slate-900/40">
             <CardContent className="p-6">
               <div className="flex items-start justify-between mb-4">
                 <div className="flex-1">
                   <div className="flex items-center space-x-3 mb-2">
-                    <h3 className="font-semibold text-gray-900">{bug.title}</h3>
+                    <h3 className="font-semibold text-gray-900 dark:text-white">{bug.title}</h3>
                     {getStatusBadge(bug.status)}
                     {getPriorityBadge(bug.priority)}
                     <Badge variant="default" className="text-xs">{bug.category}</Badge>
                   </div>
-                  <p className="text-gray-600 text-sm mb-3 line-clamp-2">{bug.description}</p>
+                  <p className="text-gray-600 dark:text-gray-300 text-sm mb-3 line-clamp-2">{bug.description}</p>
                   
-                  <div className="flex items-center space-x-6 text-sm text-gray-500">
+                  <div className="flex items-center space-x-6 text-sm text-gray-500 dark:text-gray-400">
                     <div className="flex items-center space-x-1">
                       <User className="w-4 h-4" />
                       <span>Reported by {bug.reported_by}</span>

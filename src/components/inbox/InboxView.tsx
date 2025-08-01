@@ -177,10 +177,10 @@ export function InboxView() {
         <div className="p-4 border-b bg-white/50">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold flex items-center gap-2">
-              <Mail className="h-5 w-5 text-blue-500" />
+              <Mail className="h-5 w-5 text-blue-500 dark:text-blue-400" />
               Support Inbox
             </h2>
-            <Badge variant="danger" className="bg-red-100 text-red-800">
+            <Badge variant="danger" className="bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300">
               {tickets.filter(t => t.status === 'new').length} New
             </Badge>
           </div>
@@ -200,7 +200,7 @@ export function InboxView() {
           <select
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm dark:bg-slate-800 dark:border-slate-600 dark:text-white"
           >
             <option value="all">All Tickets</option>
             <option value="new">New</option>
@@ -216,8 +216,8 @@ export function InboxView() {
             <div
               key={ticket.id}
               onClick={() => setSelectedTicket(ticket)}
-              className={`p-4 border-b cursor-pointer hover:bg-muted/50 transition-colors ${
-                selectedTicket?.id === ticket.id ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''
+              className={`p-4 border-b cursor-pointer hover:bg-muted/50 dark:hover:bg-slate-700/50 transition-colors ${
+                selectedTicket?.id === ticket.id ? 'bg-blue-50 dark:bg-blue-900/20 border-l-4 border-l-blue-500' : ''
               }`}
             >
               <div className="flex items-start justify-between mb-2">
@@ -229,7 +229,7 @@ export function InboxView() {
                     </Badge>
                   </div>
                 </div>
-                <span className="text-xs text-muted-foreground">
+                <span className="text-xs text-muted-foreground dark:text-gray-400">
                   {formatDistanceToNow(new Date(ticket.createdAt))} ago
                 </span>
               </div>
@@ -238,14 +238,14 @@ export function InboxView() {
                 {ticket.subject}
               </h3>
               
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <div className="flex items-center gap-2 text-xs text-muted-foreground dark:text-gray-400">
                 <User className="h-3 w-3" />
                 <span>{ticket.username}</span>
                 <span>•</span>
                 <span className="capitalize">{ticket.category.replace('_', ' ')}</span>
               </div>
               
-              <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+              <p className="text-xs text-muted-foreground dark:text-gray-400 mt-1 line-clamp-2">
                 {ticket.message}
               </p>
             </div>
@@ -258,11 +258,11 @@ export function InboxView() {
         {selectedTicket ? (
           <>
             {/* Ticket Header */}
-            <div className="p-6 border-b bg-gradient-to-r from-blue-50 to-purple-50">
+            <div className="p-6 border-b bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 dark:border-slate-700">
               <div className="flex items-start justify-between mb-4">
                 <div>
-                  <h1 className="text-xl font-semibold mb-2">{selectedTicket.subject}</h1>
-                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                  <h1 className="text-xl font-semibold mb-2 dark:text-white">{selectedTicket.subject}</h1>
+                  <div className="flex items-center gap-4 text-sm text-muted-foreground dark:text-gray-400">
                     <div className="flex items-center gap-1">
                       <User className="h-4 w-4" />
                       <span>{selectedTicket.username}</span>
@@ -288,7 +288,7 @@ export function InboxView() {
                   <select 
                     value={selectedTicket.status} 
                     onChange={(e) => updateTicketStatus(selectedTicket.id, e.target.value)}
-                    className="px-3 py-1 border border-gray-300 rounded text-sm bg-white"
+                    className="px-3 py-1 border border-gray-300 rounded text-sm bg-white dark:bg-slate-800 dark:border-slate-600 dark:text-white"
                   >
                     <option value="new">New</option>
                     <option value="in_progress">In Progress</option>
@@ -303,21 +303,21 @@ export function InboxView() {
             <div className="flex-1 p-6 overflow-y-auto">
               <div className="space-y-6">
                 {/* Original Message */}
-                <div className="bg-muted/30 rounded-lg p-4">
+                <div className="bg-muted/30 dark:bg-slate-800/50 rounded-lg p-4">
                   <div className="flex items-center gap-2 mb-2">
-                    <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                      <span className="text-blue-600 font-medium text-sm">
+                    <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/50 rounded-full flex items-center justify-center">
+                      <span className="text-blue-600 dark:text-blue-400 font-medium text-sm">
                         {selectedTicket.username.charAt(0).toUpperCase()}
                       </span>
                     </div>
                     <div>
-                      <p className="font-medium text-sm">{selectedTicket.username}</p>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="font-medium text-sm dark:text-white">{selectedTicket.username}</p>
+                      <p className="text-xs text-muted-foreground dark:text-gray-400">
                         {format(new Date(selectedTicket.createdAt), 'MMM dd, yyyy HH:mm')}
                       </p>
                     </div>
                   </div>
-                  <div className="prose prose-sm max-w-none">
+                  <div className="prose prose-sm max-w-none dark:text-gray-300">
                     <p>{selectedTicket.message}</p>
                   </div>
                 </div>
@@ -326,25 +326,25 @@ export function InboxView() {
                 {selectedTicket.adminReplies.map((reply) => (
                   <div key={reply.id} className={`rounded-lg p-4 ${
                     reply.isInternal 
-                      ? 'bg-orange-50 border-l-4 border-l-orange-400' 
-                      : 'bg-green-50 border-l-4 border-l-green-400'
+                      ? 'bg-orange-50 dark:bg-orange-900/20 border-l-4 border-l-orange-400' 
+                      : 'bg-green-50 dark:bg-green-900/20 border-l-4 border-l-green-400'
                   }`}>
                     <div className="flex items-center gap-2 mb-2">
                       <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
                         reply.isInternal 
-                          ? "bg-orange-100" 
-                          : "bg-green-100"
+                          ? "bg-orange-100 dark:bg-orange-900/50" 
+                          : "bg-green-100 dark:bg-green-900/50"
                       }`}>
                         <span className={`font-medium text-sm ${
                           reply.isInternal 
-                            ? "text-orange-600" 
-                            : "text-green-600"
+                            ? "text-orange-600 dark:text-orange-400" 
+                            : "text-green-600 dark:text-green-400"
                         }`}>
                           {reply.adminName.charAt(0).toUpperCase()}
                         </span>
                       </div>
                       <div>
-                        <p className="font-medium text-sm flex items-center gap-2">
+                        <p className="font-medium text-sm flex items-center gap-2 dark:text-white">
                           {reply.adminName}
                           {reply.isInternal && (
                             <Badge variant="warning" className="text-xs">
@@ -352,12 +352,12 @@ export function InboxView() {
                             </Badge>
                           )}
                         </p>
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-xs text-muted-foreground dark:text-gray-400">
                           {format(new Date(reply.timestamp), 'MMM dd, yyyy HH:mm')}
                         </p>
                       </div>
                     </div>
-                    <div className="prose prose-sm max-w-none">
+                    <div className="prose prose-sm max-w-none dark:text-gray-300">
                       <p>{reply.message}</p>
                     </div>
                   </div>
@@ -366,10 +366,10 @@ export function InboxView() {
             </div>
             
             {/* Reply Section */}
-            <div className="p-6 border-t bg-muted/20">
+            <div className="p-6 border-t bg-muted/20 dark:bg-slate-800/30 dark:border-slate-700">
               <div className="space-y-4">
                 <div className="flex items-center gap-4">
-                  <h3 className="font-medium">Reply to {selectedTicket.username}</h3>
+                  <h3 className="font-medium dark:text-white">Reply to {selectedTicket.username}</h3>
                   <div className="flex items-center gap-2">
                     <input
                       type="checkbox"
@@ -378,7 +378,7 @@ export function InboxView() {
                       onChange={(e) => setIsInternal(e.target.checked)}
                       className="rounded border-gray-300"
                     />
-                    <label htmlFor="internal-note" className="text-sm">
+                    <label htmlFor="internal-note" className="text-sm dark:text-gray-300">
                       Internal note only
                     </label>
                   </div>
@@ -388,7 +388,7 @@ export function InboxView() {
                   placeholder="Type your response..."
                   value={replyMessage}
                   onChange={(e) => setReplyMessage(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500 min-h-[100px]"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500 min-h-[100px] dark:bg-slate-800 dark:border-slate-600 dark:text-white"
                 />
                 
                 <div className="flex items-center justify-between">
@@ -413,7 +413,7 @@ export function InboxView() {
             </div>
           </>
         ) : (
-          <div className="flex-1 flex items-center justify-center text-muted-foreground">
+          <div className="flex-1 flex items-center justify-center text-muted-foreground dark:text-gray-400">
             <div className="text-center">
               <Mail className="h-12 w-12 mb-4 mx-auto opacity-50" />
               <p>Select a ticket to view details</p>

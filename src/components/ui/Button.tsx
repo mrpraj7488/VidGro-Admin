@@ -7,12 +7,12 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-violet-600 text-white hover:bg-violet-700 shadow-sm hover:shadow-md",
-        secondary: "bg-gray-100 text-gray-900 hover:bg-gray-200 dark:bg-slate-700 dark:text-white dark:hover:bg-slate-600",
-        outline: "bg-white hover:bg-gray-50 dark:bg-slate-700 dark:text-white dark:hover:bg-slate-600",
-        ghost: "hover:bg-gray-100 dark:hover:bg-slate-700 dark:text-white",
-        success: "bg-emerald-600 text-white hover:bg-emerald-700",
-        danger: "bg-red-600 text-white hover:bg-red-700"
+        default: "bg-violet-600 text-white hover:bg-violet-700 shadow-sm hover:shadow-md dark:bg-violet-600 dark:hover:bg-violet-700",
+        secondary: "bg-gray-100 text-gray-900 hover:bg-gray-200 border border-gray-300 dark:bg-slate-700 dark:text-white dark:hover:bg-slate-600 dark:border-slate-600",
+        outline: "bg-white hover:bg-gray-50 border border-gray-300 text-gray-700 dark:bg-slate-800 dark:text-white dark:hover:bg-slate-700 dark:border-slate-600",
+        ghost: "hover:bg-gray-100 text-gray-700 dark:hover:bg-slate-700 dark:text-white",
+        success: "bg-emerald-600 text-white hover:bg-emerald-700 dark:bg-emerald-600 dark:hover:bg-emerald-700",
+        danger: "bg-red-600 text-white hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-700"
       },
       size: {
         default: "h-10 px-4 py-2",
