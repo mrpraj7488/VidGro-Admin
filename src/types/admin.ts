@@ -60,11 +60,11 @@ export interface SystemEnvironment {
 }
 
 export interface AdsConfiguration {
-  banner_ads_enabled: boolean
-  interstitial_ads_enabled: boolean
-  rewarded_ads_enabled: boolean
-  ad_frequency_minutes: number
-  revenue_share_percent: number
+  bannerAdsEnabled: boolean
+  interstitialAdsEnabled: boolean
+  rewardedAdsEnabled: boolean
+  adFrequencyMinutes: number
+  revenueSharePercent: number
 }
 
 export interface UserFilters {

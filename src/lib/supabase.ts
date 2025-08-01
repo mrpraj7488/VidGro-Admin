@@ -107,11 +107,11 @@ export const mockSystemSettings = {
     EXPO_PUBLIC_ADMOB_REWARDED_ID: 'ca-app-pub-1234567890123456/1234567890'
   },
   ads: {
-    banner_ads_enabled: true,
-    interstitial_ads_enabled: true,
-    rewarded_ads_enabled: true,
-    ad_frequency_minutes: 5,
-    revenue_share_percent: 70
+    bannerAdsEnabled: true,
+    interstitialAdsEnabled: true,
+    rewardedAdsEnabled: true,
+    adFrequencyMinutes: 5,
+    revenueSharePercent: 70
   },
   general: {
     platformName: 'VidGro',

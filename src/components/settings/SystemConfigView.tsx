@@ -140,6 +140,7 @@ export function SystemConfigView() {
                           EXPO_PUBLIC_SUPABASE_ANON_KEY
                         </label>
                         <Input
+                          type="password"
                           value={settings.environment.EXPO_PUBLIC_SUPABASE_ANON_KEY}
                           onChange={(e) => handleSettingChange('environment', 'EXPO_PUBLIC_SUPABASE_ANON_KEY', e.target.value)}
                           className="font-mono text-sm"
@@ -225,17 +226,17 @@ export function SystemConfigView() {
                       
                       <div className="space-y-4">
                         {Object.entries({
-                          banner_ads_enabled: 'Banner Ads',
-                          interstitial_ads_enabled: 'Interstitial Ads',
-                          rewarded_ads_enabled: 'Rewarded Ads'
+                          bannerAdsEnabled: 'Banner Ads',
+                          interstitialAdsEnabled: 'Interstitial Ads',
+                          rewardedAdsEnabled: 'Rewarded Ads'
                         }).map(([key, label]) => (
                           <div key={key} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
                             <div>
                               <h5 className="font-medium text-gray-900">{label}</h5>
                               <p className="text-sm text-gray-500">
-                                {key === 'banner_ads_enabled' && 'Display banner ads in the app'}
-                                {key === 'interstitial_ads_enabled' && 'Show full-screen ads between content'}
-                                {key === 'rewarded_ads_enabled' && 'Offer rewarded video ads for coins'}
+                                {key === 'bannerAdsEnabled' && 'Display banner ads in the app'}
+                                {key === 'interstitialAdsEnabled' && 'Show full-screen ads between content'}
+                                {key === 'rewardedAdsEnabled' && 'Offer rewarded video ads for coins'}
                               </p>
                             </div>
                             <input
@@ -260,8 +261,8 @@ export function SystemConfigView() {
                           type="number"
                           min="1"
                           max="60"
-                          value={settings.ads.ad_frequency_minutes}
-                          onChange={(e) => handleSettingChange('ads', 'ad_frequency_minutes', Number(e.target.value))}
+                          value={settings.ads.adFrequencyMinutes}
+                          onChange={(e) => handleSettingChange('ads', 'adFrequencyMinutes', Number(e.target.value))}
                         />
                         <p className="text-xs text-gray-500 mt-1">Minimum time between interstitial ads</p>
                       </div>
@@ -274,8 +275,8 @@ export function SystemConfigView() {
                           type="number"
                           min="0"
                           max="100"
-                          value={settings.ads.revenue_share_percent}
-                          onChange={(e) => handleSettingChange('ads', 'revenue_share_percent', Number(e.target.value))}
+                          value={settings.ads.revenueSharePercent}
+                          onChange={(e) => handleSettingChange('ads', 'revenueSharePercent', Number(e.target.value))}
                         />
                         <p className="text-xs text-gray-500 mt-1">Percentage of ad revenue shared with users</p>
                       </div>
