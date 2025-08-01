@@ -39,14 +39,18 @@ export class ErrorBoundary extends Component<Props, State> {
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     this.setState({ errorInfo })
 
-    // Handle error with our error handler
-    const handledError = errorHandler.handle(error, {
-      component: 'ErrorBoundary',
-      metadata: {
-        componentStack: errorInfo.componentStack,
-        errorBoundary: true
-      }
-    })
+    try {
+      // Handle error with our error handler
+      const handledError = errorHandler.handle(error, {
+        component: 'ErrorBoundary',
+        metadata: {
+          componentStack: errorInfo.componentStack,
+          errorBoundary: true
+        }
+      })
+    } catch (handlerError) {
+      console.error('Error handler failed:', handlerError)
+    }
 
     // Call custom error handler if provided
     if (this.props.onError) {

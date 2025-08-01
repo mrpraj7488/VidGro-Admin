@@ -479,23 +479,30 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
   initializeRealtime: () => {
     console.log('🚀 Initializing realtime connections...')
     
-    // Subscribe to admin updates
-    realtimeService.subscribeToAdminUpdates((event) => {
-      get().handleRealtimeEvent(event)
-    })
-    
-    // Store callback for reconnection
-    realtimeService.storeCallback('admin-dashboard', (event) => {
-      get().handleRealtimeEvent(event)
-    })
-    
-    // Update connection status
-    set({ connectionStatus: realtimeService.getConnectionStatus() })
-    
-    // Periodically check connection status
-    setInterval(() => {
+    try {
+      // Subscribe to admin updates
+      realtimeService.subscribeToAdminUpdates((event) => {
+        get().handleRealtimeEvent(event)
+      })
+      
+      // Store callback for reconnection
+      realtimeService.storeCallback('admin-dashboard', (event) => {
+        get().handleRealtimeEvent(event)
+      })
+      
+      // Update connection status
       set({ connectionStatus: realtimeService.getConnectionStatus() })
-    }, 5000)
+      
+      // Periodically check connection status
+      setInterval(() => {
+        set({ connectionStatus: realtimeService.getConnectionStatus() })
+      }, 5000)
+      
+      console.log('✅ Realtime initialized successfully')
+    } catch (error) {
+      console.error('❌ Failed to initialize realtime:', error)
+      set({ connectionStatus: false })
+    }
   },
 
   disconnectRealtime: () => {

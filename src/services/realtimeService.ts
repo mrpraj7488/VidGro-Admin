@@ -1,5 +1,5 @@
 import { supabase, supabaseAdmin } from '../lib/supabase'
-import { RealtimeChannel } from '@supabase/supabase-js'
+import { RealtimeChannel, REALTIME_LISTEN_TYPES } from '@supabase/supabase-js'
 
 export interface RealtimeEvent {
   eventType: 'INSERT' | 'UPDATE' | 'DELETE'
@@ -21,26 +21,26 @@ export class RealtimeService {
   private subscriptions: Map<string, RealtimeChannel> = new Map()
   private isConnected = false
   private callbacks: Map<string, (payload: any) => void> = new Map()
+  private connectionCheckInterval: NodeJS.Timeout | null = null
 
   constructor() {
     this.setupConnectionMonitoring()
   }
 
   private setupConnectionMonitoring() {
-    // Monitor connection status
-    supabase.realtime.onOpen(() => {
-      this.isConnected = true
-      console.log('✅ Realtime connection established')
-    })
-
-    supabase.realtime.onClose(() => {
-      this.isConnected = false
-      console.log('❌ Realtime connection closed')
-    })
-
-    supabase.realtime.onError((error) => {
-      console.error('🔥 Realtime connection error:', error)
-    })
+    // Monitor connection status with periodic checks
+    this.connectionCheckInterval = setInterval(() => {
+      // Check if we have active subscriptions as a proxy for connection status
+      const hasActiveSubscriptions = this.subscriptions.size > 0
+      const newConnectionStatus = hasActiveSubscriptions
+      
+      if (newConnectionStatus !== this.isConnected) {
+        this.isConnected = newConnectionStatus
+        console.log(newConnectionStatus ? '✅ Realtime connection active' : '❌ Realtime connection inactive')
+      }
+    }, 5000)
+    
+    console.log('🔄 Realtime service initialized')
   }
 
   // Subscribe to admin dashboard updates
@@ -234,6 +234,12 @@ export class RealtimeService {
       console.log(`🔌 Unsubscribed from ${name}`)
     })
     this.subscriptions.clear()
+    
+    // Clear connection monitoring
+    if (this.connectionCheckInterval) {
+      clearInterval(this.connectionCheckInterval)
+      this.connectionCheckInterval = null
+    }
   }
 
   // Reconnect all subscriptions

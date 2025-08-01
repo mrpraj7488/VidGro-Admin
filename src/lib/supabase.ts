@@ -12,9 +12,8 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     detectSessionInUrl: true
   },
   realtime: {
-    params: {
-      eventsPerSecond: 10
-    }
+    heartbeatIntervalMs: 30000,
+    reconnectAfterMs: (tries) => Math.min(tries * 1000, 30000)
   }
 })
 
@@ -23,6 +22,10 @@ export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey || sup
   auth: {
     autoRefreshToken: false,
     persistSession: false
+  },
+  realtime: {
+    heartbeatIntervalMs: 30000,
+    reconnectAfterMs: (tries) => Math.min(tries * 1000, 30000)
   }
 })
 
