@@ -1,6 +1,26 @@
 import { create } from 'zustand'
-import { DashboardStats, User, Video, UserFilters, VideoFilters, ChartDataPoint } from '../types/admin'
-import { mockDashboardStats, mockUsers, mockVideos, mockChartData } from '../lib/supabase'
+import { 
+  DashboardStats, 
+  User, 
+  Video, 
+  UserFilters, 
+  VideoFilters, 
+  ChartDataPoint,
+  AnalyticsData,
+  EconomyData,
+  ModerationData,
+  SystemSettings
+} from '../types/admin'
+import { 
+  mockDashboardStats, 
+  mockUsers, 
+  mockVideos, 
+  mockChartData,
+  mockAnalyticsData,
+  mockEconomyData,
+  mockModerationData,
+  mockSystemSettings
+} from '../lib/supabase'
 
 interface AdminStore {
   // Dashboard data
@@ -16,12 +36,31 @@ interface AdminStore {
   videos: Video[]
   videoFilters: VideoFilters
   
+  // Analytics data
+  analyticsData: AnalyticsData | null
+  
+  // Economy data
+  economyData: EconomyData | null
+  
+  // Moderation data
+  moderationData: ModerationData | null
+  
+  // System settings
+  systemSettings: SystemSettings | null
+  
   // Actions
   fetchDashboardStats: () => Promise<void>
   fetchUsers: () => Promise<void>
   fetchVideos: () => Promise<void>
+  fetchAnalytics: (dateRange?: [Date | null, Date | null]) => Promise<void>
+  fetchEconomyData: () => Promise<void>
+  fetchModerationData: () => Promise<void>
+  fetchSystemSettings: () => Promise<void>
   updateUserCoins: (userId: string, coins: number) => Promise<void>
   updateVideoStatus: (videoId: string, status: string) => Promise<void>
+  updateCoinSettings: (settings: any) => Promise<void>
+  moderateContent: (itemId: string, action: string) => Promise<void>
+  updateSystemSettings: (settings: SystemSettings) => Promise<void>
   setUserFilters: (filters: Partial<UserFilters>) => void
   setVideoFilters: (filters: Partial<VideoFilters>) => void
 }
@@ -43,6 +82,10 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
     status: 'all',
     dateRange: [null, null]
   },
+  analyticsData: null,
+  economyData: null,
+  moderationData: null,
+  systemSettings: null,
 
   // Actions
   fetchDashboardStats: async () => {
@@ -68,6 +111,30 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
     set({ videos: mockVideos, isLoading: false })
   },
 
+  fetchAnalytics: async (dateRange) => {
+    set({ isLoading: true })
+    await new Promise(resolve => setTimeout(resolve, 500))
+    set({ analyticsData: mockAnalyticsData, isLoading: false })
+  },
+
+  fetchEconomyData: async () => {
+    set({ isLoading: true })
+    await new Promise(resolve => setTimeout(resolve, 400))
+    set({ economyData: mockEconomyData, isLoading: false })
+  },
+
+  fetchModerationData: async () => {
+    set({ isLoading: true })
+    await new Promise(resolve => setTimeout(resolve, 400))
+    set({ moderationData: mockModerationData, isLoading: false })
+  },
+
+  fetchSystemSettings: async () => {
+    set({ isLoading: true })
+    await new Promise(resolve => setTimeout(resolve, 300))
+    set({ systemSettings: mockSystemSettings, isLoading: false })
+  },
+
   updateUserCoins: async (userId: string, coins: number) => {
     const users = get().users.map(user => 
       user.user_id === userId ? { ...user, coins } : user
@@ -80,6 +147,39 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
       video.video_id === videoId ? { ...video, status: status as any } : video
     )
     set({ videos })
+  },
+
+  updateCoinSettings: async (newSettings) => {
+    const economyData = get().economyData
+    if (economyData) {
+      set({ 
+        economyData: { 
+          ...economyData, 
+          settings: newSettings 
+        } 
+      })
+    }
+  },
+
+  moderateContent: async (itemId: string, action: string) => {
+    const moderationData = get().moderationData
+    if (moderationData) {
+      const updatedItems = moderationData.pendingItems.map(item =>
+        item.id === itemId ? { ...item, status: action } : item
+      )
+      set({
+        moderationData: {
+          ...moderationData,
+          pendingItems: updatedItems,
+          pendingCount: updatedItems.filter(item => item.status === 'pending').length
+        }
+      })
+    }
+  },
+
+  updateSystemSettings: async (newSettings) => {
+    await new Promise(resolve => setTimeout(resolve, 500))
+    set({ systemSettings: newSettings })
   },
 
   setUserFilters: (filters) => {

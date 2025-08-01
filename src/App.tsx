@@ -4,6 +4,10 @@ import { Header } from './components/layout/Header'
 import { DashboardView } from './components/dashboard/DashboardView'
 import { UserManagement } from './components/users/UserManagement'
 import { VideoManagement } from './components/videos/VideoManagement'
+import { AnalyticsView } from './components/analytics/AnalyticsView'
+import { EconomyView } from './components/economy/EconomyView'
+import { ModerationView } from './components/moderation/ModerationView'
+import { SettingsView } from './components/settings/SettingsView'
 
 function App() {
   const [activeTab, setActiveTab] = useState('dashboard')
@@ -17,13 +21,13 @@ function App() {
       case 'videos':
         return <VideoManagement />
       case 'analytics':
-        return <DashboardView /> // Placeholder - would be separate analytics view
+        return <AnalyticsView />
       case 'economy':
-        return <DashboardView /> // Placeholder - would be economy management
+        return <EconomyView />
       case 'moderation':
-        return <VideoManagement /> // Placeholder - would be moderation tools
+        return <ModerationView />
       case 'settings':
-        return <div className="p-8 text-center text-gray-500">Settings panel coming soon...</div>
+        return <SettingsView />
       default:
         return <DashboardView />
     }
