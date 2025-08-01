@@ -16,6 +16,14 @@
   body {
     @apply bg-gradient-to-br from-violet-50 via-white to-emerald-50 font-sans antialiased;
   }
+  
+  body.dark {
+    @apply bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900;
+  }
+  
+  .dark {
+    color-scheme: dark;
+  }
 }
 
 @layer components {
