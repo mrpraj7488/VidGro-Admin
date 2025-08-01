@@ -220,65 +220,115 @@ export function SystemConfigView() {
               {/* Ads Configuration */}
               {activeTab === 'ads' && (
                 <div className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-4">
-                      <h4 className="font-semibold text-gray-800 dark:text-white">Ad Status Controls</h4>
+                  <div className="space-y-6">
+                    {/* Ad Status Controls */}
+                    <div className="bg-gradient-to-br from-violet-50 to-purple-50 dark:from-violet-900/20 dark:to-purple-900/20 border border-violet-200 dark:border-violet-800/50 rounded-xl p-6">
+                      <h4 className="font-semibold text-violet-800 dark:text-violet-300 mb-4 flex items-center">
+                        <Smartphone className="w-5 h-5 mr-2" />
+                        Ad Status Controls
+                      </h4>
                       
-                      <div className="space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         {Object.entries({
-                          bannerAdsEnabled: 'Banner Ads',
-                          interstitialAdsEnabled: 'Interstitial Ads',
-                          rewardedAdsEnabled: 'Rewarded Ads'
-                        }).map(([key, label]) => (
-                          <div key={key} className="flex items-center justify-between p-4 border border-gray-200 dark:border-slate-600 rounded-lg dark:bg-slate-800/50">
-                            <div>
+                          bannerAdsEnabled: { label: 'Banner Ads', desc: 'Display banner ads in the app' },
+                          interstitialAdsEnabled: { label: 'Interstitial Ads', desc: 'Show full-screen ads between content' },
+                          rewardedAdsEnabled: { label: 'Rewarded Ads', desc: 'Offer rewarded video ads for coins' }
+                        }).map(([key, { label, desc }]) => (
+                          <div key={key} className="gaming-card p-4">
+                            <div className="flex items-center justify-between mb-3">
                               <h5 className="font-medium text-gray-900 dark:text-white">{label}</h5>
-                              <p className="text-sm text-gray-500 dark:text-gray-400">
-                                {key === 'bannerAdsEnabled' && 'Display banner ads in the app'}
-                                {key === 'interstitialAdsEnabled' && 'Show full-screen ads between content'}
-                                {key === 'rewardedAdsEnabled' && 'Offer rewarded video ads for coins'}
-                              </p>
+                              {/* Gaming Toggle Switch */}
+                              <div className="relative">
+                                <button
+                                  type="button"
+                                  onClick={() => handleSettingChange('ads', key, !settings.ads[key])}
+                                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 ${
+                                    settings.ads[key]
+                                      ? 'bg-gradient-to-r from-violet-500 to-purple-600 shadow-[0_0_15px_rgba(139,92,246,0.5)]'
+                                      : 'bg-gray-300 dark:bg-gray-600'
+                                  }`}
+                                >
+                                  <span
+                                    className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-lg transition-transform duration-300 ${
+                                      settings.ads[key] ? 'translate-x-6' : 'translate-x-1'
+                                    }`}
+                                  />
+                                </button>
+                              </div>
                             </div>
-                            <input
-                              type="checkbox"
-                              checked={settings.ads[key]}
-                              onChange={(e) => handleSettingChange('ads', key, e.target.checked)}
-                              className="rounded border-gray-300 text-violet-600 focus:ring-violet-500"
-                            />
+                            <p className="text-sm text-gray-500 dark:text-gray-400">{desc}</p>
+                            <div className={`mt-2 text-xs font-medium ${
+                              settings.ads[key] 
+                                ? 'text-emerald-600 dark:text-emerald-400' 
+                                : 'text-gray-500 dark:text-gray-400'
+                            }`}>
+                              {settings.ads[key] ? 'Enabled' : 'Disabled'}
+                            </div>
                           </div>
                         ))}
                       </div>
                     </div>
 
-                    <div className="space-y-4">
-                      <h4 className="font-semibold text-gray-800 dark:text-white">Ad Settings</h4>
+                    {/* Ad Settings */}
+                    <div className="bg-gradient-to-br from-emerald-50 to-green-50 dark:from-emerald-900/20 dark:to-green-900/20 border border-emerald-200 dark:border-emerald-800/50 rounded-xl p-6">
+                      <h4 className="font-semibold text-emerald-800 dark:text-emerald-300 mb-4 flex items-center">
+                        <Settings className="w-5 h-5 mr-2" />
+                        Ad Configuration Settings
+                      </h4>
                       
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                          Ad Frequency (minutes)
-                        </label>
-                        <Input
-                          type="number"
-                          min="1"
-                          max="60"
-                          value={settings.ads.adFrequencyMinutes}
-                          onChange={(e) => handleSettingChange('ads', 'adFrequencyMinutes', Number(e.target.value))}
-                        />
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Minimum time between interstitial ads</p>
-                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                          <label className="block text-sm font-medium text-emerald-700 dark:text-emerald-300 mb-2">
+                            Ad Frequency (minutes)
+                          </label>
+                          <Input
+                            type="number"
+                            min="1"
+                            max="60"
+                            value={settings.ads.adFrequencyMinutes}
+                            onChange={(e) => handleSettingChange('ads', 'adFrequencyMinutes', Number(e.target.value))}
+                            className="border-emerald-300 focus:border-emerald-500 dark:border-emerald-700"
+                          />
+                          <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-1">Minimum time between interstitial ads</p>
+                        </div>
 
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                          Revenue Share (%)
-                        </label>
-                        <Input
-                          type="number"
-                          min="0"
-                          max="100"
-                          value={settings.ads.revenueSharePercent}
-                          onChange={(e) => handleSettingChange('ads', 'revenueSharePercent', Number(e.target.value))}
-                        />
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Percentage of ad revenue shared with users</p>
+                        <div>
+                          <label className="block text-sm font-medium text-emerald-700 dark:text-emerald-300 mb-2">
+                            Revenue Share (%)
+                          </label>
+                          <Input
+                            type="number"
+                            min="0"
+                            max="100"
+                            value={settings.ads.revenueSharePercent}
+                            onChange={(e) => handleSettingChange('ads', 'revenueSharePercent', Number(e.target.value))}
+                            className="border-emerald-300 focus:border-emerald-500 dark:border-emerald-700"
+                          />
+                          <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-1">Percentage of ad revenue shared with users</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Ad Performance Summary */}
+                    <div className="bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-900/20 dark:to-amber-900/20 border border-orange-200 dark:border-orange-800/50 rounded-xl p-6">
+                      <h4 className="font-semibold text-orange-800 dark:text-orange-300 mb-4 flex items-center">
+                        <DollarSign className="w-5 h-5 mr-2" />
+                        Current Ad Performance
+                      </h4>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="gaming-metric p-4 text-center">
+                          <div className="gaming-metric-value !text-xl">$2,847</div>
+                          <div className="text-sm text-orange-600 dark:text-orange-400">Monthly Revenue</div>
+                        </div>
+                        <div className="gaming-metric p-4 text-center">
+                          <div className="text-xl font-bold text-emerald-600 dark:text-emerald-400 gaming-glow">94.2%</div>
+                          <div className="text-sm text-emerald-600 dark:text-emerald-400">Fill Rate</div>
+                        </div>
+                        <div className="gaming-metric p-4 text-center">
+                          <div className="text-xl font-bold text-violet-600 dark:text-violet-400 gaming-glow">1.8M</div>
+                          <div className="text-sm text-violet-600 dark:text-violet-400">Impressions</div>
+                        </div>
                       </div>
                     </div>
                   </div>
