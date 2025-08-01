@@ -90,7 +90,6 @@ export function VideoEditModal({ video, isOpen, onClose }: VideoEditModalProps) 
             {/* Left Column */}
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
                 <label className="block text-sm font-medium text-gray-300 mb-2">
                   User ID
                 </label>
@@ -201,25 +200,25 @@ export function VideoEditModal({ video, isOpen, onClose }: VideoEditModalProps) 
 
           {/* Refund Section (only for deleted videos) */}
           {editedVideo.status === 'deleted' && (
-            <div className="bg-red-50 border border-red-200 rounded-xl p-4">
-              <h4 className="font-semibold text-red-800 mb-3 flex items-center">
+            <div className="bg-red-50 border border-red-200 rounded-xl p-4 dark:bg-red-900/20 dark:border-red-800/50">
+              <h4 className="font-semibold text-red-800 dark:text-red-300 mb-3 flex items-center">
                 <DollarSign className="w-4 h-4 mr-2" />
                 Refund Configuration
               </h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-red-700 mb-2">
+                  <label className="block text-sm font-medium text-red-700 dark:text-red-300 mb-2">
                     Refund Amount (coins)
                   </label>
                   <Input
                     type="number"
                     value={refundAmount}
                     onChange={(e) => setRefundAmount(Number(e.target.value))}
-                    className="border-red-300 focus:border-red-500"
+                    className="border-red-300 focus:border-red-500 dark:border-red-700"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-red-700 mb-2">
+                  <label className="block text-sm font-medium text-red-700 dark:text-red-300 mb-2">
                     Refund Percentage (%)
                   </label>
                   <Input
@@ -228,21 +227,21 @@ export function VideoEditModal({ video, isOpen, onClose }: VideoEditModalProps) 
                     max="100"
                     value={refundPercent}
                     onChange={(e) => setRefundPercent(Number(e.target.value))}
-                    className="border-red-300 focus:border-red-500"
+                    className="border-red-300 focus:border-red-500 dark:border-red-700"
                   />
                 </div>
               </div>
               {(video.refund_amount || video.refund_percent) && (
-                <div className="mt-4 pt-4 border-t border-red-200">
-                  <h5 className="font-medium text-red-700 mb-2">Current Refund Status:</h5>
+                <div className="mt-4 pt-4 border-t border-red-200 dark:border-red-800">
+                  <h5 className="font-medium text-red-700 dark:text-red-300 mb-2">Current Refund Status:</h5>
                   <div className="flex items-center space-x-4 text-sm">
                     {video.refund_amount && (
-                      <span className="text-green-600 font-semibold">
+                      <span className="text-green-600 dark:text-green-400 font-semibold">
                         {formatNumber(video.refund_amount)} coins refunded
                       </span>
                     )}
                     {video.refund_percent && (
-                      <span className="text-green-600 font-semibold">
+                      <span className="text-green-600 dark:text-green-400 font-semibold">
                         {video.refund_percent}% refund applied
                       </span>
                     )}
@@ -254,32 +253,32 @@ export function VideoEditModal({ video, isOpen, onClose }: VideoEditModalProps) 
 
           {/* Performance Metrics */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-           <div className="gaming-metric p-4 text-center">
-             <div className="gaming-metric-value !text-2xl">{formatNumber(video.views_count)}</div>
-             <div className="text-sm text-violet-400">Total Views</div>
+            <div className="gaming-metric p-4 text-center">
+              <div className="gaming-metric-value !text-2xl">{formatNumber(video.views_count)}</div>
+              <div className="text-sm text-violet-400">Total Views</div>
             </div>
-           <div className="gaming-metric p-4 text-center">
-             <div className="text-2xl font-bold text-emerald-400 gaming-glow">{video.completion_rate}%</div>
-             <div className="text-sm text-emerald-400">Completion Rate</div>
+            <div className="gaming-metric p-4 text-center">
+              <div className="text-2xl font-bold text-emerald-400 gaming-glow">{video.completion_rate}%</div>
+              <div className="text-sm text-emerald-400">Completion Rate</div>
             </div>
-           <div className="gaming-metric p-4 text-center">
-             <div className="text-2xl font-bold text-orange-400 gaming-glow">{formatNumber(video.spent_coins)}</div>
-             <div className="text-sm text-orange-400">Coins Spent</div>
+            <div className="gaming-metric p-4 text-center">
+              <div className="text-2xl font-bold text-orange-400 gaming-glow">{formatNumber(video.spent_coins)}</div>
+              <div className="text-sm text-orange-400">Coins Spent</div>
             </div>
-           <div className="gaming-metric p-4 text-center">
-             <div className="text-2xl font-bold text-blue-400 gaming-glow">{Math.floor(video.total_watch_time / 60)}m</div>
-             <div className="text-sm text-blue-400">Watch Time</div>
+            <div className="gaming-metric p-4 text-center">
+              <div className="text-2xl font-bold text-blue-400 gaming-glow">{Math.floor(video.total_watch_time / 60)}m</div>
+              <div className="text-sm text-blue-400">Watch Time</div>
             </div>
           </div>
         </div>
 
         {/* Footer */}
-       <div className="flex items-center justify-end space-x-3 p-6 border-t border-violet-500/20 gaming-card">
+        <div className="flex items-center justify-end space-x-3 p-6 border-t border-violet-500/20 gaming-card">
           <Button variant="outline" onClick={onClose}>
             Cancel
           </Button>
           <Button onClick={handleSave} className="flex items-center space-x-2">
-           <Save className="w-4 h-4 gaming-glow" />
+            <Save className="w-4 h-4 gaming-glow" />
             <span>Save Changes</span>
           </Button>
         </div>
