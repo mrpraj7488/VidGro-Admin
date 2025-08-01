@@ -329,6 +329,12 @@ export const mockSystemSettings = {
 // API functions
 export const getDashboardStats = async () => {
   try {
+    // Check if we're using placeholder URLs
+    if (supabaseUrl.includes('placeholder-project')) {
+      console.warn('Using mock data - Supabase not configured')
+      return mockDashboardStats
+    }
+    
     const { data, error } = await supabaseAdmin.rpc('get_admin_dashboard_stats')
     if (error) throw error
     return data || mockDashboardStats
@@ -340,6 +346,12 @@ export const getDashboardStats = async () => {
 
 export const getUsers = async (limit = 50, offset = 0) => {
   try {
+    // Check if we're using placeholder URLs
+    if (supabaseUrl.includes('placeholder-project')) {
+      console.warn('Using mock data - Supabase not configured')
+      return mockUsers
+    }
+    
     const { data, error } = await supabaseAdmin
       .from('profiles')
       .select('*')
@@ -356,6 +368,12 @@ export const getUsers = async (limit = 50, offset = 0) => {
 
 export const getVideos = async (limit = 50, offset = 0) => {
   try {
+    // Check if we're using placeholder URLs
+    if (supabaseUrl.includes('placeholder-project')) {
+      console.warn('Using mock data - Supabase not configured')
+      return mockVideos
+    }
+    
     const { data, error } = await supabaseAdmin
       .from('videos')
       .select(`
@@ -385,6 +403,12 @@ export const getVideos = async (limit = 50, offset = 0) => {
 
 export const adjustUserCoins = async (userId: string, amount: number, reason: string, adminId: string) => {
   try {
+    // Check if we're using placeholder URLs
+    if (supabaseUrl.includes('placeholder-project')) {
+      console.warn('Mock mode - coin adjustment simulated')
+      return { success: true, message: 'Coin adjustment simulated in demo mode' }
+    }
+    
     const { data, error } = await supabaseAdmin.rpc('admin_adjust_user_coins', {
       user_uuid: userId,
       coin_adjustment: amount,
@@ -402,6 +426,12 @@ export const adjustUserCoins = async (userId: string, amount: number, reason: st
 
 export const updateVideoStatus = async (videoId: string, status: string, adminId: string, reason?: string) => {
   try {
+    // Check if we're using placeholder URLs
+    if (supabaseUrl.includes('placeholder-project')) {
+      console.warn('Mock mode - video status update simulated')
+      return { success: true, message: 'Video status update simulated in demo mode' }
+    }
+    
     const { data, error } = await supabaseAdmin.rpc('admin_update_video_status', {
       video_uuid: videoId,
       new_status: status,
@@ -419,6 +449,18 @@ export const updateVideoStatus = async (videoId: string, status: string, adminId
 
 export const getRealtimeAnalytics = async () => {
   try {
+    // Check if we're using placeholder URLs
+    if (supabaseUrl.includes('placeholder-project')) {
+      console.warn('Using mock data - Supabase not configured')
+      return {
+        onlineUsers: Math.floor(Math.random() * 1000) + 500,
+        videosWatchedLastHour: Math.floor(Math.random() * 500) + 100,
+        coinsEarnedLastHour: Math.floor(Math.random() * 10000) + 1000,
+        newUsersToday: Math.floor(Math.random() * 100) + 20,
+        activePromotions: Math.floor(Math.random() * 50) + 10
+      }
+    }
+    
     const { data, error } = await supabaseAdmin.rpc('get_realtime_analytics')
     if (error) throw error
     return data
