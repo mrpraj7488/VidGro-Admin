@@ -229,6 +229,100 @@ export const mockAnalyticsData = {
   }))
 }
 
+// Mock bug report data
+export const mockBugReportData = {
+  newBugs: 15,
+  bugsFixedToday: 8,
+  totalBugs: 127,
+  bugReports: Array.from({ length: 12 }, (_, i) => ({
+    bug_id: `bug-${i + 1}`,
+    title: [
+      'Video upload fails on mobile',
+      'Coin balance not updating',
+      'Push notifications not working',
+      'App crashes on video play',
+      'VIP features not accessible',
+      'Payment processing error',
+      'Profile picture upload issue',
+      'Video thumbnail missing',
+      'Referral system bug',
+      'Dark mode toggle broken',
+      'Search functionality slow',
+      'Analytics data incorrect'
+    ][i],
+    description: `Detailed description of bug ${i + 1}. This includes steps to reproduce, expected behavior, and actual behavior observed by users.`,
+    status: ['new', 'in_progress', 'fixed', 'wont_fix'][Math.floor(Math.random() * 4)] as 'new' | 'in_progress' | 'fixed' | 'wont_fix',
+    priority: ['low', 'medium', 'high', 'critical'][Math.floor(Math.random() * 4)] as 'low' | 'medium' | 'high' | 'critical',
+    reported_by: `user${Math.floor(Math.random() * 100) + 1}`,
+    assigned_to: Math.random() > 0.5 ? `admin${Math.floor(Math.random() * 5) + 1}` : undefined,
+    category: ['UI/UX', 'Backend', 'Mobile App', 'Payment', 'Video Processing', 'General'][Math.floor(Math.random() * 6)],
+    created_at: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString(),
+    updated_at: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString()
+  }))
+}
+
+// Mock system settings
+export const mockSystemSettings = {
+  environment: {
+    EXPO_PUBLIC_SUPABASE_URL: 'https://your-project.supabase.co',
+    EXPO_PUBLIC_SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+    EXPO_PUBLIC_SUPABASE_SERVICE_ROLE_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+    EXPO_PUBLIC_ADMOB_APP_ID: 'ca-app-pub-1234567890123456~1234567890',
+    EXPO_PUBLIC_ADMOB_BANNER_ID: 'ca-app-pub-1234567890123456/1234567890',
+    EXPO_PUBLIC_ADMOB_INTERSTITIAL_ID: 'ca-app-pub-1234567890123456/1234567890',
+    EXPO_PUBLIC_ADMOB_REWARDED_ID: 'ca-app-pub-1234567890123456/1234567890'
+  },
+  ads: {
+    bannerAdsEnabled: true,
+    interstitialAdsEnabled: true,
+    rewardedAdsEnabled: true,
+    adFrequencyMinutes: 5,
+    revenueSharePercent: 70
+  },
+  general: {
+    platformName: 'VidGro',
+    supportEmail: 'support@vidgro.com',
+    maxVideoSize: 100,
+    allowedVideoFormats: ['mp4', 'mov', 'avi'],
+    maintenanceMode: false
+  },
+  users: {
+    registrationEnabled: true,
+    emailVerificationRequired: true,
+    maxCoinsPerUser: 100000,
+    vipUpgradePrice: 9.99,
+    referralReward: 50
+  },
+  videos: {
+    maxVideosPerUser: 10,
+    autoModerationEnabled: true,
+    minVideoLength: 10,
+    maxVideoLength: 300,
+    thumbnailRequired: true
+  },
+  economy: {
+    coinPrice: 0.01,
+    videoReward: 10,
+    dailyBonusCoins: 5,
+    vipMultiplier: 2.0,
+    withdrawalMinimum: 1000
+  },
+  notifications: {
+    emailNotifications: true,
+    pushNotifications: true,
+    moderationAlerts: true,
+    systemAlerts: true,
+    weeklyReports: true
+  },
+  security: {
+    twoFactorRequired: false,
+    sessionTimeout: 24,
+    maxLoginAttempts: 5,
+    passwordMinLength: 8,
+    ipWhitelist: []
+  }
+}
+
 // API functions
 export const getDashboardStats = async () => {
   try {

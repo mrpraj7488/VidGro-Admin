@@ -151,4 +151,18 @@ export interface SystemSettings {
     vipMultiplier: number
     withdrawalMinimum: number
   }
+  notifications: {
+    emailNotifications: boolean
+    pushNotifications: boolean
+    moderationAlerts: boolean
+    systemAlerts: boolean
+    weeklyReports: boolean
+  }
+  security: {
+    twoFactorRequired: boolean
+    sessionTimeout: number
+    maxLoginAttempts: number
+    passwordMinLength: number
+    ipWhitelist: string[]
+  }
 }

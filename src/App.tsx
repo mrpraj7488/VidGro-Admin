@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { ErrorBoundary } from './components/common/ErrorBoundary'
 import { Sidebar } from './components/layout/Sidebar'
 import { Header } from './components/layout/Header'
 import { DashboardView } from './components/dashboard/DashboardView'
@@ -34,17 +35,21 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-slate-900 transition-colors duration-200">
-      <div className="flex">
-        <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
-        <div className="flex-1">
-          <Header />
-          <main className="p-4 md:p-6 dark:text-white min-h-[calc(100vh-4rem)]">
-            {renderContent()}
-          </main>
+    <ErrorBoundary>
+      <div className="min-h-screen bg-gray-50 dark:bg-slate-900 transition-colors duration-200">
+        <div className="flex">
+          <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
+          <div className="flex-1">
+            <Header />
+            <main className="p-4 md:p-6 dark:text-white min-h-[calc(100vh-4rem)]">
+              <ErrorBoundary>
+                {renderContent()}
+              </ErrorBoundary>
+            </main>
+          </div>
         </div>
       </div>
-    </div>
+    </ErrorBoundary>
   )
 }
 

@@ -23,11 +23,10 @@ import {
   getRealtimeAnalytics,
   mockChartData,
   mockAnalyticsData,
-  mockBugReportData,
-  mockSystemSettings,
   Profile,
   Video as VideoType
 } from '../lib/supabase'
+import { mockBugReportData, mockSystemSettings } from '../lib/supabase'
 import { realtimeService, RealtimeEvent, createCoinAdjustmentNotification, createVideoStatusNotification } from '../services/realtimeService'
 
 interface AdminStore {
