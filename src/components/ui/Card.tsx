@@ -9,7 +9,7 @@ export function Card({ className, children, ...props }: CardProps) {
   return (
     <div
       className={cn(
-        "gaming-card",
+        "bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-lg shadow-sm",
         className
       )}
       {...props}
@@ -21,7 +21,7 @@ export function Card({ className, children, ...props }: CardProps) {
 
 export function CardHeader({ className, children, ...props }: CardProps) {
   return (
-    <div className={cn("p-6 pb-0 text-gray-900 dark:text-white relative z-10", className)} {...props}>
+    <div className={cn("p-6 pb-0 text-gray-900 dark:text-white", className)} {...props}>
       {children}
     </div>
   )
@@ -29,7 +29,7 @@ export function CardHeader({ className, children, ...props }: CardProps) {
 
 export function CardContent({ className, children, ...props }: CardProps) {
   return (
-    <div className={cn("p-6 text-gray-900 dark:text-white relative z-10", className)} {...props}>
+    <div className={cn("p-6 text-gray-900 dark:text-white", className)} {...props}>
       {children}
     </div>
   )
@@ -37,7 +37,7 @@ export function CardContent({ className, children, ...props }: CardProps) {
 
 export function CardTitle({ className, children, ...props }: React.HTMLAttributes<HTMLHeadingElement>) {
   return (
-    <h3 className={cn("text-lg font-semibold text-gray-900 dark:text-white gaming-glow", className)} {...props}>
+    <h3 className={cn("text-lg font-semibold text-gray-900 dark:text-white", className)} {...props}>
       {children}
     </h3>
   )
