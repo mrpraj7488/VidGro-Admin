@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react'
-import { Users, Video, Coins, TrendingUp, Activity, UserCheck } from 'lucide-react'
+import { Users, Video, Crown, DollarSign, TrendingUp, Activity, UserCheck, Coins } from 'lucide-react'
 import { LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts'
 import { useAdminStore } from '../../stores/adminStore'
 import { StatsCard } from './StatsCard'
@@ -17,12 +17,12 @@ export function DashboardView() {
       <div className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-32 bg-gray-200 animate-pulse rounded-xl" />
+            <div key={i} className="h-32 bg-gradient-to-r from-gray-100 to-gray-200 animate-pulse rounded-xl" />
           ))}
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="h-80 bg-gray-200 animate-pulse rounded-xl" />
-          <div className="h-80 bg-gray-200 animate-pulse rounded-xl" />
+          <div className="h-80 bg-gradient-to-r from-gray-100 to-gray-200 animate-pulse rounded-xl" />
+          <div className="h-80 bg-gradient-to-r from-gray-100 to-gray-200 animate-pulse rounded-xl" />
         </div>
       </div>
     )
@@ -30,6 +30,21 @@ export function DashboardView() {
 
   return (
     <div className="space-y-6">
+      {/* Welcome Section */}
+      <div className="bg-gradient-to-r from-violet-600 via-purple-600 to-violet-700 rounded-2xl p-8 text-white shadow-xl">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold mb-2">Welcome back, Admin! 👋</h1>
+            <p className="text-violet-100 text-lg">Here's what's happening with VidGro today</p>
+          </div>
+          <div className="hidden md:block">
+            <div className="w-24 h-24 bg-white/10 rounded-full flex items-center justify-center backdrop-blur-sm">
+              <TrendingUp className="w-12 h-12 text-white" />
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatsCard
@@ -40,35 +55,54 @@ export function DashboardView() {
           color="violet"
         />
         <StatsCard
-          title="Active Videos"
-          value={dashboardStats.activeVideos}
+          title="VIP Users"
+          value={dashboardStats.vipUsers}
           change={8.3}
-          icon={Video}
+          icon={Crown}
           color="emerald"
         />
         <StatsCard
-          title="Coins Distributed"
-          value={dashboardStats.totalCoinsDistributed}
+          title="Active Videos"
+          value={dashboardStats.activeVideos}
           change={15.2}
-          icon={Coins}
+          icon={Video}
           color="orange"
         />
+        <StatsCard
+          title="Monthly Revenue"
+          value={dashboardStats.monthlyRevenue}
+          change={12.7}
+          icon={DollarSign}
+          format="currency"
+          color="blue"
+        />
+      </div>
+
+      {/* Secondary Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <StatsCard
           title="Daily Active Users"
           value={dashboardStats.dailyActiveUsers}
           change={-2.1}
           icon={UserCheck}
-          color="blue"
+          color="violet"
+        />
+        <StatsCard
+          title="Coins Distributed"
+          value={dashboardStats.totalCoinsDistributed}
+          change={18.5}
+          icon={Coins}
+          color="orange"
         />
       </div>
 
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
+        <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
-              <TrendingUp className="w-5 h-5" />
-              <span>User Growth</span>
+              <TrendingUp className="w-5 h-5 text-violet-600" />
+              <span>User Growth Trend</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -87,15 +121,15 @@ export function DashboardView() {
                   contentStyle={{ 
                     backgroundColor: 'white', 
                     border: '1px solid #e2e8f0',
-                    borderRadius: '8px',
-                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                    borderRadius: '12px',
+                    boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1)'
                   }}
                 />
                 <Area
                   type="monotone"
                   dataKey="users"
                   stroke="#6366f1"
-                  strokeWidth={2}
+                  strokeWidth={3}
                   fillOpacity={1}
                   fill="url(#colorUsers)"
                 />
@@ -104,11 +138,11 @@ export function DashboardView() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
-              <Activity className="w-5 h-5" />
-              <span>Video & Coin Activity</span>
+              <Activity className="w-5 h-5 text-emerald-600" />
+              <span>Platform Activity</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -121,12 +155,12 @@ export function DashboardView() {
                   contentStyle={{ 
                     backgroundColor: 'white', 
                     border: '1px solid #e2e8f0',
-                    borderRadius: '8px',
-                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                    borderRadius: '12px',
+                    boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1)'
                   }}
                 />
-                <Bar dataKey="videos" fill="#10b981" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="coins" fill="#f59e0b" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="videos" fill="#10b981" radius={[6, 6, 0, 0]} />
+                <Bar dataKey="coins" fill="#f59e0b" radius={[6, 6, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -134,29 +168,39 @@ export function DashboardView() {
       </div>
 
       {/* Recent Activity */}
-      <Card>
+      <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
         <CardHeader>
-          <CardTitle>Recent Activity</CardTitle>
+          <CardTitle className="flex items-center space-x-2">
+            <Activity className="w-5 h-5 text-gray-600" />
+            <span>Recent Platform Activity</span>
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
             {[
-              { action: 'New user registered', user: 'user123', time: '2 minutes ago', type: 'user' },
-              { action: 'Video uploaded', user: 'creator456', time: '5 minutes ago', type: 'video' },
-              { action: 'Coins purchased', user: 'user789', time: '8 minutes ago', type: 'coin' },
-              { action: 'Video completed promotion', user: 'creator101', time: '12 minutes ago', type: 'promotion' }
+              { action: 'New VIP user upgraded', user: 'user123', time: '2 minutes ago', type: 'vip', amount: '$9.99' },
+              { action: 'Video promotion started', user: 'creator456', time: '5 minutes ago', type: 'video', amount: '500 coins' },
+              { action: 'Bulk coin purchase', user: 'user789', time: '8 minutes ago', type: 'coin', amount: '$49.99' },
+              { action: 'Video completed promotion', user: 'creator101', time: '12 minutes ago', type: 'promotion', amount: '1.2K views' },
+              { action: 'New user registered', user: 'user202', time: '15 minutes ago', type: 'user', amount: '50 bonus coins' }
             ].map((activity, index) => (
-              <div key={index} className="flex items-center space-x-4 p-3 rounded-lg hover:bg-gray-50 transition-colors">
-                <div className={`w-2 h-2 rounded-full ${
+              <div key={index} className="flex items-center space-x-4 p-4 rounded-xl hover:bg-gray-50/70 transition-all duration-200 group">
+                <div className={`w-3 h-3 rounded-full ${
                   activity.type === 'user' ? 'bg-violet-500' :
+                  activity.type === 'vip' ? 'bg-yellow-500' :
                   activity.type === 'video' ? 'bg-emerald-500' :
                   activity.type === 'coin' ? 'bg-orange-500' : 'bg-blue-500'
-                }`} />
+                } shadow-sm`} />
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-gray-900">{activity.action}</p>
+                  <p className="text-sm font-semibold text-gray-900 group-hover:text-violet-700 transition-colors">
+                    {activity.action}
+                  </p>
                   <p className="text-xs text-gray-500">by {activity.user}</p>
                 </div>
-                <span className="text-xs text-gray-400">{activity.time}</span>
+                <div className="text-right">
+                  <span className="text-sm font-medium text-gray-900">{activity.amount}</span>
+                  <p className="text-xs text-gray-400">{activity.time}</p>
+                </div>
               </div>
             ))}
           </div>

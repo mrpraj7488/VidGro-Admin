@@ -5,9 +5,8 @@ import { DashboardView } from './components/dashboard/DashboardView'
 import { UserManagement } from './components/users/UserManagement'
 import { VideoManagement } from './components/videos/VideoManagement'
 import { AnalyticsView } from './components/analytics/AnalyticsView'
-import { EconomyView } from './components/economy/EconomyView'
-import { ModerationView } from './components/moderation/ModerationView'
-import { SettingsView } from './components/settings/SettingsView'
+import { BugReportsView } from './components/reports/BugReportsView'
+import { SystemConfigView } from './components/settings/SystemConfigView'
 
 function App() {
   const [activeTab, setActiveTab] = useState('dashboard')
@@ -22,12 +21,10 @@ function App() {
         return <VideoManagement />
       case 'analytics':
         return <AnalyticsView />
-      case 'economy':
-        return <EconomyView />
-      case 'moderation':
-        return <ModerationView />
+      case 'reports':
+        return <BugReportsView />
       case 'settings':
-        return <SettingsView />
+        return <SystemConfigView />
       default:
         return <DashboardView />
     }

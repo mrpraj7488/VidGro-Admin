@@ -7,9 +7,11 @@ import {
   VideoFilters, 
   ChartDataPoint,
   AnalyticsData,
-  EconomyData,
-  ModerationData,
-  SystemSettings
+  BugReportData,
+  BugReport,
+  SystemSettings,
+  SystemEnvironment,
+  AdsConfiguration
 } from '../types/admin'
 import { 
   mockDashboardStats, 
@@ -17,8 +19,7 @@ import {
   mockVideos, 
   mockChartData,
   mockAnalyticsData,
-  mockEconomyData,
-  mockModerationData,
+  mockBugReportData,
   mockSystemSettings
 } from '../lib/supabase'
 
@@ -35,15 +36,13 @@ interface AdminStore {
   // Video management
   videos: Video[]
   videoFilters: VideoFilters
+  selectedVideo: Video | null
   
   // Analytics data
   analyticsData: AnalyticsData | null
   
-  // Economy data
-  economyData: EconomyData | null
-  
-  // Moderation data
-  moderationData: ModerationData | null
+  // Bug reports
+  bugReportData: BugReportData | null
   
   // System settings
   systemSettings: SystemSettings | null
@@ -53,16 +52,33 @@ interface AdminStore {
   fetchUsers: () => Promise<void>
   fetchVideos: () => Promise<void>
   fetchAnalytics: (dateRange?: [Date | null, Date | null]) => Promise<void>
-  fetchEconomyData: () => Promise<void>
-  fetchModerationData: () => Promise<void>
+  fetchBugReports: () => Promise<void>
   fetchSystemSettings: () => Promise<void>
+  
+  // User actions
   updateUserCoins: (userId: string, coins: number) => Promise<void>
+  toggleUserVip: (userId: string) => Promise<void>
+  
+  // Video actions
   updateVideoStatus: (videoId: string, status: string) => Promise<void>
-  updateCoinSettings: (settings: any) => Promise<void>
-  moderateContent: (itemId: string, action: string) => Promise<void>
+  getVideoDetails: (videoId: string) => Promise<Video | null>
+  processRefund: (videoId: string, amount: number, percent: number) => Promise<void>
+  
+  // Bug report actions
+  createBugReport: (report: Partial<BugReport>) => Promise<void>
+  updateBugStatus: (bugId: string, status: string) => Promise<void>
+  assignBug: (bugId: string, assignedTo: string) => Promise<void>
+  
+  // System settings actions
+  updateEnvironmentVars: (vars: Partial<SystemEnvironment>) => Promise<void>
+  updateAdsConfig: (config: Partial<AdsConfiguration>) => Promise<void>
   updateSystemSettings: (settings: SystemSettings) => Promise<void>
+  
+  // Utility actions
+  copyToClipboard: (text: string) => void
   setUserFilters: (filters: Partial<UserFilters>) => void
   setVideoFilters: (filters: Partial<VideoFilters>) => void
+  setSelectedVideo: (video: Video | null) => void
 }
 
 export const useAdminStore = create<AdminStore>((set, get) => ({
@@ -82,15 +98,14 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
     status: 'all',
     dateRange: [null, null]
   },
+  selectedVideo: null,
   analyticsData: null,
-  economyData: null,
-  moderationData: null,
+  bugReportData: null,
   systemSettings: null,
 
-  // Actions
+  // Dashboard actions
   fetchDashboardStats: async () => {
     set({ isLoading: true })
-    // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 500))
     set({ 
       dashboardStats: mockDashboardStats,
@@ -99,40 +114,11 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
     })
   },
 
+  // User actions
   fetchUsers: async () => {
     set({ isLoading: true })
     await new Promise(resolve => setTimeout(resolve, 300))
     set({ users: mockUsers, isLoading: false })
-  },
-
-  fetchVideos: async () => {
-    set({ isLoading: true })
-    await new Promise(resolve => setTimeout(resolve, 300))
-    set({ videos: mockVideos, isLoading: false })
-  },
-
-  fetchAnalytics: async (dateRange) => {
-    set({ isLoading: true })
-    await new Promise(resolve => setTimeout(resolve, 500))
-    set({ analyticsData: mockAnalyticsData, isLoading: false })
-  },
-
-  fetchEconomyData: async () => {
-    set({ isLoading: true })
-    await new Promise(resolve => setTimeout(resolve, 400))
-    set({ economyData: mockEconomyData, isLoading: false })
-  },
-
-  fetchModerationData: async () => {
-    set({ isLoading: true })
-    await new Promise(resolve => setTimeout(resolve, 400))
-    set({ moderationData: mockModerationData, isLoading: false })
-  },
-
-  fetchSystemSettings: async () => {
-    set({ isLoading: true })
-    await new Promise(resolve => setTimeout(resolve, 300))
-    set({ systemSettings: mockSystemSettings, isLoading: false })
   },
 
   updateUserCoins: async (userId: string, coins: number) => {
@@ -142,6 +128,20 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
     set({ users })
   },
 
+  toggleUserVip: async (userId: string) => {
+    const users = get().users.map(user => 
+      user.user_id === userId ? { ...user, is_vip: !user.is_vip } : user
+    )
+    set({ users })
+  },
+
+  // Video actions
+  fetchVideos: async () => {
+    set({ isLoading: true })
+    await new Promise(resolve => setTimeout(resolve, 300))
+    set({ videos: mockVideos, isLoading: false })
+  },
+
   updateVideoStatus: async (videoId: string, status: string) => {
     const videos = get().videos.map(video => 
       video.video_id === videoId ? { ...video, status: status as any } : video
@@ -149,29 +149,133 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
     set({ videos })
   },
 
-  updateCoinSettings: async (newSettings) => {
-    const economyData = get().economyData
-    if (economyData) {
-      set({ 
-        economyData: { 
-          ...economyData, 
-          settings: newSettings 
-        } 
+  getVideoDetails: async (videoId: string) => {
+    const video = get().videos.find(v => v.video_id === videoId)
+    return video || null
+  },
+
+  processRefund: async (videoId: string, amount: number, percent: number) => {
+    const videos = get().videos.map(video => 
+      video.video_id === videoId ? { 
+        ...video, 
+        refund_amount: amount, 
+        refund_percent: percent,
+        status: 'deleted' as any
+      } : video
+    )
+    set({ videos })
+  },
+
+  // Analytics actions
+  fetchAnalytics: async (dateRange) => {
+    set({ isLoading: true })
+    await new Promise(resolve => setTimeout(resolve, 500))
+    set({ analyticsData: mockAnalyticsData, isLoading: false })
+  },
+
+  // Bug report actions
+  fetchBugReports: async () => {
+    set({ isLoading: true })
+    await new Promise(resolve => setTimeout(resolve, 400))
+    set({ bugReportData: mockBugReportData, isLoading: false })
+  },
+
+  createBugReport: async (report: Partial<BugReport>) => {
+    const newReport: BugReport = {
+      bug_id: `bug-${Date.now()}`,
+      title: report.title || '',
+      description: report.description || '',
+      status: 'new',
+      priority: report.priority || 'medium',
+      reported_by: report.reported_by || 'admin',
+      category: report.category || 'general',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    }
+    
+    const currentData = get().bugReportData
+    if (currentData) {
+      set({
+        bugReportData: {
+          ...currentData,
+          bugReports: [newReport, ...currentData.bugReports],
+          newBugs: currentData.newBugs + 1,
+          totalBugs: currentData.totalBugs + 1
+        }
       })
     }
   },
 
-  moderateContent: async (itemId: string, action: string) => {
-    const moderationData = get().moderationData
-    if (moderationData) {
-      const updatedItems = moderationData.pendingItems.map(item =>
-        item.id === itemId ? { ...item, status: action } : item
+  updateBugStatus: async (bugId: string, status: string) => {
+    const currentData = get().bugReportData
+    if (currentData) {
+      const updatedReports = currentData.bugReports.map(bug =>
+        bug.bug_id === bugId ? { 
+          ...bug, 
+          status: status as any, 
+          updated_at: new Date().toISOString() 
+        } : bug
       )
+      
+      const bugsFixedToday = status === 'fixed' ? currentData.bugsFixedToday + 1 : currentData.bugsFixedToday
+      
       set({
-        moderationData: {
-          ...moderationData,
-          pendingItems: updatedItems,
-          pendingCount: updatedItems.filter(item => item.status === 'pending').length
+        bugReportData: {
+          ...currentData,
+          bugReports: updatedReports,
+          bugsFixedToday
+        }
+      })
+    }
+  },
+
+  assignBug: async (bugId: string, assignedTo: string) => {
+    const currentData = get().bugReportData
+    if (currentData) {
+      const updatedReports = currentData.bugReports.map(bug =>
+        bug.bug_id === bugId ? { 
+          ...bug, 
+          assigned_to: assignedTo,
+          status: 'in_progress' as any,
+          updated_at: new Date().toISOString() 
+        } : bug
+      )
+      
+      set({
+        bugReportData: {
+          ...currentData,
+          bugReports: updatedReports
+        }
+      })
+    }
+  },
+
+  // System settings actions
+  fetchSystemSettings: async () => {
+    set({ isLoading: true })
+    await new Promise(resolve => setTimeout(resolve, 300))
+    set({ systemSettings: mockSystemSettings, isLoading: false })
+  },
+
+  updateEnvironmentVars: async (vars: Partial<SystemEnvironment>) => {
+    const currentSettings = get().systemSettings
+    if (currentSettings) {
+      set({
+        systemSettings: {
+          ...currentSettings,
+          environment: { ...currentSettings.environment, ...vars }
+        }
+      })
+    }
+  },
+
+  updateAdsConfig: async (config: Partial<AdsConfiguration>) => {
+    const currentSettings = get().systemSettings
+    if (currentSettings) {
+      set({
+        systemSettings: {
+          ...currentSettings,
+          ads: { ...currentSettings.ads, ...config }
         }
       })
     }
@@ -182,11 +286,20 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
     set({ systemSettings: newSettings })
   },
 
+  // Utility actions
+  copyToClipboard: (text: string) => {
+    navigator.clipboard.writeText(text)
+  },
+
   setUserFilters: (filters) => {
     set({ userFilters: { ...get().userFilters, ...filters } })
   },
 
   setVideoFilters: (filters) => {
     set({ videoFilters: { ...get().videoFilters, ...filters } })
+  },
+
+  setSelectedVideo: (video) => {
+    set({ selectedVideo: video })
   }
 }))
