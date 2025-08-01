@@ -19,23 +19,23 @@ function ThemeToggle() {
         onClick={toggleTheme}
         className={`relative h-9 w-16 rounded-full transition-all duration-300 hover:scale-105 p-0 border-2 ${
           isDark 
-            ? 'bg-gradient-to-r from-slate-700 to-slate-800 border-slate-600 shadow-[0_0_20px_rgba(59,130,246,0.4)]' 
-            : 'bg-gradient-to-r from-slate-200 to-slate-300 border-slate-300 shadow-[0_0_20px_rgba(251,146,60,0.2)]'
+            ? 'bg-gradient-to-r from-slate-700 to-slate-800 border-slate-600 shadow-[0_0_20px_rgba(59,130,246,0.6)] gaming-glow' 
+            : 'bg-gradient-to-r from-slate-200 to-slate-300 border-slate-300 shadow-[0_0_20px_rgba(251,146,60,0.4)] gaming-glow'
         }`}
       >
         <div className={`absolute top-0.5 left-0.5 h-7 w-7 rounded-full shadow-lg transition-all duration-300 flex items-center justify-center ${
           isDark ? 'translate-x-7' : 'translate-x-0'
         } ${isDark ? 'bg-slate-900' : 'bg-white'}`}>
           {isDark ? (
-            <Moon className="h-4 w-4 text-blue-400" />
+            <Moon className="h-4 w-4 text-blue-400 gaming-glow" />
           ) : (
-            <Sun className="h-4 w-4 text-orange-400" />
+            <Sun className="h-4 w-4 text-orange-400 gaming-glow" />
           )}
         </div>
       </Button>
       
       {/* Tooltip */}
-      <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 text-xs text-gray-500 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
+      <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 text-xs text-gray-500 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none gaming-notification">
         {isDark ? 'Dark Mode' : 'Light Mode'}
       </div>
     </div>
@@ -44,27 +44,26 @@ function ThemeToggle() {
 
 export function Header() {
   return (
-    <header className="h-16 bg-white/90 backdrop-blur-xl flex items-center justify-between px-6 shadow-sm dark:bg-slate-900/90 transition-all duration-300">
+    <header className="h-16 gaming-card !rounded-none flex items-center justify-between px-6 border-b border-violet-500/20 shadow-[0_4px_20px_rgba(99,102,241,0.1)]">
       <div className="flex items-center space-x-4 flex-1">
         <div className="relative max-w-md">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
           <Input
             placeholder="Search users, videos, or analytics..."
-            className="pl-10 w-80 bg-white/70 focus:ring-violet-200 dark:bg-slate-800/70 dark:text-white"
+            className="pl-10 w-80"
           />
         </div>
       </div>
       
       <div className="flex items-center space-x-3">
-        <Button variant="ghost" size="icon" className="relative hover:bg-gray-100/70 dark:hover:bg-slate-700/70">
+        <Button variant="ghost" size="icon" className="relative status-online">
           <Bell className="w-5 h-5" />
-          <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
         </Button>
         
         <ThemeToggle />
         
         <div className="flex items-center space-x-3 pl-3">
-          <div className="w-8 h-8 bg-gradient-to-br from-violet-500 to-purple-600 rounded-full flex items-center justify-center shadow-sm">
+          <div className="w-8 h-8 bg-gradient-to-br from-violet-500 to-purple-600 rounded-full flex items-center justify-center shadow-sm gaming-pulse">
             <User className="w-4 h-4 text-white" />
           </div>
           <div>

@@ -60,8 +60,8 @@ export function VideoManagement() {
   if (isLoading) {
     return (
       <div className="space-y-6">
-        <div className="h-16 bg-gradient-to-r from-gray-100 to-gray-200 animate-pulse rounded-xl" />
-        <div className="h-96 bg-gradient-to-r from-gray-100 to-gray-200 animate-pulse rounded-xl" />
+        <div className="h-16 gaming-skeleton rounded-xl" />
+        <div className="h-96 gaming-skeleton rounded-xl" />
       </div>
     )
   }
@@ -79,9 +79,9 @@ export function VideoManagement() {
       {/* Status Overview */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         {Object.entries(statusCounts).map(([status, count]) => (
-          <Card key={status} className="text-center p-4 hover:shadow-md dark:hover:shadow-slate-900/40 transition-shadow cursor-pointer"
+          <Card key={status} className="text-center p-4 cursor-pointer gaming-interactive gaming-glow"
                 onClick={() => setVideoFilters({ status: status === videoFilters.status ? 'all' : status })}>
-            <div className="text-2xl font-bold text-gray-900 dark:text-white">{count}</div>
+            <div className="gaming-metric-value !text-2xl">{count}</div>
             <div className="text-sm text-gray-500 dark:text-gray-400 capitalize">{status}</div>
           </Card>
         ))}
@@ -119,24 +119,24 @@ export function VideoManagement() {
 
       {/* Videos Table */}
       <Card>
-        <CardContent className="p-0">
+        <CardContent className="p-0 gaming-table">
           <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-200 dark:bg-slate-800/50 dark:border-slate-700">
+            <table className="w-full gaming-table">
+              <thead>
                 <tr>
-                  <th className="text-left py-4 px-6 text-sm font-medium text-gray-900 dark:text-white">User</th>
-                  <th className="text-left py-4 px-6 text-sm font-medium text-gray-900 dark:text-white">Video Status</th>
-                  <th className="text-left py-4 px-6 text-sm font-medium text-gray-900 dark:text-white">View Criteria</th>
-                  <th className="text-left py-4 px-6 text-sm font-medium text-gray-900 dark:text-white">Video ID</th>
-                  <th className="text-right py-4 px-6 text-sm font-medium text-gray-900 dark:text-white">Actions</th>
+                  <th className="text-left">User</th>
+                  <th className="text-left">Video Status</th>
+                  <th className="text-left">View Criteria</th>
+                  <th className="text-left">Video ID</th>
+                  <th className="text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200 dark:divide-slate-700">
+              <tbody>
                 {filteredVideos.map((video) => (
-                  <tr key={video.video_id} className="hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors group">
+                  <tr key={video.video_id} className="group">
                     <td className="py-4 px-6">
                       <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 bg-gradient-to-br from-violet-400 to-purple-600 rounded-full flex items-center justify-center text-white font-medium text-sm">
+                        <div className="w-10 h-10 bg-gradient-to-br from-violet-400 to-purple-600 rounded-full flex items-center justify-center text-white font-medium text-sm gaming-pulse">
                           {video.username.charAt(0).toUpperCase()}
                         </div>
                         <div>
@@ -150,18 +150,18 @@ export function VideoManagement() {
                     </td>
                     <td className="py-4 px-6">
                       <div className="flex items-center space-x-2">
-                        <Eye className="w-4 h-4 text-gray-400" />
+                        <Eye className="w-4 h-4 text-gray-400 gaming-glow" />
                         <span className="font-mono text-sm font-medium">{video.view_criteria}</span>
                       </div>
                     </td>
                     <td className="py-4 px-6">
                       <div className="flex items-center space-x-2">
-                        <code className="bg-gray-100 dark:bg-slate-700 px-2 py-1 rounded text-sm font-mono dark:text-white">{video.video_id}</code>
+                        <code className="bg-violet-500/10 border border-violet-500/20 px-2 py-1 rounded text-sm font-mono text-violet-600 dark:text-violet-400 gaming-glow">{video.video_id}</code>
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => copyToClipboard(video.video_id)}
-                          className="opacity-0 group-hover:opacity-100 transition-opacity"
+                          className="opacity-0 group-hover:opacity-100 transition-opacity gaming-glow"
                         >
                           <Copy className="w-3 h-3" />
                         </Button>
@@ -174,7 +174,7 @@ export function VideoManagement() {
                         onClick={() => handleEditVideo(video)}
                         className="flex items-center space-x-1"
                       >
-                        <Edit className="w-4 h-4" />
+                        <Edit className="w-4 h-4 gaming-glow" />
                         <span>Edit</span>
                       </Button>
                     </td>

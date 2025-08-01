@@ -3,16 +3,16 @@ import { cn } from '../../lib/utils'
 import { cva, type VariantProps } from 'class-variance-authority'
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center rounded-lg text-sm font-medium transition-all duration-200 disabled:pointer-events-none disabled:opacity-50",
+  "gaming-button gaming-interactive inline-flex items-center justify-center text-sm font-medium disabled:pointer-events-none disabled:opacity-50",
   {
     variants: {
       variant: {
-        default: "bg-violet-600 text-white hover:bg-violet-700 shadow-sm hover:shadow-md dark:bg-violet-600 dark:hover:bg-violet-700",
-        secondary: "bg-gray-100 text-gray-900 hover:bg-gray-200 border border-gray-300 dark:bg-slate-700 dark:text-white dark:hover:bg-slate-600 dark:border-slate-600",
-        outline: "bg-white hover:bg-gray-50 border border-gray-300 text-gray-700 dark:bg-slate-800 dark:text-white dark:hover:bg-slate-700 dark:border-slate-600",
-        ghost: "hover:bg-gray-100 text-gray-700 dark:hover:bg-slate-700 dark:text-white",
-        success: "bg-emerald-600 text-white hover:bg-emerald-700 dark:bg-emerald-600 dark:hover:bg-emerald-700",
-        danger: "bg-red-600 text-white hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-700"
+        default: "",
+        secondary: "!bg-gradient-to-r !from-gray-400 !to-gray-600 !shadow-[0_4px_15px_rgba(156,163,175,0.4)]",
+        outline: "!bg-transparent !border-2 !border-violet-500/50 !text-violet-600 dark:!text-violet-400 !shadow-[0_0_15px_rgba(99,102,241,0.3)] hover:!bg-violet-500/10",
+        ghost: "!bg-transparent !shadow-none hover:!bg-violet-500/10 !text-gray-700 dark:!text-white",
+        success: "!bg-gradient-to-r !from-emerald-500 !to-green-600 !shadow-[0_4px_15px_rgba(16,185,129,0.4)]",
+        danger: "!bg-gradient-to-r !from-red-500 !to-red-600 !shadow-[0_4px_15px_rgba(239,68,68,0.4)]"
       },
       size: {
         default: "h-10 px-4 py-2",

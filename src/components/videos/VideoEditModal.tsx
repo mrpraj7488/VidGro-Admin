@@ -48,37 +48,37 @@ export function VideoEditModal({ video, isOpen, onClose }: VideoEditModalProps) 
   }
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="gaming-modal max-w-4xl w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+        <div className="flex items-center justify-between p-6 border-b border-violet-500/20">
           <div>
-            <h2 className="text-xl font-bold text-gray-900">Edit Video Details</h2>
-            <p className="text-sm text-gray-500">Manage video promotion settings and status</p>
+            <h2 className="text-xl font-bold text-white gaming-glow">Edit Video Details</h2>
+            <p className="text-sm text-gray-400">Manage video promotion settings and status</p>
           </div>
           <Button variant="ghost" size="icon" onClick={onClose}>
-            <X className="w-5 h-5" />
+            <X className="w-5 h-5 text-white gaming-glow" />
           </Button>
         </div>
 
         <div className="p-6 space-y-6">
           {/* Video Preview */}
-          <div className="flex items-start space-x-4 p-4 bg-gray-50 rounded-xl">
+          <div className="flex items-start space-x-4 p-4 gaming-card">
             <img
               src={video.thumbnail_url}
               alt={video.title}
-              className="w-24 h-16 object-cover rounded-lg shadow-sm"
+              className="w-24 h-16 object-cover rounded-lg shadow-sm gaming-glow"
             />
             <div className="flex-1">
-              <h3 className="font-semibold text-gray-900 mb-1">{video.title}</h3>
-              <p className="text-sm text-gray-600">by {video.username}</p>
+              <h3 className="font-semibold text-white mb-1 gaming-glow">{video.title}</h3>
+              <p className="text-sm text-gray-400">by {video.username}</p>
               <div className="flex items-center space-x-4 mt-2">
-                <span className="text-xs text-gray-500 flex items-center">
-                  <Eye className="w-3 h-3 mr-1" />
+                <span className="text-xs text-gray-400 flex items-center">
+                  <Eye className="w-3 h-3 mr-1 gaming-glow" />
                   {formatNumber(video.views_count)} views
                 </span>
-                <span className="text-xs text-gray-500 flex items-center">
-                  <TrendingUp className="w-3 h-3 mr-1" />
+                <span className="text-xs text-gray-400 flex items-center">
+                  <TrendingUp className="w-3 h-3 mr-1 gaming-glow" />
                   {video.completion_rate}% completion
                 </span>
               </div>
@@ -91,60 +91,61 @@ export function VideoEditModal({ video, isOpen, onClose }: VideoEditModalProps) 
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-300 mb-2">
                   User ID
                 </label>
                 <div className="flex items-center space-x-2">
                   <Input
                     value={video.user_id}
                     readOnly
-                    className="bg-gray-50 font-mono text-sm"
+                    className="!bg-violet-500/10 font-mono text-sm"
                   />
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => copyToClipboard(video.user_id)}
                   >
-                    <Copy className="w-4 h-4" />
+                    <Copy className="w-4 h-4 gaming-glow" />
                   </Button>
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-300 mb-2">
                   Video URL
                 </label>
                 <div className="flex items-center space-x-2">
                   <Input
                     value={video.video_url}
                     readOnly
-                    className="bg-gray-50 font-mono text-sm"
+                    className="!bg-violet-500/10 font-mono text-sm"
                   />
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => copyToClipboard(video.video_url)}
                   >
-                    <Copy className="w-4 h-4" />
+                    <Copy className="w-4 h-4 gaming-glow" />
                   </Button>
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-300 mb-2">
                   Title
                 </label>
                 <Input
                   value={video.title}
                   readOnly
-                  className="bg-gray-50"
+                  className="!bg-violet-500/10"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-300 mb-2">
                   Criteria
                 </label>
-                <div className="px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg">
+                <div className="px-3 py-2 gaming-card">
                   <Badge variant="default" className="font-mono text-sm">{video.view_criteria}</Badge>
                 </div>
               </div>
@@ -153,22 +154,22 @@ export function VideoEditModal({ video, isOpen, onClose }: VideoEditModalProps) 
             {/* Right Column */}
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-300 mb-2">
                   Spent Coins
                 </label>
-                <div className="px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg">
-                  <span className="font-mono text-sm">{formatNumber(video.spent_coins)}</span>
+                <div className="px-3 py-2 gaming-card">
+                  <span className="font-mono text-sm text-orange-400 gaming-glow">{formatNumber(video.spent_coins)}</span>
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-300 mb-2">
                   Video Status
                 </label>
                 <select
                   value={editedVideo.status}
                   onChange={(e) => setEditedVideo({ ...editedVideo, status: e.target.value })}
-                  className={`w-full px-3 py-2 border border-gray-300 rounded-lg ${getStatusColor(editedVideo.status)} font-medium`}
+                  className={`gaming-input w-full ${getStatusColor(editedVideo.status)} font-medium`}
                 >
                   <option value="active">Active</option>
                   <option value="completed">Completed</option>
@@ -179,20 +180,20 @@ export function VideoEditModal({ video, isOpen, onClose }: VideoEditModalProps) 
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-300 mb-2">
                   Total Watch Time (seconds)
                 </label>
-                <div className="px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg">
-                  <span className="font-mono text-sm">{Math.floor(video.total_watch_time / 60)}m {video.total_watch_time % 60}s</span>
+                <div className="px-3 py-2 gaming-card">
+                  <span className="font-mono text-sm text-blue-400 gaming-glow">{Math.floor(video.total_watch_time / 60)}m {video.total_watch_time % 60}s</span>
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-300 mb-2">
                   Completion Rate (%)
                 </label>
-                <div className="px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg">
-                  <span className="font-mono text-sm">{video.completion_rate}%</span>
+                <div className="px-3 py-2 gaming-card">
+                  <span className="font-mono text-sm text-emerald-400 gaming-glow">{video.completion_rate}%</span>
                 </div>
               </div>
             </div>
@@ -253,32 +254,32 @@ export function VideoEditModal({ video, isOpen, onClose }: VideoEditModalProps) 
 
           {/* Performance Metrics */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="bg-violet-50 p-4 rounded-xl text-center">
-              <div className="text-2xl font-bold text-violet-600">{formatNumber(video.views_count)}</div>
-              <div className="text-sm text-violet-700">Total Views</div>
+           <div className="gaming-metric p-4 text-center">
+             <div className="gaming-metric-value !text-2xl">{formatNumber(video.views_count)}</div>
+             <div className="text-sm text-violet-400">Total Views</div>
             </div>
-            <div className="bg-emerald-50 p-4 rounded-xl text-center">
-              <div className="text-2xl font-bold text-emerald-600">{video.completion_rate}%</div>
-              <div className="text-sm text-emerald-700">Completion Rate</div>
+           <div className="gaming-metric p-4 text-center">
+             <div className="text-2xl font-bold text-emerald-400 gaming-glow">{video.completion_rate}%</div>
+             <div className="text-sm text-emerald-400">Completion Rate</div>
             </div>
-            <div className="bg-orange-50 p-4 rounded-xl text-center">
-              <div className="text-2xl font-bold text-orange-600">{formatNumber(video.spent_coins)}</div>
-              <div className="text-sm text-orange-700">Coins Spent</div>
+           <div className="gaming-metric p-4 text-center">
+             <div className="text-2xl font-bold text-orange-400 gaming-glow">{formatNumber(video.spent_coins)}</div>
+             <div className="text-sm text-orange-400">Coins Spent</div>
             </div>
-            <div className="bg-blue-50 p-4 rounded-xl text-center">
-              <div className="text-2xl font-bold text-blue-600">{Math.floor(video.total_watch_time / 60)}m</div>
-              <div className="text-sm text-blue-700">Watch Time</div>
+           <div className="gaming-metric p-4 text-center">
+             <div className="text-2xl font-bold text-blue-400 gaming-glow">{Math.floor(video.total_watch_time / 60)}m</div>
+             <div className="text-sm text-blue-400">Watch Time</div>
             </div>
           </div>
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end space-x-3 p-6 border-t border-gray-200 bg-gray-50">
+       <div className="flex items-center justify-end space-x-3 p-6 border-t border-violet-500/20 gaming-card">
           <Button variant="outline" onClick={onClose}>
             Cancel
           </Button>
           <Button onClick={handleSave} className="flex items-center space-x-2">
-            <Save className="w-4 h-4" />
+           <Save className="w-4 h-4 gaming-glow" />
             <span>Save Changes</span>
           </Button>
         </div>

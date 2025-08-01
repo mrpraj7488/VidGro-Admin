@@ -35,8 +35,8 @@ export function UserManagement() {
   if (isLoading) {
     return (
       <div className="space-y-6">
-        <div className="h-16 bg-gray-200 animate-pulse rounded-xl" />
-        <div className="h-96 bg-gray-200 animate-pulse rounded-xl" />
+        <div className="h-16 gaming-skeleton rounded-xl" />
+        <div className="h-96 gaming-skeleton rounded-xl" />
       </div>
     )
   }
@@ -83,26 +83,26 @@ export function UserManagement() {
 
       {/* Users Table */}
       <Card>
-        <CardContent className="p-0">
+        <CardContent className="p-0 gaming-table">
           <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-200 dark:bg-slate-800/50 dark:border-slate-700">
+            <table className="w-full gaming-table">
+              <thead>
                 <tr>
-                  <th className="text-left py-4 px-6 text-sm font-medium text-gray-900 dark:text-white">User</th>
-                  <th className="text-left py-4 px-6 text-sm font-medium text-gray-900 dark:text-white">Status</th>
-                  <th className="text-left py-4 px-6 text-sm font-medium text-gray-900 dark:text-white">Coins</th>
-                  <th className="text-left py-4 px-6 text-sm font-medium text-gray-900 dark:text-white">Videos</th>
-                  <th className="text-left py-4 px-6 text-sm font-medium text-gray-900 dark:text-white">Joined</th>
-                  <th className="text-left py-4 px-6 text-sm font-medium text-gray-900 dark:text-white">Last Active</th>
-                  <th className="text-right py-4 px-6 text-sm font-medium text-gray-900 dark:text-white">Actions</th>
+                  <th className="text-left">User</th>
+                  <th className="text-left">Status</th>
+                  <th className="text-left">Coins</th>
+                  <th className="text-left">Videos</th>
+                  <th className="text-left">Joined</th>
+                  <th className="text-left">Last Active</th>
+                  <th className="text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200 dark:divide-slate-700">
+              <tbody>
                 {filteredUsers.map((user) => (
-                  <tr key={user.user_id} className="hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors">
+                  <tr key={user.user_id}>
                     <td className="py-4 px-6">
                       <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 bg-gradient-to-br from-violet-400 to-purple-600 rounded-full flex items-center justify-center text-white font-medium text-sm">
+                        <div className="w-10 h-10 bg-gradient-to-br from-violet-400 to-purple-600 rounded-full flex items-center justify-center text-white font-medium text-sm gaming-pulse">
                           {user.username.charAt(0).toUpperCase()}
                         </div>
                         <div>
@@ -147,7 +147,7 @@ export function UserManagement() {
                       ) : (
                         <button
                           onClick={() => setEditingCoins({ userId: user.user_id, coins: user.coins })}
-                          className="flex items-center space-x-1 text-orange-600 hover:text-orange-700 font-medium"
+                          className="flex items-center space-x-1 text-orange-600 hover:text-orange-700 font-medium gaming-glow gaming-interactive"
                         >
                           <Coins className="w-4 h-4" />
                           <span>{formatNumber(user.coins)}</span>
@@ -159,7 +159,7 @@ export function UserManagement() {
                     </td>
                     <td className="py-4 px-6">
                       <div className="flex items-center space-x-1 text-gray-500 dark:text-gray-400 text-sm">
-                        <Calendar className="w-4 h-4" />
+                        <Calendar className="w-4 h-4 gaming-glow" />
                         <span>{format(new Date(user.created_at), 'MMM dd, yyyy')}</span>
                       </div>
                     </td>
@@ -184,22 +184,22 @@ export function UserManagement() {
       {/* Summary Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card>
-          <CardContent className="p-6 text-center">
-            <div className="text-2xl font-bold text-gray-900 dark:text-white">{filteredUsers.length}</div>
+          <CardContent className="p-6 text-center gaming-metric">
+            <div className="gaming-metric-value !text-2xl">{filteredUsers.length}</div>
             <div className="text-sm text-gray-500 dark:text-gray-400">Total Users Shown</div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-6 text-center">
-            <div className="text-2xl font-bold text-violet-600 dark:text-violet-400">
+          <CardContent className="p-6 text-center gaming-metric">
+            <div className="text-2xl font-bold text-violet-600 dark:text-violet-400 gaming-glow">
               {filteredUsers.filter(u => u.is_vip).length}
             </div>
             <div className="text-sm text-gray-500 dark:text-gray-400">VIP Users</div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-6 text-center">
-            <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">
+          <CardContent className="p-6 text-center gaming-metric">
+            <div className="text-2xl font-bold text-orange-600 dark:text-orange-400 gaming-glow">
               {formatNumber(filteredUsers.reduce((sum, u) => sum + u.coins, 0))}
             </div>
             <div className="text-sm text-gray-500 dark:text-gray-400">Total Coins</div>

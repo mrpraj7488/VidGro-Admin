@@ -17,12 +17,12 @@ export function DashboardView() {
       <div className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-32 bg-gradient-to-r from-gray-100 to-gray-200 animate-pulse rounded-xl" />
+            <div key={i} className="h-32 gaming-skeleton rounded-xl" />
           ))}
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="h-80 bg-gradient-to-r from-gray-100 to-gray-200 animate-pulse rounded-xl" />
-          <div className="h-80 bg-gradient-to-r from-gray-100 to-gray-200 animate-pulse rounded-xl" />
+          <div className="h-80 gaming-skeleton rounded-xl" />
+          <div className="h-80 gaming-skeleton rounded-xl" />
         </div>
       </div>
     )
@@ -65,10 +65,10 @@ export function DashboardView() {
 
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm dark:bg-slate-800/80">
+        <Card className="gaming-float">
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
-              <TrendingUp className="w-5 h-5 text-violet-600 dark:text-violet-400" />
+              <TrendingUp className="w-5 h-5 text-violet-600 dark:text-violet-400 gaming-glow" />
               <span>User Growth Trend</span>
             </CardTitle>
           </CardHeader>
@@ -105,10 +105,10 @@ export function DashboardView() {
           </CardContent>
         </Card>
 
-        <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm dark:bg-slate-800/80">
+        <Card className="gaming-float">
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
-              <Activity className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+              <Activity className="w-5 h-5 text-emerald-600 dark:text-emerald-400 gaming-glow" />
               <span>Platform Activity</span>
             </CardTitle>
           </CardHeader>
@@ -135,10 +135,10 @@ export function DashboardView() {
       </div>
 
       {/* Recent Activity */}
-      <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm dark:bg-slate-800/80">
+      <Card>
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
-            <Activity className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+            <Activity className="w-5 h-5 text-gray-600 dark:text-gray-400 gaming-glow" />
             <span>Recent Platform Activity</span>
           </CardTitle>
         </CardHeader>
@@ -151,15 +151,15 @@ export function DashboardView() {
               { action: 'Video completed promotion', user: 'creator101', time: '12 minutes ago', type: 'promotion', amount: '1.2K views' },
               { action: 'New user registered', user: 'user202', time: '15 minutes ago', type: 'user', amount: '50 bonus coins' }
             ].map((activity, index) => (
-              <div key={index} className="flex items-center space-x-4 p-4 rounded-xl hover:bg-gray-50/70 dark:hover:bg-slate-700/50 transition-all duration-200 group">
+              <div key={index} className="flex items-center space-x-4 p-4 rounded-xl hover:bg-violet-500/10 transition-all duration-200 group gaming-interactive">
                 <div className={`w-3 h-3 rounded-full ${
                   activity.type === 'user' ? 'bg-violet-500' :
                   activity.type === 'vip' ? 'bg-yellow-500' :
                   activity.type === 'video' ? 'bg-emerald-500' :
                   activity.type === 'coin' ? 'bg-orange-500' : 'bg-blue-500'
-                } shadow-sm`} />
+                } shadow-sm gaming-pulse`} />
                 <div className="flex-1">
-                  <p className="text-sm font-semibold text-gray-900 dark:text-white group-hover:text-violet-700 dark:group-hover:text-violet-400 transition-colors">
+                  <p className="text-sm font-semibold text-gray-900 dark:text-white group-hover:text-violet-700 dark:group-hover:text-violet-400 transition-colors gaming-glow">
                     {activity.action}
                   </p>
                   <p className="text-xs text-gray-500 dark:text-gray-400">by {activity.user}</p>
