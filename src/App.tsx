@@ -34,12 +34,12 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-violet-50 via-white to-emerald-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 transition-colors duration-300">
+    <div className="min-h-screen bg-gradient-to-br from-violet-50 via-white to-emerald-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 transition-all duration-300">
       <div className="flex">
         <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
         <div className="flex-1">
           <Header />
-          <main className="p-6">
+          <main className="p-6 dark:text-white">
             {renderContent()}
           </main>
         </div>

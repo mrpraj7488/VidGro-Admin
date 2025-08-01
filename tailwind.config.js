@@ -5,7 +5,9 @@ export default {
   theme: {
     extend: {
       colors: {
-        border: 'rgb(229 231 235)', // gray-200
+        border: 'hsl(var(--border))',
+        background: 'hsl(var(--background))',
+        foreground: 'hsl(var(--foreground))',
         violet: {
           50: '#f5f3ff',
           100: '#ede9fe',
@@ -55,6 +57,9 @@ export default {
       },
       animation: {
         'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+      },
+      boxShadow: {
+        'dark': '0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2)',
       }
     },
   },

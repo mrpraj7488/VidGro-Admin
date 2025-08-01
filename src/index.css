@@ -6,7 +6,7 @@
 
 @layer base {
   * {
-    @apply border outline-none;
+    @apply border-0 outline-none;
   }
   
   html {
@@ -14,15 +14,29 @@
   }
   
   body {
-    @apply bg-gradient-to-br from-violet-50 via-white to-emerald-50 font-sans antialiased;
+    @apply bg-gradient-to-br from-violet-50 via-white to-emerald-50 font-sans antialiased transition-colors duration-300;
   }
   
   body.dark {
-    @apply bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900;
+    @apply bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white;
   }
   
   .dark {
     color-scheme: dark;
+  }
+  
+  /* Remove all default borders and outlines */
+  input, button, select, textarea, div, span {
+    @apply outline-none border-0;
+  }
+  
+  /* Custom focus styles without outlines */
+  input:focus, select:focus, textarea:focus {
+    @apply ring-2 ring-violet-500/50 ring-offset-0;
+  }
+  
+  .dark input:focus, .dark select:focus, .dark textarea:focus {
+    @apply ring-2 ring-violet-400/50 ring-offset-0;
   }
 }
 
