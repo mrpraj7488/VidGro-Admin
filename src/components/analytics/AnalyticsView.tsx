@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { Calendar, Download, TrendingUp, Users, Video, Coins, BarChart3 } from 'lucide-react'
+import { Calendar, Download, TrendingUp, Users, Coins, BarChart3 } from 'lucide-react'
 import { LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from 'recharts'
 import { useAdminStore } from '../../stores/adminStore'
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card'
@@ -71,52 +71,32 @@ export function AnalyticsView() {
           color="violet"
         />
         <StatsCard
-          title="User Retention"
-          value={analyticsData.userRetention}
-          change={8.3}
-          icon={Users}
-          format="percentage"
-          color="emerald"
-        />
-        <StatsCard
-          title="Video Completion"
-          value={analyticsData.avgCompletionRate}
-          change={-2.1}
-          icon={Video}
-          format="percentage"
-          color="orange"
-        />
-        <StatsCard
           title="Coin Transactions"
           value={analyticsData.coinTransactions}
           change={15.7}
           icon={Coins}
           format="number"
-          color="blue"
+          color="orange"
         />
       </div>
 
       {/* Charts Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* User Growth Trend */}
+        {/* Daily Active Users Chart */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
-              <Users className="w-5 h-5" />
-              <span>User Growth Trend</span>
+              <TrendingUp className="w-5 h-5" />
+              <span>Daily Active Users</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
-              <AreaChart data={analyticsData.userGrowthData}>
+              <LineChart data={analyticsData.userGrowthData}>
                 <defs>
-                  <linearGradient id="colorNewUsers" x1="0" y1="0" x2="0" y2="1">
+                  <linearGradient id="colorActiveUsers" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3}/>
                     <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
-                  </linearGradient>
-                  <linearGradient id="colorActiveUsers" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
@@ -130,65 +110,29 @@ export function AnalyticsView() {
                     boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
                   }}
                 />
-                <Area
-                  type="monotone"
-                  dataKey="newUsers"
-                  stackId="1"
-                  stroke="#6366f1"
-                  fill="url(#colorNewUsers)"
-                />
-                <Area
+                <Line
                   type="monotone"
                   dataKey="activeUsers"
-                  stackId="1"
-                  stroke="#10b981"
-                  fill="url(#colorActiveUsers)"
+                  stroke="#6366f1"
+                  strokeWidth={3}
+                  dot={{ fill: '#6366f1', strokeWidth: 2, r: 4 }}
                 />
-              </AreaChart>
+              </LineChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
 
-        {/* Revenue Analytics */}
+        {/* Coin Transactions Chart */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
-              <BarChart3 className="w-5 h-5" />
-              <span>Revenue Analytics</span>
+              <Coins className="w-5 h-5" />
+              <span>Coin Transactions</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={analyticsData.revenueData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                <XAxis dataKey="month" stroke="#64748b" fontSize={12} />
-                <YAxis stroke="#64748b" fontSize={12} />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: 'white', 
-                    border: '1px solid #e2e8f0',
-                    borderRadius: '8px',
-                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-                  }}
-                />
-                <Bar dataKey="revenue" fill="#6366f1" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="coinSales" fill="#f59e0b" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
-        {/* Video Performance */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Video className="w-5 h-5" />
-              <span>Video Performance</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={analyticsData.videoPerformanceData}>
+              <BarChart data={analyticsData.coinTransactionData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
                 <XAxis dataKey="date" stroke="#64748b" fontSize={12} />
                 <YAxis stroke="#64748b" fontSize={12} />
@@ -200,52 +144,9 @@ export function AnalyticsView() {
                     boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
                   }}
                 />
-                <Line
-                  type="monotone"
-                  dataKey="uploads"
-                  stroke="#10b981"
-                  strokeWidth={2}
-                  dot={{ fill: '#10b981', strokeWidth: 2, r: 4 }}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="completions"
-                  stroke="#f59e0b"
-                  strokeWidth={2}
-                  dot={{ fill: '#f59e0b', strokeWidth: 2, r: 4 }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
-        {/* User Segments */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Users className="w-5 h-5" />
-              <span>User Segments</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={analyticsData.userSegments}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                  outerRadius={80}
-                  fill="#8884d8"
-                  dataKey="value"
-                >
-                  {analyticsData.userSegments.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
+                <Bar dataKey="transactions" fill="#f59e0b" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="volume" fill="#10b981" radius={[4, 4, 0, 0]} />
+              </BarChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>

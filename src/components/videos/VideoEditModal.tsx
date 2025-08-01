@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { X, Copy, Save, RefreshCw, Trash2, DollarSign, Clock, Eye, TrendingUp } from 'lucide-react'
+import { X, Copy, Save, Eye, TrendingUp, DollarSign } from 'lucide-react'
 import { useAdminStore } from '../../stores/adminStore'
 import { Button } from '../ui/Button'
 import { Input } from '../ui/Input'
@@ -14,7 +14,7 @@ interface VideoEditModalProps {
 
 export function VideoEditModal({ video, isOpen, onClose }: VideoEditModalProps) {
   const { updateVideoStatus, processRefund, copyToClipboard } = useAdminStore()
-  const [editedVideo, setEditedVideo] = useState(video)
+  const [editedVideo, setEditedVideo] = useState(video || {})
   const [refundAmount, setRefundAmount] = useState(0)
   const [refundPercent, setRefundPercent] = useState(0)
 
@@ -134,7 +134,7 @@ export function VideoEditModal({ video, isOpen, onClose }: VideoEditModalProps) 
                   Title
                 </label>
                 <Input
-                  value={editedVideo.title}
+                  value={video.title}
                   readOnly
                   className="bg-gray-50"
                 />
@@ -145,7 +145,7 @@ export function VideoEditModal({ video, isOpen, onClose }: VideoEditModalProps) 
                   Criteria
                 </label>
                 <div className="px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg">
-                  <span className="font-mono text-sm">{video.view_criteria}</span>
+                  <Badge variant="default" className="font-mono text-sm">{video.view_criteria}</Badge>
                 </div>
               </div>
             </div>

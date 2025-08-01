@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react'
-import { Users, Video, Crown, DollarSign, TrendingUp, Activity, UserCheck, Coins } from 'lucide-react'
+import { Users, Video, Crown, DollarSign, TrendingUp, Activity } from 'lucide-react'
 import { LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts'
 import { useAdminStore } from '../../stores/adminStore'
 import { StatsCard } from './StatsCard'
@@ -30,12 +30,12 @@ export function DashboardView() {
 
   return (
     <div className="space-y-6">
-      {/* Stats Cards */}
+      {/* Clean Stats Cards - Only 4 Essential Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatsCard
           title="Total Users"
           value={dashboardStats.totalUsers}
-          change={dashboardStats.userGrowthRate}
+          change={12.5}
           icon={Users}
           color="violet"
         />
@@ -56,7 +56,7 @@ export function DashboardView() {
         <StatsCard
           title="Monthly Revenue"
           value={dashboardStats.monthlyRevenue}
-          change={12.7}
+          change={15.2}
           icon={DollarSign}
           format="currency"
           color="blue"

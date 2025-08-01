@@ -53,30 +53,16 @@ export const mockChartData = Array.from({ length: 30 }, (_, i) => ({
 
 export const mockAnalyticsData = {
   dailyActiveUsers: 12453,
-  userRetention: 78.2,
-  avgCompletionRate: 65.8,
   coinTransactions: 8924,
   userGrowthData: Array.from({ length: 30 }, (_, i) => ({
     date: new Date(Date.now() - (29 - i) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-    newUsers: Math.floor(Math.random() * 200) + 50,
     activeUsers: Math.floor(Math.random() * 800) + 400
   })),
-  revenueData: Array.from({ length: 12 }, (_, i) => ({
-    month: new Date(2024, i, 1).toLocaleDateString('en', { month: 'short' }),
-    revenue: Math.floor(Math.random() * 50000) + 20000,
-    coinSales: Math.floor(Math.random() * 30000) + 10000
-  })),
-  videoPerformanceData: Array.from({ length: 30 }, (_, i) => ({
+  coinTransactionData: Array.from({ length: 30 }, (_, i) => ({
     date: new Date(Date.now() - (29 - i) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-    uploads: Math.floor(Math.random() * 100) + 20,
-    completions: Math.floor(Math.random() * 80) + 15
+    transactions: Math.floor(Math.random() * 500) + 200,
+    volume: Math.floor(Math.random() * 50000) + 10000
   })),
-  userSegments: [
-    { name: 'Regular Users', value: 65 },
-    { name: 'VIP Users', value: 20 },
-    { name: 'Content Creators', value: 10 },
-    { name: 'Inactive', value: 5 }
-  ],
   topVideos: Array.from({ length: 5 }, (_, i) => ({
     id: `top-video-${i + 1}`,
     title: `Top Performing Video ${i + 1}`,

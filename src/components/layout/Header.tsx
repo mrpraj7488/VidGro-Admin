@@ -1,5 +1,5 @@
 import React from 'react'
-import { Bell, Search, User, Moon, Sun } from 'lucide-react'
+import { Bell, Search, User, Moon, Sun, Settings } from 'lucide-react'
 import { Button } from '../ui/Button'
 import { Input } from '../ui/Input'
 
@@ -17,7 +17,7 @@ function ThemeToggle() {
         variant="ghost"
         size="sm"
         onClick={toggleTheme}
-        className="relative h-9 w-16 rounded-full bg-gradient-to-r from-slate-200 to-slate-300 dark:from-slate-700 dark:to-slate-800 border-2 border-slate-300 dark:border-slate-600 transition-all duration-300 hover:shadow-lg hover:scale-105"
+        className="relative h-9 w-16 rounded-full bg-gradient-to-r from-slate-200 to-slate-300 dark:from-slate-700 dark:to-slate-800 border-2 border-slate-300 dark:border-slate-600 transition-all duration-300 hover:shadow-lg hover:scale-105 p-0"
       >
         <div className={`absolute top-0.5 left-0.5 h-7 w-7 rounded-full bg-white dark:bg-slate-900 shadow-lg transition-all duration-300 flex items-center justify-center ${
           isDark ? 'translate-x-7' : 'translate-x-0'
@@ -36,6 +36,11 @@ function ThemeToggle() {
             : 'shadow-[0_0_20px_rgba(251,146,60,0.3)]'
         }`} />
       </Button>
+      
+      {/* Tooltip */}
+      <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 text-xs text-gray-500 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
+        {isDark ? 'Dark Mode' : 'Light Mode'}
+      </div>
     </div>
   )
 }

@@ -118,29 +118,29 @@ export function VideoManagement() {
       </Card>
 
       {/* Videos Table */}
-      <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
+      <Card>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
+              <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
-                  <th className="text-left py-4 px-6 text-sm font-semibold text-gray-900">User</th>
-                  <th className="text-left py-4 px-6 text-sm font-semibold text-gray-900">Video Status</th>
-                  <th className="text-left py-4 px-6 text-sm font-semibold text-gray-900">View Criteria</th>
-                  <th className="text-left py-4 px-6 text-sm font-semibold text-gray-900">Video ID</th>
-                  <th className="text-right py-4 px-6 text-sm font-semibold text-gray-900">Actions</th>
+                  <th className="text-left py-4 px-6 text-sm font-medium text-gray-900">User</th>
+                  <th className="text-left py-4 px-6 text-sm font-medium text-gray-900">Video Status</th>
+                  <th className="text-left py-4 px-6 text-sm font-medium text-gray-900">View Criteria</th>
+                  <th className="text-left py-4 px-6 text-sm font-medium text-gray-900">Video ID</th>
+                  <th className="text-right py-4 px-6 text-sm font-medium text-gray-900">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
                 {filteredVideos.map((video) => (
-                  <tr key={video.video_id} className="hover:bg-gray-50/70 transition-colors group">
+                  <tr key={video.video_id} className="hover:bg-gray-50 transition-colors group">
                     <td className="py-4 px-6">
                       <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 bg-gradient-to-br from-violet-400 to-purple-600 rounded-full flex items-center justify-center text-white font-medium text-sm shadow-sm">
+                        <div className="w-10 h-10 bg-gradient-to-br from-violet-400 to-purple-600 rounded-full flex items-center justify-center text-white font-medium text-sm">
                           {video.username.charAt(0).toUpperCase()}
                         </div>
                         <div>
-                          <p className="font-semibold text-gray-900">{video.username}</p>
+                          <p className="font-medium text-gray-900">{video.username}</p>
                           <p className="text-sm text-gray-500 line-clamp-1">{video.title}</p>
                         </div>
                       </div>

@@ -88,27 +88,15 @@ export interface ChartDataPoint {
 
 export interface AnalyticsData {
   dailyActiveUsers: number
-  userRetention: number
-  avgCompletionRate: number
   coinTransactions: number
   userGrowthData: Array<{
     date: string
-    newUsers: number
     activeUsers: number
   }>
-  revenueData: Array<{
-    month: string
-    revenue: number
-    coinSales: number
-  }>
-  videoPerformanceData: Array<{
+  coinTransactionData: Array<{
     date: string
-    uploads: number
-    completions: number
-  }>
-  userSegments: Array<{
-    name: string
-    value: number
+    transactions: number
+    volume: number
   }>
   topVideos: Array<{
     id: string

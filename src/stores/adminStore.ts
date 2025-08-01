@@ -69,6 +69,16 @@ interface AdminStore {
   updateBugStatus: (bugId: string, status: string) => Promise<void>
   assignBug: (bugId: string, assignedTo: string) => Promise<void>
   
+  // Moderation actions
+  moderationData: any
+  fetchModerationData: () => Promise<void>
+  moderateContent: (itemId: string, action: 'approve' | 'reject' | 'flag') => Promise<void>
+  
+  // Economy actions
+  economyData: any
+  fetchEconomyData: () => Promise<void>
+  updateCoinSettings: (settings: any) => Promise<void>
+  
   // System settings actions
   updateEnvironmentVars: (vars: Partial<SystemEnvironment>) => Promise<void>
   updateAdsConfig: (config: Partial<AdsConfiguration>) => Promise<void>
@@ -102,6 +112,8 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
   analyticsData: null,
   bugReportData: null,
   systemSettings: null,
+  moderationData: null,
+  economyData: null,
 
   // Dashboard actions
   fetchDashboardStats: async () => {
@@ -171,6 +183,73 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
     set({ isLoading: true })
     await new Promise(resolve => setTimeout(resolve, 500))
     set({ analyticsData: mockAnalyticsData, isLoading: false })
+  },
+
+  // Moderation actions
+  moderationData: null,
+  fetchModerationData: async () => {
+    set({ isLoading: true })
+    await new Promise(resolve => setTimeout(resolve, 500))
+    set({ 
+      moderationData: {
+        pendingCount: 15,
+        approvedToday: 42,
+        flaggedCount: 8,
+        pendingItems: [],
+        stats: {
+          totalReviewed: 1250,
+          approvalRate: 85,
+          avgResponseTime: 2.5,
+          activeReports: 23
+        }
+      }, 
+      isLoading: false 
+    })
+  },
+
+  moderateContent: async (itemId: string, action: 'approve' | 'reject' | 'flag') => {
+    // Mock implementation
+    await new Promise(resolve => setTimeout(resolve, 300))
+  },
+
+  // Economy actions
+  economyData: null,
+  fetchEconomyData: async () => {
+    set({ isLoading: true })
+    await new Promise(resolve => setTimeout(resolve, 500))
+    set({ 
+      economyData: {
+        totalCoinsCirculation: 2500000,
+        monthlyRevenue: 89500,
+        coinVelocity: 1.8,
+        activeSpenders: 3247,
+        settings: {
+          coinPrice: 0.01,
+          videoReward: 10,
+          referralBonus: 50,
+          vipMultiplier: 2.0
+        },
+        coinFlowData: [],
+        revenueData: [],
+        healthIndicators: [],
+        topSpenders: [],
+        alerts: []
+      }, 
+      isLoading: false 
+    })
+  },
+
+  updateCoinSettings: async (settings: any) => {
+    await new Promise(resolve => setTimeout(resolve, 300))
+    const currentData = get().economyData
+    if (currentData) {
+      set({
+        economyData: {
+          ...currentData,
+          settings
+        }
+      })
+    }
   },
 
   // Bug report actions
