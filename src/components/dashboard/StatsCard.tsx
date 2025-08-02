@@ -39,7 +39,7 @@ export function StatsCard({
   }
 
   return (
-    <Card className="gaming-metric group gaming-interactive">
+    <Card className="gaming-metric gaming-shine group gaming-interactive">
       <CardContent className="p-6 relative">
         <div className="flex items-center justify-between">
           <div>
@@ -54,8 +54,8 @@ export function StatsCard({
               <span className="text-sm text-gray-500 dark:text-gray-400 ml-1">vs last month</span>
             </div>
           </div>
-          <div className={`w-12 h-12 bg-gradient-to-br ${colorClasses[color]} rounded-lg flex items-center justify-center shadow-lg gaming-glow`}>
-            <Icon className="w-6 h-6 text-white gaming-glow" strokeWidth={2} />
+          <div className={`w-12 h-12 bg-gradient-to-br ${colorClasses[color]} rounded-lg flex items-center justify-center shadow-lg gaming-glow gaming-sparkle`}>
+            <Icon className="w-6 h-6 text-white gaming-icon-glow" strokeWidth={2} />
           </div>
         </div>
         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
