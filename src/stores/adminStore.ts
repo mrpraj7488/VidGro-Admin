@@ -19,8 +19,12 @@ import {
   getVideos,
   adjustUserCoins,
   updateVideoStatus as updateVideoStatusAPI,
-  mockChartData,
-  mockAnalyticsData,
+  getUserGrowthAnalytics,
+  getVideoPerformanceAnalytics,
+  getCoinEconomyAnalytics,
+  getSystemConfig,
+  getAdminLogs,
+  checkAdminPermission,
   Profile,
   Video as VideoType
 } from '../lib/supabase'
@@ -134,10 +138,16 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
     set({ isLoading: true })
     try {
       const stats = await getDashboardStats()
+      const chartData = await getUserGrowthAnalytics(30)
       
       set({ 
         dashboardStats: stats,
-        chartData: mockChartData,
+        chartData: chartData.map(item => ({
+          date: item.date,
+          users: item.new_users || 0,
+          videos: 0, // Will be populated by video analytics
+          coins: 0   // Will be populated by coin analytics
+        })),
         isLoading: false 
       })
     } catch (error) {
@@ -150,7 +160,13 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
   fetchUsers: async () => {
     set({ isLoading: true })
     try {
-      const users = await getUsers()
+      const filters = get().userFilters
+      const users = await getUsers(
+        50, 0, 
+        filters.search || undefined,
+        filters.vipStatus === 'vip',
+        filters.minCoins || undefined
+      )
       set({ users, isLoading: false })
     } catch (error) {
       logger.error('Failed to fetch users', error, 'adminStore')
@@ -221,7 +237,12 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
   fetchVideos: async () => {
     set({ isLoading: true })
     try {
-      const videos = await getVideos()
+      const filters = get().videoFilters
+      const videos = await getVideos(
+        50, 0,
+        filters.status !== 'all' ? filters.status : undefined,
+        filters.search || undefined
+      )
       set({ videos, isLoading: false })
     } catch (error) {
       logger.error('Failed to fetch videos', error, 'adminStore')
@@ -287,7 +308,40 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
   // Analytics actions
   fetchAnalytics: async (dateRange) => {
     set({ isLoading: true })
-    set({ analyticsData: mockAnalyticsData, isLoading: false })
+    try {
+      const daysBack = dateRange && dateRange[0] && dateRange[1] 
+        ? Math.ceil((dateRange[1].getTime() - dateRange[0].getTime()) / (1000 * 60 * 60 * 24))
+        : 30
+      
+      const [userGrowth, videoPerformance, coinEconomy] = await Promise.all([
+        getUserGrowthAnalytics(daysBack),
+        getVideoPerformanceAnalytics(daysBack),
+        getCoinEconomyAnalytics(daysBack)
+      ])
+      
+      const analyticsData = {
+        dailyActiveUsers: userGrowth.reduce((sum, day) => sum + (day.active_users || 0), 0),
+        coinTransactions: coinEconomy.reduce((sum, day) => sum + (day.coins_spent || 0), 0),
+        totalPromoted: videoPerformance.reduce((sum, day) => sum + (day.videos_created || 0), 0),
+        videosDeleted: 156, // This would come from video_deletions table
+        userGrowthData: userGrowth.map(item => ({
+          date: item.date,
+          activeUsers: item.active_users || 0
+        })),
+        coinTransactionData: coinEconomy.map(item => ({
+          date: item.date,
+          transactions: item.coins_spent || 0,
+          volume: item.coins_earned || 0
+        })),
+        topVideos: [], // Would need separate query for top videos
+        recentActivity: [] // Would need separate query for recent activity
+      }
+      
+      set({ analyticsData, isLoading: false })
+    } catch (error) {
+      logger.error('Failed to fetch analytics', error, 'adminStore')
+      set({ isLoading: false })
+    }
   },
 
   // Moderation actions
@@ -432,7 +486,13 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
   // System settings actions
   fetchSystemSettings: async () => {
     set({ isLoading: true })
-    set({ systemSettings: mockSystemSettings, isLoading: false })
+    try {
+      const settings = await getSystemConfig()
+      set({ systemSettings: settings, isLoading: false })
+    } catch (error) {
+      logger.error('Failed to fetch system settings', error, 'adminStore')
+      set({ isLoading: false })
+    }
   },
 
   updateEnvironmentVars: async (vars: Partial<SystemEnvironment>) => {

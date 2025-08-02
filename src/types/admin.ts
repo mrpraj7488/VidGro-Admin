@@ -1,9 +1,16 @@
 export interface DashboardStats {
-  totalUsers: number
-  activeVideos: number
-  vipUsers: number
-  monthlyRevenue: number
-  userGrowthRate: number
+  total_users: number
+  active_videos: number
+  vip_users: number
+  monthly_revenue: number
+  user_growth_rate: number
+  daily_active_users: number
+  coin_transactions: number
+  total_coins_distributed: number
+  video_completion_rate: number
+  average_watch_time: number
+  total_transactions: number
+  pending_videos: number
 }
 
 export interface User {
@@ -12,27 +19,45 @@ export interface User {
   email: string
   coins: number
   is_vip: boolean
-  created_at: string
-  last_active: string
+  vip_expires_at?: string
+  referral_code?: string
+  referred_by?: string
+  total_earned: number
+  total_spent: number
   videos_posted: number
+  last_active: string
+  created_at: string
+  updated_at: string
 }
 
 export interface Video {
   id: string
   user_id: string
   username: string
-  video_url: string
+  youtube_url: string
   title: string
-  status: 'active' | 'completed' | 'hold' | 'repromote' | 'deleted'
-  view_criteria: string // "7/40" format
+  views_count: number
+  target_views: number
+  current_views: number
+  duration_seconds: number
+  coin_reward: number
+  coin_cost: number
   spent_coins: number
+  status: 'active' | 'paused' | 'completed' | 'on_hold' | 'repromoted' | 'deleted'
+  hold_until?: string
+  repromoted_at?: string
   total_watch_time: number
   completion_rate: number
+  completed: boolean
+  coins_earned_total: number
+  created_at: string
+  updated_at: string
+  completed_at?: string
+  thumbnail_url: string
+  video_id: string
+  video_url: string
   refund_amount?: number
   refund_percent?: number
-  created_at: string
-  thumbnail_url: string
-  views_count: number
 }
 
 export interface BugReport {
@@ -46,6 +71,44 @@ export interface BugReport {
   created_at: string
   updated_at: string
   category: string
+}
+
+export interface AdminProfile {
+  id: string
+  user_id?: string
+  email: string
+  role: 'super_admin' | 'content_moderator' | 'analytics_viewer' | 'user_support'
+  permissions: Record<string, boolean>
+  is_active: boolean
+  last_login?: string
+  created_at: string
+  updated_at: string
+}
+
+export interface AdminLog {
+  id: string
+  admin_id: string
+  action: string
+  target_type?: string
+  target_id?: string
+  old_values?: Record<string, any>
+  new_values?: Record<string, any>
+  ip_address?: string
+  user_agent?: string
+  details?: Record<string, any>
+  created_at: string
+}
+
+export interface VideoDeletion {
+  id: string
+  video_id: string
+  user_id: string
+  video_title: string
+  coin_cost: number
+  refund_amount: number
+  refund_percentage: number
+  deleted_at: string
+  created_at: string
 }
 
 export interface UserFilters {
@@ -100,6 +163,7 @@ export interface AnalyticsData {
 export interface BugReportData {
   newBugs: number
   bugsFixedToday: number
+  totalBugs: number
   bugReports: BugReport[]
 }
 
@@ -146,4 +210,21 @@ export interface SystemSettings {
     passwordMinLength: number
     ipWhitelist: string[]
   }
+}
+
+export interface SystemEnvironment {
+  VITE_SUPABASE_URL: string
+  VITE_SUPABASE_ANON_KEY: string
+  VITE_SUPABASE_SERVICE_ROLE_KEY: string
+  VITE_ADMIN_EMAIL: string
+  VITE_ADMIN_SECRET_KEY: string
+  VITE_APP_NAME: string
+  VITE_API_BASE_URL: string
+}
+
+export interface AdsConfiguration {
+  ADMOB_APP_ID: string
+  ADMOB_BANNER_ID: string
+  ADMOB_INTERSTITIAL_ID: string
+  ADMOB_REWARDED_ID: string
 }

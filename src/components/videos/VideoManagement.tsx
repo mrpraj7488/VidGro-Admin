@@ -33,9 +33,12 @@ export function VideoManagement() {
         return <Badge variant="success" className="font-medium">Active</Badge>
       case 'completed':
         return <Badge variant="info" className="font-medium">Completed</Badge>
-      case 'hold':
+      case 'on_hold':
         return <Badge variant="warning" className="font-medium">On Hold</Badge>
+      case 'paused':
+        return <Badge variant="warning" className="font-medium">Paused</Badge>
       case 'repromote':
+      case 'repromoted':
         return <Badge variant="default" className="font-medium">Repromote</Badge>
       case 'deleted':
         return <Badge variant="danger" className="font-medium">Deleted</Badge>
@@ -47,8 +50,9 @@ export function VideoManagement() {
   const statusCounts = {
     active: videos.filter(v => v.status === 'active').length,
     completed: videos.filter(v => v.status === 'completed').length,
-    hold: videos.filter(v => v.status === 'hold').length,
-    repromote: videos.filter(v => v.status === 'repromote').length,
+    on_hold: videos.filter(v => v.status === 'on_hold').length,
+    paused: videos.filter(v => v.status === 'paused').length,
+    repromoted: videos.filter(v => v.status === 'repromoted').length,
     deleted: videos.filter(v => v.status === 'deleted').length
   }
 
@@ -77,12 +81,12 @@ export function VideoManagement() {
       </div>
 
       {/* Status Overview */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
         {Object.entries(statusCounts).map(([status, count]) => (
           <Card key={status} className="text-center p-4 cursor-pointer gaming-interactive"
                 onClick={() => setVideoFilters({ status: status === videoFilters.status ? 'all' : status })}>
             <div className="gaming-metric-value !text-2xl">{count}</div>
-            <div className="text-sm text-gray-500 dark:text-gray-400 capitalize">{status}</div>
+            <div className="text-sm text-gray-500 dark:text-gray-400 capitalize">{status.replace('_', ' ')}</div>
           </Card>
         ))}
       </div>
@@ -109,8 +113,9 @@ export function VideoManagement() {
               <option value="all">All Status</option>
               <option value="active">Active</option>
               <option value="completed">Completed</option>
-              <option value="hold">On Hold</option>
-              <option value="repromote">Repromote</option>
+              <option value="on_hold">On Hold</option>
+              <option value="paused">Paused</option>
+              <option value="repromoted">Repromoted</option>
               <option value="deleted">Deleted</option>
             </select>
           </div>
@@ -151,7 +156,7 @@ export function VideoManagement() {
                     <td className="py-4 px-6">
                       <div className="flex items-center space-x-2">
                         <Eye className="w-4 h-4 text-gray-400" />
-                        <span className="font-mono text-sm font-medium">{video.current_views}/{video.target_views}</span>
+                        <span className="font-mono text-sm font-medium">{video.views_count}/{video.target_views}</span>
                       </div>
                     </td>
                     <td className="py-4 px-6">

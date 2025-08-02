@@ -21,8 +21,9 @@ export function VideoEditModal({ video, isOpen, onClose }: VideoEditModalProps) 
     switch (status) {
       case 'active': return 'text-emerald-600 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-900/20'
       case 'completed': return 'text-blue-600 bg-blue-50 dark:text-blue-400 dark:bg-blue-900/20'
-      case 'hold': return 'text-orange-600 bg-orange-50 dark:text-orange-400 dark:bg-orange-900/20'
-      case 'repromote': return 'text-purple-600 bg-purple-50 dark:text-purple-400 dark:bg-purple-900/20'
+      case 'on_hold': return 'text-orange-600 bg-orange-50 dark:text-orange-400 dark:bg-orange-900/20'
+      case 'paused': return 'text-orange-600 bg-orange-50 dark:text-orange-400 dark:bg-orange-900/20'
+      case 'repromoted': return 'text-purple-600 bg-purple-50 dark:text-purple-400 dark:bg-purple-900/20'
       case 'deleted': return 'text-red-600 bg-red-50 dark:text-red-400 dark:bg-red-900/20'
       default: return 'text-gray-600 bg-gray-50 dark:text-gray-400 dark:bg-gray-900/20'
     }
@@ -46,7 +47,7 @@ export function VideoEditModal({ video, isOpen, onClose }: VideoEditModalProps) 
           {/* Video Preview */}
           <div className="flex items-start space-x-4 p-4 gaming-card">
             <img
-              src={video.thumbnail_url}
+            src={video.thumbnail_url || `https://images.pexels.com/photos/2000/pexels-photo-2000.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop`}
               alt={video.title}
               className="w-24 h-16 object-cover rounded-lg shadow-sm"
             />
@@ -96,14 +97,14 @@ export function VideoEditModal({ video, isOpen, onClose }: VideoEditModalProps) 
                 </label>
                 <div className="flex items-center space-x-2">
                   <Input
-                    value={video.video_url}
+                    value={video.youtube_url}
                     readOnly
                     className="!bg-violet-500/10 font-mono text-sm"
                   />
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => copyToClipboard(video.video_url)}
+                    onClick={() => copyToClipboard(video.youtube_url)}
                   >
                     <Copy className="w-4 h-4" />
                   </Button>
@@ -126,7 +127,7 @@ export function VideoEditModal({ video, isOpen, onClose }: VideoEditModalProps) 
                   Criteria
                 </label>
                 <div className="px-3 py-2 gaming-card">
-                  <Badge variant="default" className="font-mono text-sm">{video.current_views}/{video.target_views}</Badge>
+                  <Badge variant="default" className="font-mono text-sm">{video.views_count}/{video.target_views}</Badge>
                 </div>
               </div>
             </div>
@@ -138,7 +139,7 @@ export function VideoEditModal({ video, isOpen, onClose }: VideoEditModalProps) 
                   Spent Coins
                 </label>
                 <div className="px-3 py-2 gaming-card">
-                  <span className="font-mono text-sm text-orange-400">{formatNumber(video.spent_coins)}</span>
+                  <span className="font-mono text-sm text-orange-400">{formatNumber(video.coin_cost)}</span>
                 </div>
               </div>
 
@@ -182,7 +183,7 @@ export function VideoEditModal({ video, isOpen, onClose }: VideoEditModalProps) 
               <div className="text-sm text-emerald-400">Completion Rate</div>
             </div>
             <div className="gaming-metric p-4 text-center">
-              <div className="text-2xl font-bold text-orange-400">{formatNumber(video.spent_coins)}</div>
+              <div className="text-2xl font-bold text-orange-400">{formatNumber(video.coin_cost)}</div>
               <div className="text-sm text-orange-400">Coins Spent</div>
             </div>
             <div className="gaming-metric p-4 text-center">
