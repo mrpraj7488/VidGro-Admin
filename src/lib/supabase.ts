@@ -2,7 +2,6 @@ import { createClient } from '@supabase/supabase-js'
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://placeholder-project.supabase.co'
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.placeholder'
-const supabaseServiceKey = import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY
 
 // Regular client for auth and basic operations
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
@@ -18,14 +17,10 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 })
 
 // Admin client with service role key for admin operations
-export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey || supabaseAnonKey, {
+export const supabaseAdmin = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     autoRefreshToken: false,
     persistSession: false
-  },
-  realtime: {
-    heartbeatIntervalMs: 30000,
-    reconnectAfterMs: (tries) => Math.min(tries * 1000, 30000)
   }
 })
 
@@ -114,25 +109,6 @@ export interface AdminLog {
   user_agent?: string
   details?: Record<string, any>
   created_at: string
-}
-
-// Real-time subscriptions
-export const subscribeToAdminNotifications = (callback: (payload: any) => void) => {
-  return supabase
-    .channel('admin-notifications')
-    .on('postgres_changes', 
-      { event: '*', schema: 'public', table: 'profiles' }, 
-      callback
-    )
-    .on('postgres_changes',
-      { event: '*', schema: 'public', table: 'videos' },
-      callback
-    )
-    .on('postgres_changes',
-      { event: 'INSERT', schema: 'public', table: 'transactions' },
-      callback
-    )
-    .subscribe()
 }
 
 // Mock data for demo purposes (when Supabase is not configured)
@@ -444,34 +420,5 @@ export const updateVideoStatus = async (videoId: string, status: string, adminId
   } catch (error) {
     console.error('Failed to update video status:', error)
     throw error
-  }
-}
-
-export const getRealtimeAnalytics = async () => {
-  try {
-    // Check if we're using placeholder URLs
-    if (supabaseUrl.includes('placeholder-project')) {
-      console.warn('Using mock data - Supabase not configured')
-      return {
-        onlineUsers: Math.floor(Math.random() * 1000) + 500,
-        videosWatchedLastHour: Math.floor(Math.random() * 500) + 100,
-        coinsEarnedLastHour: Math.floor(Math.random() * 10000) + 1000,
-        newUsersToday: Math.floor(Math.random() * 100) + 20,
-        activePromotions: Math.floor(Math.random() * 50) + 10
-      }
-    }
-    
-    const { data, error } = await supabaseAdmin.rpc('get_realtime_analytics')
-    if (error) throw error
-    return data
-  } catch (error) {
-    console.warn('Failed to get realtime analytics:', error)
-    return {
-      onlineUsers: Math.floor(Math.random() * 1000) + 500,
-      videosWatchedLastHour: Math.floor(Math.random() * 500) + 100,
-      coinsEarnedLastHour: Math.floor(Math.random() * 10000) + 1000,
-      newUsersToday: Math.floor(Math.random() * 100) + 20,
-      activePromotions: Math.floor(Math.random() * 50) + 10
-    }
   }
 }

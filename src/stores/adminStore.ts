@@ -34,8 +34,6 @@ interface AdminStore {
   dashboardStats: DashboardStats | null
   chartData: ChartDataPoint[]
   isLoading: boolean
-  realtimeStats: any
-  connectionStatus: boolean
   
   // User management
   users: Profile[]
@@ -108,8 +106,6 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
   dashboardStats: null,
   chartData: [],
   isLoading: false,
-  realtimeStats: {},
-  connectionStatus: false,
   users: [],
   userFilters: {
     search: '',
@@ -133,14 +129,10 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
   fetchDashboardStats: async () => {
     set({ isLoading: true })
     try {
-      const [stats, realtimeStats] = await Promise.all([
-        getDashboardStats(),
-        getRealtimeAnalytics()
-      ])
+      const stats = await getDashboardStats()
       
       set({ 
         dashboardStats: stats,
-        realtimeStats,
         chartData: mockChartData,
         isLoading: false 
       })
@@ -473,134 +465,6 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
   updateSystemSettings: async (newSettings) => {
     await new Promise(resolve => setTimeout(resolve, 500))
     set({ systemSettings: newSettings })
-  },
-
-  // Realtime actions
-  initializeRealtime: () => {
-    console.log('🚀 Initializing realtime connections...')
-    
-    try {
-      // Subscribe to admin updates
-      realtimeService.subscribeToAdminUpdates((event) => {
-        get().handleRealtimeEvent(event)
-      })
-      
-      // Store callback for reconnection
-      realtimeService.storeCallback('admin-dashboard', (event) => {
-        get().handleRealtimeEvent(event)
-      })
-      
-      // Update connection status
-      set({ connectionStatus: realtimeService.getConnectionStatus() })
-      
-      // Periodically check connection status
-      setInterval(() => {
-        set({ connectionStatus: realtimeService.getConnectionStatus() })
-      }, 5000)
-      
-      console.log('✅ Realtime initialized successfully')
-    } catch (error) {
-      console.error('❌ Failed to initialize realtime:', error)
-      set({ connectionStatus: false })
-    }
-  },
-
-  disconnectRealtime: () => {
-    console.log('🔌 Disconnecting realtime connections...')
-    realtimeService.unsubscribeAll()
-    set({ connectionStatus: false })
-  },
-
-  handleRealtimeEvent: (event: RealtimeEvent) => {
-    console.log('📡 Handling realtime event:', event)
-    
-    const { table, eventType, new: newData, old: oldData } = event
-    
-    switch (table) {
-      case 'profiles':
-        if (eventType === 'INSERT') {
-          // New user registered
-          const currentStats = get().dashboardStats
-          if (currentStats) {
-            set({
-              dashboardStats: {
-                ...currentStats,
-                totalUsers: currentStats.totalUsers + 1
-              }
-            })
-          }
-          
-          // Add to users list if we're on the users page
-          const currentUsers = get().users
-          if (currentUsers.length > 0) {
-            set({
-              users: [newData, ...currentUsers]
-            })
-          }
-        } else if (eventType === 'UPDATE') {
-          // User updated
-          const users = get().users.map(user => 
-            user.id === newData.id ? { ...user, ...newData } : user
-          )
-          set({ users })
-        }
-        break
-        
-      case 'videos':
-        if (eventType === 'INSERT') {
-          // New video submitted
-          const currentStats = get().dashboardStats
-          if (currentStats) {
-            set({
-              dashboardStats: {
-                ...currentStats,
-                activeVideos: currentStats.activeVideos + 1
-              }
-            })
-          }
-          
-          // Add to videos list
-          const currentVideos = get().videos
-          if (currentVideos.length > 0) {
-            set({
-              videos: [newData, ...currentVideos]
-            })
-          }
-        } else if (eventType === 'UPDATE') {
-          // Video updated
-          const videos = get().videos.map(video => 
-            video.id === newData.id ? { ...video, ...newData } : video
-          )
-          set({ videos })
-          
-          // Update selected video if it's the one being updated
-          const selectedVideo = get().selectedVideo
-          if (selectedVideo && selectedVideo.id === newData.id) {
-            set({ selectedVideo: { ...selectedVideo, ...newData } })
-          }
-        }
-        break
-        
-      case 'transactions':
-        if (eventType === 'INSERT') {
-          // New transaction
-          console.log('💰 New transaction:', newData)
-          
-          // Update realtime stats
-          const currentRealtime = get().realtimeStats
-          set({
-            realtimeStats: {
-              ...currentRealtime,
-              lastTransaction: {
-                amount: newData.amount,
-                type: newData.type,
-                timestamp: newData.created_at
-              }
-            }
-          })
-        }
-        break
-    }
   },
   // Utility actions
   copyToClipboard: (text: string) => {
