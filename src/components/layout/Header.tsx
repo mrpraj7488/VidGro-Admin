@@ -75,8 +75,8 @@ export function Header({ isPopupOpen = false }: HeaderProps) {
       <header className={`fixed top-0 left-0 right-0 z-30 transition-all duration-500 ease-in-out ${
         isVisible ? 'translate-y-0' : '-translate-y-full'
       }`}>
-        <div className="gaming-header-enhanced border-b border-violet-500/20 h-16 md:h-20">
-          <div className="flex items-center justify-between px-4 md:px-6 py-4">
+        <div className="gaming-header-enhanced border-b border-violet-500/20 h-14 md:h-16">
+          <div className="flex items-center justify-between px-4 md:px-6 py-2 md:py-3">
             {/* Left Section - Mobile Menu & Search */}
             <div className="flex items-center space-x-4 flex-1">
               {/* Mobile Menu Button */}
@@ -90,13 +90,13 @@ export function Header({ isPopupOpen = false }: HeaderProps) {
               </Button>
 
               {/* Search Bar */}
-              <div className="relative max-w-md w-full hidden sm:block">
+              <div className="relative max-w-sm w-full hidden md:block">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                 <Input
                   placeholder="Search users, videos, or reports..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 !bg-white/10 dark:!bg-slate-800/30 border-violet-500/30 backdrop-blur-md"
+                  className="pl-10 !bg-white/10 dark:!bg-slate-800/30 border-violet-500/30 backdrop-blur-md text-sm"
                 />
               </div>
             </div>
@@ -107,7 +107,7 @@ export function Header({ isPopupOpen = false }: HeaderProps) {
               <Button
                 variant="ghost"
                 size="icon"
-                className="sm:hidden gaming-interactive"
+                className="md:hidden gaming-interactive"
               >
                 <Search className="w-5 h-5" />
               </Button>
@@ -118,10 +118,10 @@ export function Header({ isPopupOpen = false }: HeaderProps) {
                 size="icon"
                 className="relative gaming-interactive"
               >
-                <Bell className="w-5 h-5" />
+                <Bell className="w-4 h-4 md:w-5 md:h-5" />
                 <Badge 
                   variant="danger" 
-                  className="absolute -top-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center text-xs gaming-pulse"
+                  className="absolute -top-2 -right-2 min-w-[18px] h-[18px] rounded-full flex items-center justify-center text-xs font-bold gaming-pulse px-1 shadow-lg border-2 border-white dark:border-slate-800"
                 >
                   3
                 </Badge>
@@ -135,9 +135,9 @@ export function Header({ isPopupOpen = false }: HeaderProps) {
                 className="gaming-interactive"
               >
                 {isDarkMode ? (
-                  <Sun className="w-5 h-5 text-yellow-500 gaming-glow" />
+                  <Sun className="w-4 h-4 md:w-5 md:h-5 text-yellow-500 gaming-glow" />
                 ) : (
-                  <Moon className="w-5 h-5 text-violet-500 gaming-glow" />
+                  <Moon className="w-4 h-4 md:w-5 md:h-5 text-violet-500 gaming-glow" />
                 )}
               </Button>
 
@@ -148,7 +148,7 @@ export function Header({ isPopupOpen = false }: HeaderProps) {
                 onClick={toggleSettings}
                 className="relative gaming-interactive"
               >
-                <div className="w-8 h-8 bg-gradient-to-br from-violet-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-sm gaming-glow">
+                <div className="w-7 h-7 md:w-8 md:h-8 bg-gradient-to-br from-violet-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-xs md:text-sm gaming-glow">
                   A
                 </div>
               </Button>
@@ -157,7 +157,7 @@ export function Header({ isPopupOpen = false }: HeaderProps) {
 
           {/* Mobile Menu Overlay */}
           {isMobileMenuOpen && (
-            <div className="md:hidden absolute top-full left-0 right-0 gaming-card border-t border-violet-500/20 p-4 backdrop-blur-md z-40">
+            <div className="md:hidden absolute top-full left-0 right-0 gaming-card border-t border-violet-500/20 p-4 backdrop-blur-md z-40 mx-2 rounded-b-lg">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                 <Input

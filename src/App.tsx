@@ -51,7 +51,7 @@ function App() {
           <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
           <div className="flex-1">
             <Header isPopupOpen={isPopupOpen} />
-            <main className="p-4 md:p-6 dark:text-white min-h-[calc(100vh-4rem)] relative pt-20 md:pt-24">
+            <main className="p-4 md:p-6 dark:text-white min-h-[calc(100vh-4rem)] relative pt-16 md:pt-18">
               <div className="absolute inset-0 bg-gradient-to-br from-violet-500/5 via-transparent to-emerald-500/5 pointer-events-none" />
               <div className="relative z-10">
               <ErrorBoundary>
