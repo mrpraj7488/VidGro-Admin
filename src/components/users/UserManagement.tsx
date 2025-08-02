@@ -166,6 +166,32 @@ export function UserManagement() {
 
   return (
     <div className="space-y-6">
+      {/* Summary Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <Card>
+          <CardContent className="p-6 text-center">
+            <div className="text-2xl font-bold text-gray-900 dark:text-white">{filteredUsers.length}</div>
+            <div className="text-sm text-gray-500 dark:text-gray-400">Total Users Shown</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-6 text-center">
+            <div className="text-2xl font-bold text-violet-600 dark:text-violet-400">
+              {filteredUsers.filter(u => u.is_vip).length}
+            </div>
+            <div className="text-sm text-gray-500 dark:text-gray-400">VIP Users</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-6 text-center">
+            <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">
+              {formatNumber(filteredUsers.reduce((sum, u) => sum + u.coins, 0))}
+            </div>
+            <div className="text-sm text-gray-500 dark:text-gray-400">Total Coins</div>
+          </CardContent>
+        </Card>
+      </div>
+
       {/* Header with Search and Filters */}
       <Card>
         <CardHeader>
@@ -284,32 +310,6 @@ export function UserManagement() {
           </div>
         </CardContent>
       </Card>
-
-      {/* Summary Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card>
-          <CardContent className="p-6 text-center">
-            <div className="text-2xl font-bold text-gray-900 dark:text-white">{filteredUsers.length}</div>
-            <div className="text-sm text-gray-500 dark:text-gray-400">Total Users Shown</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6 text-center">
-            <div className="text-2xl font-bold text-violet-600 dark:text-violet-400">
-              {filteredUsers.filter(u => u.is_vip).length}
-            </div>
-            <div className="text-sm text-gray-500 dark:text-gray-400">VIP Users</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6 text-center">
-            <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">
-              {formatNumber(filteredUsers.reduce((sum, u) => sum + u.coins, 0))}
-            </div>
-            <div className="text-sm text-gray-500 dark:text-gray-400">Total Coins</div>
-          </CardContent>
-        </Card>
-      </div>
 
       {/* Coin Adjustment Modal */}
       <CoinAdjustmentModal
