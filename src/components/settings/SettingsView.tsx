@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Settings, Save, Shield, Bell, Database, Users, Video, Coins, Globe } from 'lucide-react'
+import { Settings, Save, Shield, Bell, Database, Users, Video, Coins, Globe, ChevronRight } from 'lucide-react'
 import { useAdminStore } from '../../stores/adminStore'
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card'
 import { Button } from '../ui/Button'
@@ -105,38 +105,47 @@ export function SettingsView() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">System Settings</h1>
-          <p className="text-gray-600">Configure platform settings and preferences</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white gaming-text-shadow">System Settings</h1>
+          <p className="text-gray-600 dark:text-gray-300">Configure platform settings and preferences</p>
         </div>
         {hasChanges && (
-          <Button onClick={handleSave} className="flex items-center space-x-2">
+          <Button onClick={handleSave} className="flex items-center space-x-2 w-full sm:w-auto">
             <Save className="w-4 h-4" />
             <span>Save Changes</span>
           </Button>
         )}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
         {/* Settings Navigation */}
-        <Card>
+        <Card className="xl:col-span-1">
           <CardContent className="p-0">
-            <nav className="space-y-1">
+            <nav className="space-y-1 p-2">
               {tabs.map((tab) => {
                 const Icon = tab.icon
                 return (
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`w-full flex items-center space-x-3 px-4 py-3 text-left transition-colors ${
+                    className={`w-full flex items-center justify-between px-4 py-3 text-left transition-all duration-300 rounded-lg group ${
                       activeTab === tab.id
-                        ? 'bg-violet-100 text-violet-700 border-r-2 border-violet-600'
-                        : 'text-gray-600 hover:bg-gray-50'
+                        ? 'bg-violet-500/20 dark:bg-violet-500/30 text-violet-700 dark:text-violet-300 border-l-4 border-violet-600 dark:border-violet-400 shadow-lg'
+                        : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-700/50 hover:text-gray-900 dark:hover:text-gray-200'
                     }`}
                   >
-                    <Icon className="w-5 h-5" />
-                    <span className="font-medium">{tab.label}</span>
+                    <div className="flex items-center space-x-3">
+                      <Icon className={`w-5 h-5 transition-colors ${
+                        activeTab === tab.id 
+                          ? 'text-violet-600 dark:text-violet-400' 
+                          : 'text-gray-500 dark:text-gray-500 group-hover:text-gray-700 dark:group-hover:text-gray-300'
+                      }`} />
+                      <span className="font-medium">{tab.label}</span>
+                    </div>
+                    <ChevronRight className={`w-4 h-4 transition-transform xl:hidden ${
+                      activeTab === tab.id ? 'rotate-90' : ''
+                    }`} />
                   </button>
                 )
               })}
@@ -145,8 +154,8 @@ export function SettingsView() {
         </Card>
 
         {/* Settings Content */}
-        <div className="lg:col-span-3">
-          <Card>
+        <div className="xl:col-span-3">
+          <Card className="gaming-card-enhanced">
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
                 {React.createElement(tabs.find(t => t.id === activeTab)?.icon || Settings, { className: "w-5 h-5" })}
@@ -157,9 +166,9 @@ export function SettingsView() {
               {/* General Settings */}
               {activeTab === 'general' && (
                 <div className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Platform Name
                       </label>
                       <Input
@@ -168,7 +177,7 @@ export function SettingsView() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Support Email
                       </label>
                       <Input
@@ -178,7 +187,7 @@ export function SettingsView() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Max Video Size (MB)
                       </label>
                       <Input
@@ -188,17 +197,17 @@ export function SettingsView() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Maintenance Mode
                       </label>
-                      <div className="flex items-center space-x-3">
+                      <div className="flex items-center space-x-3 p-3 gaming-card rounded-lg">
                         <input
                           type="checkbox"
                           checked={settings.general.maintenanceMode}
                           onChange={(e) => handleSettingChange('general', 'maintenanceMode', e.target.checked)}
-                          className="rounded border-gray-300"
+                          className="rounded border-gray-300 dark:border-gray-600"
                         />
-                        <span className="text-sm text-gray-600">Enable maintenance mode</span>
+                        <span className="text-sm text-gray-600 dark:text-gray-400">Enable maintenance mode</span>
                       </div>
                     </div>
                   </div>
@@ -208,37 +217,37 @@ export function SettingsView() {
               {/* User Settings */}
               {activeTab === 'users' && (
                 <div className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Registration
                       </label>
-                      <div className="flex items-center space-x-3">
+                      <div className="flex items-center space-x-3 p-3 gaming-card rounded-lg">
                         <input
                           type="checkbox"
                           checked={settings.users.registrationEnabled}
                           onChange={(e) => handleSettingChange('users', 'registrationEnabled', e.target.checked)}
-                          className="rounded border-gray-300"
+                          className="rounded border-gray-300 dark:border-gray-600"
                         />
-                        <span className="text-sm text-gray-600">Allow new user registration</span>
+                        <span className="text-sm text-gray-600 dark:text-gray-400">Allow new user registration</span>
                       </div>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Email Verification
                       </label>
-                      <div className="flex items-center space-x-3">
+                      <div className="flex items-center space-x-3 p-3 gaming-card rounded-lg">
                         <input
                           type="checkbox"
                           checked={settings.users.emailVerificationRequired}
                           onChange={(e) => handleSettingChange('users', 'emailVerificationRequired', e.target.checked)}
-                          className="rounded border-gray-300"
+                          className="rounded border-gray-300 dark:border-gray-600"
                         />
-                        <span className="text-sm text-gray-600">Require email verification</span>
+                        <span className="text-sm text-gray-600 dark:text-gray-400">Require email verification</span>
                       </div>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Max Coins Per User
                       </label>
                       <Input
@@ -248,7 +257,7 @@ export function SettingsView() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         VIP Upgrade Price ($)
                       </label>
                       <Input
@@ -265,9 +274,9 @@ export function SettingsView() {
               {/* Video Settings */}
               {activeTab === 'videos' && (
                 <div className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Max Videos Per User
                       </label>
                       <Input
@@ -277,21 +286,21 @@ export function SettingsView() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Auto Moderation
                       </label>
-                      <div className="flex items-center space-x-3">
+                      <div className="flex items-center space-x-3 p-3 gaming-card rounded-lg">
                         <input
                           type="checkbox"
                           checked={settings.videos.autoModerationEnabled}
                           onChange={(e) => handleSettingChange('videos', 'autoModerationEnabled', e.target.checked)}
-                          className="rounded border-gray-300"
+                          className="rounded border-gray-300 dark:border-gray-600"
                         />
-                        <span className="text-sm text-gray-600">Enable automatic content moderation</span>
+                        <span className="text-sm text-gray-600 dark:text-gray-400">Enable automatic content moderation</span>
                       </div>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Min Video Length (seconds)
                       </label>
                       <Input
@@ -301,7 +310,7 @@ export function SettingsView() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Max Video Length (seconds)
                       </label>
                       <Input
@@ -317,9 +326,9 @@ export function SettingsView() {
               {/* Economy Settings */}
               {activeTab === 'economy' && (
                 <div className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Coin Price (USD)
                       </label>
                       <Input
@@ -330,7 +339,7 @@ export function SettingsView() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Video Reward (Coins)
                       </label>
                       <Input
@@ -340,7 +349,7 @@ export function SettingsView() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Daily Bonus Coins
                       </label>
                       <Input
@@ -350,7 +359,7 @@ export function SettingsView() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         VIP Multiplier
                       </label>
                       <Input
@@ -367,14 +376,14 @@ export function SettingsView() {
               {/* Notification Settings */}
               {activeTab === 'notifications' && (
                 <div className="space-y-6">
-                  <div className="space-y-4">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                     {Object.entries(settings.notifications).map(([key, value]) => (
-                      <div key={key} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+                      <div key={key} className="flex items-center justify-between p-4 gaming-card rounded-lg">
                         <div>
-                          <h4 className="font-medium text-gray-900 capitalize">
+                          <h4 className="font-medium text-gray-900 dark:text-white capitalize">
                             {key.replace(/([A-Z])/g, ' $1').trim()}
                           </h4>
-                          <p className="text-sm text-gray-500">
+                          <p className="text-sm text-gray-500 dark:text-gray-400">
                             {key === 'emailNotifications' && 'Send email notifications to users'}
                             {key === 'pushNotifications' && 'Send push notifications to mobile devices'}
                             {key === 'moderationAlerts' && 'Alert moderators of new content to review'}
@@ -386,7 +395,7 @@ export function SettingsView() {
                           type="checkbox"
                           checked={value as boolean}
                           onChange={(e) => handleSettingChange('notifications', key, e.target.checked)}
-                          className="rounded border-gray-300"
+                          className="rounded border-gray-300 dark:border-gray-600"
                         />
                       </div>
                     ))}
@@ -397,23 +406,23 @@ export function SettingsView() {
               {/* Security Settings */}
               {activeTab === 'security' && (
                 <div className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Two-Factor Authentication
                       </label>
-                      <div className="flex items-center space-x-3">
+                      <div className="flex items-center space-x-3 p-3 gaming-card rounded-lg">
                         <input
                           type="checkbox"
                           checked={settings.security.twoFactorRequired}
                           onChange={(e) => handleSettingChange('security', 'twoFactorRequired', e.target.checked)}
-                          className="rounded border-gray-300"
+                          className="rounded border-gray-300 dark:border-gray-600"
                         />
-                        <span className="text-sm text-gray-600">Require 2FA for all admin accounts</span>
+                        <span className="text-sm text-gray-600 dark:text-gray-400">Require 2FA for all admin accounts</span>
                       </div>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Session Timeout (hours)
                       </label>
                       <Input
@@ -423,7 +432,7 @@ export function SettingsView() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Max Login Attempts
                       </label>
                       <Input
@@ -433,7 +442,7 @@ export function SettingsView() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Password Min Length
                       </label>
                       <Input
