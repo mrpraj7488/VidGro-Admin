@@ -34,7 +34,7 @@ export function DashboardView() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 mt-4">
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold gaming-gradient-text gaming-text-shadow">Dashboard</h1>

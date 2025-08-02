@@ -28,7 +28,7 @@ const menuItems = [
 
 export function Sidebar({ activeTab, onTabChange }: SidebarProps) {
   return (
-    <div className="w-64 lg:w-64 md:w-16 sm:w-16 gaming-card border-r border-violet-200/50 dark:border-violet-500/30 h-screen sticky top-0 transition-all duration-300 shadow-xl">
+    <div className="w-64 lg:w-64 md:w-16 sm:w-16 gaming-card border-r border-violet-200/50 dark:border-violet-500/30 h-screen sticky top-0 transition-all duration-300 shadow-xl z-20">
       <div className="p-6">
         <div className="flex items-center space-x-3">
           <div className="w-10 h-10 bg-gradient-to-br from-violet-600 via-purple-600 to-violet-700 rounded-xl flex items-center justify-center shadow-lg gaming-pulse gaming-shine-enhanced">

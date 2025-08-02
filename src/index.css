@@ -518,20 +518,27 @@
   
   .gaming-header-enhanced {
     @apply relative;
-    background: linear-gradient(135deg, 
-      rgba(255, 255, 255, 0.7) 0%, 
-      rgba(255, 255, 255, 0.5) 100%);
+    background: linear-gradient(135deg,
+      rgba(255, 255, 255, 0.95) 0%,
+      rgba(255, 255, 255, 0.9) 100%);
     backdrop-filter: blur(20px);
     border-bottom: 1px solid rgba(139, 92, 246, 0.15);
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    min-height: 4rem;
   }
   
   .dark .gaming-header-enhanced {
-    background: linear-gradient(135deg, 
-      rgba(15, 15, 35, 0.8) 0%, 
-      rgba(26, 26, 46, 0.6) 100%);
+    background: linear-gradient(135deg,
+      rgba(15, 15, 35, 0.95) 0%,
+      rgba(26, 26, 46, 0.9) 100%);
     border-bottom: 1px solid rgba(139, 92, 246, 0.25);
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+  }
+  
+  @media (min-width: 768px) {
+    .gaming-header-enhanced {
+      min-height: 5rem;
+    }
   }
   
   .gaming-stats-grid {

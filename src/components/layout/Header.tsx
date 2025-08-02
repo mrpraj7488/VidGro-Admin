@@ -75,7 +75,7 @@ export function Header({ isPopupOpen = false }: HeaderProps) {
       <header className={`fixed top-0 left-0 right-0 z-30 transition-all duration-500 ease-in-out ${
         isVisible ? 'translate-y-0' : '-translate-y-full'
       }`}>
-        <div className="gaming-header-enhanced border-b border-violet-500/20">
+        <div className="gaming-header-enhanced border-b border-violet-500/20 h-16 md:h-20">
           <div className="flex items-center justify-between px-4 md:px-6 py-4">
             {/* Left Section - Mobile Menu & Search */}
             <div className="flex items-center space-x-4 flex-1">
@@ -157,7 +157,7 @@ export function Header({ isPopupOpen = false }: HeaderProps) {
 
           {/* Mobile Menu Overlay */}
           {isMobileMenuOpen && (
-            <div className="md:hidden absolute top-full left-0 right-0 gaming-card border-t border-violet-500/20 p-4 backdrop-blur-md">
+            <div className="md:hidden absolute top-full left-0 right-0 gaming-card border-t border-violet-500/20 p-4 backdrop-blur-md z-40">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                 <Input
