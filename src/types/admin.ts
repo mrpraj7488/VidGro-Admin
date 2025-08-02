@@ -3,6 +3,10 @@ export interface DashboardStats {
   activeVideos: number
   vipUsers: number
   monthlyRevenue: number
+  dailyActiveUsers: number
+  coinTransactions: number
+  totalPromoted: number
+  deletedVideos: number
   userGrowthRate: number
 }
 
