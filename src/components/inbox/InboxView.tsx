@@ -10,12 +10,16 @@ import {
   ArrowDown, 
   Minus,
   Search,
-  Filter
+  Filter,
+  Bell,
+  Users,
+  Plus
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card'
 import { Button } from '../ui/Button'
 import { Input } from '../ui/Input'
 import { Badge } from '../ui/Badge'
+import { BulkNotificationModal } from '../users/BulkNotificationModal'
 import { format, formatDistanceToNow } from 'date-fns'
 
 interface SupportTicket {
@@ -116,6 +120,9 @@ export function InboxView() {
   const [filterStatus, setFilterStatus] = useState<string>('all')
   const [isInternal, setIsInternal] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
+  const [isBulkNotificationOpen, setIsBulkNotificationOpen] = useState(false)
+  const [isComposeEmailOpen, setIsComposeEmailOpen] = useState(false)
+  const [selectedUserForEmail, setSelectedUserForEmail] = useState<string | null>(null)
 
   const filteredTickets = tickets.filter(ticket => {
     const matchesStatus = filterStatus === 'all' || ticket.status === filterStatus
@@ -170,17 +177,58 @@ export function InboxView() {
     setIsInternal(false)
   }
 
+  const handleSendBulkNotification = async (notification: any) => {
+    console.log('Sending bulk notification:', notification)
+    // TODO: Implement actual bulk notification sending
+  }
+
+  const handleComposeEmail = (userId?: string) => {
+    setSelectedUserForEmail(userId || null)
+    setIsComposeEmailOpen(true)
+  }
+
   return (
-    <div className="h-[calc(100vh-8rem)] flex">
+    <>
+      <div className="space-y-6">
+        {/* Header with Actions */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white gaming-text-shadow">
+              Support Inbox
+            </h1>
+            <p className="text-gray-600 dark:text-gray-300">
+              Manage support tickets and send notifications
+            </p>
+          </div>
+          <div className="flex items-center space-x-3">
+            <Button
+              onClick={() => setIsBulkNotificationOpen(true)}
+              className="flex items-center space-x-2"
+            >
+              <Bell className="w-4 h-4" />
+              <span>Bulk Notification</span>
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => handleComposeEmail()}
+              className="flex items-center space-x-2"
+            >
+              <Mail className="w-4 h-4" />
+              <span>Compose Email</span>
+            </Button>
+          </div>
+        </div>
+
+        <div className="h-[calc(100vh-12rem)] flex gaming-card !p-0 overflow-hidden">
       {/* Ticket List Sidebar */}
-      <div className="w-1/3 border-r bg-muted/30 flex flex-col">
-        <div className="p-4 border-b bg-white/50">
+          <div className="w-1/3 border-r border-violet-500/20 bg-violet-500/5 flex flex-col">
+            <div className="p-4 border-b border-violet-500/20 bg-gradient-to-r from-violet-500/10 to-purple-500/10">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold flex items-center gap-2">
-              <Mail className="h-5 w-5 text-blue-500 dark:text-blue-400" />
+              <h2 className="text-lg font-semibold flex items-center gap-2 text-gray-900 dark:text-white">
+                <Mail className="h-5 w-5 text-violet-500 dark:text-violet-400 gaming-glow" />
               Support Inbox
             </h2>
-            <Badge variant="danger" className="bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300">
+              <Badge variant="danger" className="gaming-pulse">
               {tickets.filter(t => t.status === 'new').length} New
             </Badge>
           </div>
@@ -192,7 +240,7 @@ export function InboxView() {
               placeholder="Search tickets..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
+                className="pl-10 !bg-violet-500/10 border-violet-500/30"
             />
           </div>
           
@@ -200,7 +248,7 @@ export function InboxView() {
           <select
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm dark:bg-slate-800 dark:border-slate-600 dark:text-white"
+              className="w-full px-3 py-2 border border-violet-500/30 rounded-lg bg-violet-500/10 text-sm dark:text-white gaming-input"
           >
             <option value="all">All Tickets</option>
             <option value="new">New</option>
@@ -211,13 +259,13 @@ export function InboxView() {
         </div>
         
         {/* Ticket List */}
-        <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 overflow-y-auto gaming-scrollbar">
           {filteredTickets.map((ticket) => (
             <div
               key={ticket.id}
               onClick={() => setSelectedTicket(ticket)}
-              className={`p-4 border-b cursor-pointer hover:bg-muted/50 dark:hover:bg-slate-700/50 transition-colors ${
-                selectedTicket?.id === ticket.id ? 'bg-blue-50 dark:bg-blue-900/20 border-l-4 border-l-blue-500' : ''
+                className={`p-4 border-b border-violet-500/10 cursor-pointer hover:bg-violet-500/10 transition-all duration-300 gaming-interactive ${
+                  selectedTicket?.id === ticket.id ? 'bg-violet-500/20 border-l-4 border-l-violet-500 gaming-glow' : ''
               }`}
             >
               <div className="flex items-start justify-between mb-2">
@@ -254,11 +302,11 @@ export function InboxView() {
       </div>
       
       {/* Ticket Detail View */}
-      <div className="flex-1 flex flex-col">
+          <div className="flex-1 flex flex-col bg-white dark:bg-slate-900">
         {selectedTicket ? (
           <>
             {/* Ticket Header */}
-            <div className="p-6 border-b bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 dark:border-slate-700">
+              <div className="p-6 border-b border-violet-500/20 bg-gradient-to-r from-violet-50 to-purple-50 dark:from-violet-900/20 dark:to-purple-900/20">
               <div className="flex items-start justify-between mb-4">
                 <div>
                   <h1 className="text-xl font-semibold mb-2 dark:text-white">{selectedTicket.subject}</h1>
@@ -288,7 +336,7 @@ export function InboxView() {
                   <select 
                     value={selectedTicket.status} 
                     onChange={(e) => updateTicketStatus(selectedTicket.id, e.target.value)}
-                    className="px-3 py-1 border border-gray-300 rounded text-sm bg-white dark:bg-slate-800 dark:border-slate-600 dark:text-white"
+                      className="px-3 py-1 border border-violet-500/30 rounded text-sm bg-violet-500/10 dark:text-white gaming-input"
                   >
                     <option value="new">New</option>
                     <option value="in_progress">In Progress</option>
@@ -300,13 +348,13 @@ export function InboxView() {
             </div>
             
             {/* Conversation Thread */}
-            <div className="flex-1 p-6 overflow-y-auto">
+              <div className="flex-1 p-6 overflow-y-auto gaming-scrollbar">
               <div className="space-y-6">
                 {/* Original Message */}
-                <div className="bg-muted/30 dark:bg-slate-800/50 rounded-lg p-4">
+                  <div className="bg-violet-500/10 dark:bg-slate-800/50 rounded-lg p-4 gaming-card">
                   <div className="flex items-center gap-2 mb-2">
-                    <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/50 rounded-full flex items-center justify-center">
-                      <span className="text-blue-600 dark:text-blue-400 font-medium text-sm">
+                      <div className="w-8 h-8 bg-violet-100 dark:bg-violet-900/50 rounded-full flex items-center justify-center">
+                        <span className="text-violet-600 dark:text-violet-400 font-medium text-sm">
                         {selectedTicket.username.charAt(0).toUpperCase()}
                       </span>
                     </div>
@@ -326,8 +374,8 @@ export function InboxView() {
                 {selectedTicket.adminReplies.map((reply) => (
                   <div key={reply.id} className={`rounded-lg p-4 ${
                     reply.isInternal 
-                      ? 'bg-orange-50 dark:bg-orange-900/20 border-l-4 border-l-orange-400' 
-                      : 'bg-green-50 dark:bg-green-900/20 border-l-4 border-l-green-400'
+                        ? 'bg-orange-50 dark:bg-orange-900/20 border-l-4 border-l-orange-400 gaming-card' 
+                        : 'bg-emerald-50 dark:bg-emerald-900/20 border-l-4 border-l-emerald-400 gaming-card'
                   }`}>
                     <div className="flex items-center gap-2 mb-2">
                       <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
@@ -366,7 +414,7 @@ export function InboxView() {
             </div>
             
             {/* Reply Section */}
-            <div className="p-6 border-t bg-muted/20 dark:bg-slate-800/30 dark:border-slate-700">
+              <div className="p-6 border-t border-violet-500/20 bg-violet-500/5 dark:bg-slate-800/30">
               <div className="space-y-4">
                 <div className="flex items-center gap-4">
                   <h3 className="font-medium dark:text-white">Reply to {selectedTicket.username}</h3>
@@ -388,7 +436,7 @@ export function InboxView() {
                   placeholder="Type your response..."
                   value={replyMessage}
                   onChange={(e) => setReplyMessage(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500 min-h-[100px] dark:bg-slate-800 dark:border-slate-600 dark:text-white"
+                    className="w-full px-3 py-2 border border-violet-500/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500 min-h-[100px] bg-violet-500/10 dark:text-white gaming-input"
                 />
                 
                 <div className="flex items-center justify-between">
@@ -413,14 +461,23 @@ export function InboxView() {
             </div>
           </>
         ) : (
-          <div className="flex-1 flex items-center justify-center text-muted-foreground dark:text-gray-400">
+            <div className="flex-1 flex items-center justify-center text-gray-500 dark:text-gray-400">
             <div className="text-center">
-              <Mail className="h-12 w-12 mb-4 mx-auto opacity-50" />
+                <Mail className="h-12 w-12 mb-4 mx-auto opacity-50 text-violet-500" />
               <p>Select a ticket to view details</p>
             </div>
           </div>
         )}
       </div>
-    </div>
+        </div>
+      </div>
+
+      {/* Bulk Notification Modal */}
+      <BulkNotificationModal
+        isOpen={isBulkNotificationOpen}
+        onClose={() => setIsBulkNotificationOpen(false)}
+        onSend={handleSendBulkNotification}
+      />
+    </>
   )
 }

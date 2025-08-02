@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { Search, Filter, MoreHorizontal, Crown, Coins, Calendar, Plus, Minus, DollarSign, UserPlus, Ban } from 'lucide-react'
+import { Search, Filter, MoreHorizontal, Crown, Coins, Calendar, Plus, Minus, DollarSign, UserPlus, Ban, Bell } from 'lucide-react'
 import { useAdminStore } from '../../stores/adminStore'
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card'
 import { Button } from '../ui/Button'
@@ -7,6 +7,7 @@ import { Input } from '../ui/Input'
 import { Badge } from '../ui/Badge'
 import { UserProfilePanel } from './UserProfilePanel'
 import { CreateUserModal } from './CreateUserModal'
+import { BulkNotificationModal } from './BulkNotificationModal'
 import { formatNumber } from '../../lib/utils'
 import { format } from 'date-fns'
 
@@ -125,6 +126,7 @@ export function UserManagement() {
   const [isProfilePanelOpen, setIsProfilePanelOpen] = useState(false)
   const [isCreateUserModalOpen, setIsCreateUserModalOpen] = useState(false)
   const [profileUser, setProfileUser] = useState<any>(null)
+  const [isBulkNotificationOpen, setIsBulkNotificationOpen] = useState(false)
 
   useEffect(() => {
     fetchUsers()
@@ -176,6 +178,11 @@ export function UserManagement() {
     await fetchUsers() // Refresh users list
   }
 
+  const handleSendBulkNotification = async (notification: any) => {
+    console.log('Sending bulk notification:', notification)
+    // TODO: Implement actual bulk notification sending
+  }
+
   if (isLoading) {
     return (
       <div className="space-y-6">
@@ -218,13 +225,23 @@ export function UserManagement() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle>User Management</CardTitle>
-            <Button 
-              onClick={() => setIsCreateUserModalOpen(true)}
-              className="flex items-center space-x-2"
-            >
-              <UserPlus className="w-4 h-4" />
-              <span>Create User</span>
-            </Button>
+            <div className="flex items-center space-x-3">
+              <Button 
+                variant="outline"
+                onClick={() => setIsBulkNotificationOpen(true)}
+                className="flex items-center space-x-2"
+              >
+                <Bell className="w-4 h-4" />
+                <span>Bulk Notify</span>
+              </Button>
+              <Button 
+                onClick={() => setIsCreateUserModalOpen(true)}
+                className="flex items-center space-x-2"
+              >
+                <UserPlus className="w-4 h-4" />
+                <span>Create User</span>
+              </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent>
@@ -366,6 +383,13 @@ export function UserManagement() {
         isOpen={isCreateUserModalOpen}
         onClose={() => setIsCreateUserModalOpen(false)}
         onCreateUser={handleCreateUser}
+      />
+
+      {/* Bulk Notification Modal */}
+      <BulkNotificationModal
+        isOpen={isBulkNotificationOpen}
+        onClose={() => setIsBulkNotificationOpen(false)}
+        onSend={handleSendBulkNotification}
       />
     </div>
   )
