@@ -165,11 +165,15 @@ export function UserManagement() {
   const openProfilePanel = (user: any) => {
     setProfileUser(user)
     setIsProfilePanelOpen(true)
+    // Dispatch popup state change event
+    window.dispatchEvent(new CustomEvent('popupStateChange', { detail: { isOpen: true } }))
   }
 
   const closeProfilePanel = () => {
     setProfileUser(null)
     setIsProfilePanelOpen(false)
+    // Dispatch popup state change event
+    window.dispatchEvent(new CustomEvent('popupStateChange', { detail: { isOpen: false } }))
   }
 
   const handleCreateUser = async (userData: any) => {

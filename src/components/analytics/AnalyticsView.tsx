@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card'
 import { Button } from '../ui/Button'
 import { DateRangePicker } from '../ui/DateRangePicker'
 import { StatsCard } from '../dashboard/StatsCard'
+import { AnalyticsSkeleton } from './AnalyticsSkeleton'
 
 const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6']
 
@@ -21,29 +22,13 @@ export function AnalyticsView() {
   }, [fetchAnalytics, dateRange])
 
   if (isLoading || !analyticsData) {
-    return (
-      <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <div className="h-8 w-48 bg-gray-200 animate-pulse rounded" />
-          <div className="h-10 w-64 bg-gray-200 animate-pulse rounded" />
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-32 bg-gray-200 animate-pulse rounded-xl" />
-          ))}
-        </div>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="h-80 bg-gray-200 animate-pulse rounded-xl" />
-          <div className="h-80 bg-gray-200 animate-pulse rounded-xl" />
-        </div>
-      </div>
-    )
+    return <AnalyticsSkeleton />
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 animate-slide-down">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Analytics Dashboard</h1>
           <p className="text-gray-600 dark:text-gray-300">Comprehensive insights into your platform performance</p>
@@ -61,7 +46,7 @@ export function AnalyticsView() {
       </div>
 
       {/* Key Metrics */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 animate-stagger-children">
         <StatsCard
           title="Daily Active Users"
           value={analyticsData.dailyActiveUsers}
@@ -97,9 +82,9 @@ export function AnalyticsView() {
       </div>
 
       {/* Charts Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-stagger-children">
         {/* Daily Active Users Chart */}
-        <Card className="dark:bg-slate-800/95">
+        <Card className="dark:bg-slate-800/95 animate-slide-up">
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <TrendingUp className="w-5 h-5" />
@@ -139,7 +124,7 @@ export function AnalyticsView() {
         </Card>
 
         {/* Coin Transactions Chart */}
-        <Card className="dark:bg-slate-800/95">
+        <Card className="dark:bg-slate-800/95 animate-slide-up">
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <Coins className="w-5 h-5" />
@@ -169,9 +154,9 @@ export function AnalyticsView() {
       </div>
 
       {/* Detailed Tables */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-stagger-children">
         {/* Top Performing Videos */}
-        <Card className="dark:bg-slate-800/95">
+        <Card className="dark:bg-slate-800/95 animate-slide-up">
           <CardHeader>
             <CardTitle>Top Performing Videos</CardTitle>
           </CardHeader>
@@ -202,7 +187,7 @@ export function AnalyticsView() {
         </Card>
 
         {/* Recent Activity */}
-        <Card className="dark:bg-slate-800/95">
+        <Card className="dark:bg-slate-800/95 animate-slide-up">
           <CardHeader>
             <CardTitle>Platform Activity</CardTitle>
           </CardHeader>

@@ -516,8 +516,80 @@
     border-bottom: 1px solid rgba(139, 92, 246, 0.2);
   }
   
+  .gaming-header-enhanced {
+    @apply relative;
+    background: linear-gradient(135deg, 
+      rgba(255, 255, 255, 0.7) 0%, 
+      rgba(255, 255, 255, 0.5) 100%);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(139, 92, 246, 0.15);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  }
+  
+  .dark .gaming-header-enhanced {
+    background: linear-gradient(135deg, 
+      rgba(15, 15, 35, 0.8) 0%, 
+      rgba(26, 26, 46, 0.6) 100%);
+    border-bottom: 1px solid rgba(139, 92, 246, 0.25);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+  }
+  
   .gaming-stats-grid {
     @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6;
+  }
+  
+  /* Animation classes */
+  .animate-fade-in {
+    animation: fadeIn 0.6s ease-out;
+  }
+  
+  .animate-slide-down {
+    animation: slideDown 0.5s ease-out;
+  }
+  
+  .animate-slide-up {
+    animation: slideUp 0.5s ease-out;
+  }
+  
+  .animate-stagger-children > * {
+    animation: slideUp 0.5s ease-out;
+  }
+  
+  .animate-stagger-children > *:nth-child(1) { animation-delay: 0.1s; }
+  .animate-stagger-children > *:nth-child(2) { animation-delay: 0.2s; }
+  .animate-stagger-children > *:nth-child(3) { animation-delay: 0.3s; }
+  .animate-stagger-children > *:nth-child(4) { animation-delay: 0.4s; }
+  .animate-stagger-children > *:nth-child(5) { animation-delay: 0.5s; }
+  
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+  
+  @keyframes slideDown {
+    from {
+      opacity: 0;
+      transform: translateY(-20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  @keyframes slideUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
   
   @media (max-width: 768px) {

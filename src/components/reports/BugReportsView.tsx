@@ -6,6 +6,7 @@ import { Button } from '../ui/Button'
 import { Input } from '../ui/Input'
 import { Badge } from '../ui/Badge'
 import { CreateBugModal } from './CreateBugModal'
+import { BugReportsSkeleton } from './BugReportsSkeleton'
 import { formatNumber } from '../../lib/utils'
 import { format } from 'date-fns'
 
@@ -24,16 +25,7 @@ export function BugReportsView() {
   }, [fetchBugReports])
 
   if (isLoading || !bugReportData) {
-    return (
-      <div className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="h-32 bg-gradient-to-r from-gray-100 to-gray-200 animate-pulse rounded-xl" />
-          ))}
-        </div>
-        <div className="h-96 bg-gradient-to-r from-gray-100 to-gray-200 animate-pulse rounded-xl" />
-      </div>
-    )
+    return <BugReportsSkeleton />
   }
 
   const getPriorityBadge = (priority: string) => {
@@ -78,9 +70,9 @@ export function BugReportsView() {
   })
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between items-center animate-slide-down">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Bug Reports</h1>
           <p className="text-gray-600">Track and manage application issues and bugs</p>
@@ -95,8 +87,8 @@ export function BugReportsView() {
       </div>
 
       {/* Stats Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200 dark:from-orange-900/20 dark:to-orange-800/20 dark:border-orange-700/50">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-stagger-children">
+        <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200 dark:from-orange-900/20 dark:to-orange-800/20 dark:border-orange-700/50 animate-slide-up">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -110,7 +102,7 @@ export function BugReportsView() {
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-emerald-50 to-emerald-100 border-emerald-200 dark:from-emerald-900/20 dark:to-emerald-800/20 dark:border-emerald-700/50">
+        <Card className="bg-gradient-to-br from-emerald-50 to-emerald-100 border-emerald-200 dark:from-emerald-900/20 dark:to-emerald-800/20 dark:border-emerald-700/50 animate-slide-up">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -126,7 +118,7 @@ export function BugReportsView() {
       </div>
 
       {/* Filters */}
-      <Card>
+      <Card className="animate-slide-up">
         <CardContent className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="relative">
@@ -180,9 +172,9 @@ export function BugReportsView() {
       </Card>
 
       {/* Bug Reports List */}
-      <div className="space-y-4">
+      <div className="space-y-4 animate-stagger-children">
         {filteredBugs.map((bug) => (
-          <Card key={bug.bug_id} className="hover:shadow-md transition-shadow dark:hover:shadow-slate-900/40">
+          <Card key={bug.bug_id} className="hover:shadow-md transition-all duration-300 dark:hover:shadow-slate-900/40 animate-slide-up hover:scale-[1.01]">
             <CardContent className="p-6">
               <div className="flex items-start justify-between mb-4">
                 <div className="flex-1">

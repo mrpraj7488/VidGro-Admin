@@ -50,6 +50,17 @@ export function BulkNotificationModal({ isOpen, onClose, onSend }: BulkNotificat
     }
   }
 
+  // Dispatch popup state events
+  React.useEffect(() => {
+    if (isOpen) {
+      window.dispatchEvent(new CustomEvent('popupStateChange', { detail: { isOpen: true } }))
+    }
+    return () => {
+      if (isOpen) {
+        window.dispatchEvent(new CustomEvent('popupStateChange', { detail: { isOpen: false } }))
+      }
+    }
+  }, [isOpen])
   if (!isOpen) return null
 
   const getTargetUserCount = () => {

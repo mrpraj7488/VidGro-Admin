@@ -48,6 +48,17 @@ export function CreateUserModal({ isOpen, onClose, onCreateUser }: CreateUserMod
     }
   }
 
+  // Dispatch popup state events
+  React.useEffect(() => {
+    if (isOpen) {
+      window.dispatchEvent(new CustomEvent('popupStateChange', { detail: { isOpen: true } }))
+    }
+    return () => {
+      if (isOpen) {
+        window.dispatchEvent(new CustomEvent('popupStateChange', { detail: { isOpen: false } }))
+      }
+    }
+  }, [isOpen])
   if (!isOpen) return null
 
   return (
