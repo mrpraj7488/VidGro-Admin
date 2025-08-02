@@ -501,44 +501,60 @@
   }
   
   .gaming-header {
-    @apply relative;
+    @apply relative fixed top-0 left-0 right-0 z-30;
     background: linear-gradient(135deg, 
-      rgba(255, 255, 255, 0.9) 0%, 
-      rgba(255, 255, 255, 0.8) 100%);
+      rgba(139, 92, 246, 0.1) 0%, 
+      rgba(147, 51, 234, 0.1) 100%);
     backdrop-filter: blur(20px);
-    border-bottom: 1px solid rgba(139, 92, 246, 0.1);
+    border-bottom: 1px solid rgba(139, 92, 246, 0.3);
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
   }
   
   .dark .gaming-header {
     background: linear-gradient(135deg, 
-      rgba(15, 15, 35, 0.9) 0%, 
-      rgba(26, 26, 46, 0.8) 100%);
-    border-bottom: 1px solid rgba(139, 92, 246, 0.2);
+      rgba(139, 92, 246, 0.15) 0%, 
+      rgba(147, 51, 234, 0.15) 100%);
+    border-bottom: 1px solid rgba(139, 92, 246, 0.4);
+    box-shadow: 0 0 30px rgba(139, 92, 246, 0.2);
   }
   
-  .gaming-header-enhanced {
-    @apply relative;
-    background: linear-gradient(135deg,
-      rgba(255, 255, 255, 0.95) 0%,
-      rgba(255, 255, 255, 0.9) 100%);
-    backdrop-filter: blur(20px);
-    border-bottom: 1px solid rgba(139, 92, 246, 0.15);
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-    min-height: 3.5rem;
+  /* Header neon glow effects */
+  .gaming-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(90deg, 
+      transparent 0%, 
+      rgba(139, 92, 246, 0.1) 25%,
+      rgba(147, 51, 234, 0.1) 50%,
+      rgba(139, 92, 246, 0.1) 75%,
+      transparent 100%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
   }
   
-  .dark .gaming-header-enhanced {
-    background: linear-gradient(135deg,
-      rgba(15, 15, 35, 0.95) 0%,
-      rgba(26, 26, 46, 0.9) 100%);
-    border-bottom: 1px solid rgba(139, 92, 246, 0.25);
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+  .gaming-header:hover::before {
+    opacity: 1;
   }
   
-  @media (min-width: 768px) {
-    .gaming-header-enhanced {
-      min-height: 4rem;
-    }
+  /* Enhanced button hover effects for header */
+  .gaming-header .gaming-interactive:hover {
+    transform: scale(1.05);
+    background: rgba(139, 92, 246, 0.2);
+    box-shadow: 0 0 20px rgba(139, 92, 246, 0.4);
+  }
+  
+  /* Neon text glow for header elements */
+  .gaming-header .text-violet-400 {
+    text-shadow: 0 0 10px rgba(139, 92, 246, 0.8);
+  }
+  
+  .gaming-header .text-yellow-400 {
+    text-shadow: 0 0 10px rgba(251, 191, 36, 0.8);
   }
   
   .gaming-stats-grid {
