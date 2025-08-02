@@ -20,7 +20,6 @@ import {
   getVideos,
   adjustUserCoins,
   updateVideoStatus as updateVideoStatusAPI,
-  getRealtimeAnalytics,
   mockChartData,
   mockAnalyticsData,
   Profile,
@@ -28,6 +27,7 @@ import {
 } from '../lib/supabase'
 import { mockBugReportData, mockSystemSettings } from '../lib/supabase'
 import { realtimeService, RealtimeEvent, createCoinAdjustmentNotification, createVideoStatusNotification } from '../services/realtimeService'
+import { envManager, EnvironmentVariables } from '../lib/envManager'
 
 interface AdminStore {
   // Dashboard data
@@ -89,7 +89,7 @@ interface AdminStore {
   updateCoinSettings: (settings: any) => Promise<void>
   
   // System settings actions
-  updateEnvironmentVars: (vars: Partial<SystemEnvironment>) => Promise<void>
+  updateEnvironmentVars: (vars: Partial<EnvironmentVariables>) => Promise<void>
   updateAdsConfig: (config: Partial<AdsConfiguration>) => Promise<void>
   updateSystemSettings: (settings: SystemSettings) => Promise<void>
   
@@ -439,14 +439,22 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
   },
 
   updateEnvironmentVars: async (vars: Partial<SystemEnvironment>) => {
-    const currentSettings = get().systemSettings
-    if (currentSettings) {
-      set({
-        systemSettings: {
-          ...currentSettings,
-          environment: { ...currentSettings.environment, ...vars }
+    try {
+      const result = await envManager.saveEnvironmentVariables(vars)
+      if (result.success) {
+        const currentSettings = get().systemSettings
+        if (currentSettings) {
+          set({
+            systemSettings: {
+              ...currentSettings,
+              environment: { ...currentSettings.environment, ...vars }
+            }
+          })
         }
-      })
+      }
+    } catch (error) {
+      console.error('Failed to update environment variables:', error)
+      throw error
     }
   },
 

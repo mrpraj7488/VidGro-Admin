@@ -1,14 +1,19 @@
 import React, { useState, useEffect } from 'react'
-import { Settings, Save, Database, Smartphone, DollarSign, Globe, Shield, Bell } from 'lucide-react'
+import { Settings, Save, Database, Smartphone, DollarSign, Globe, Shield, Bell, Download, CheckCircle, AlertTriangle, Copy } from 'lucide-react'
 import { useAdminStore } from '../../stores/adminStore'
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card'
 import { Button } from '../ui/Button'
 import { Input } from '../ui/Input'
+import { Badge } from '../ui/Badge'
+import { envManager, EnvironmentVariables } from '../../lib/envManager'
 
 export function SystemConfigView() {
   const { systemSettings, isLoading, fetchSystemSettings, updateEnvironmentVars, updateAdsConfig, updateSystemSettings } = useAdminStore()
   const [activeTab, setActiveTab] = useState('environment')
   const [hasChanges, setHasChanges] = useState(false)
+  const [envVars, setEnvVars] = useState<EnvironmentVariables>(envManager.getEnvironmentVariables())
+  const [saveStatus, setSaveStatus] = useState<{ type: 'success' | 'error' | null, message: string }>({ type: null, message: '' })
+  const [isSaving, setIsSaving] = useState(false)
   const [settings, setSettings] = useState(systemSettings)
 
   useEffect(() => {
@@ -34,14 +39,52 @@ export function SystemConfigView() {
 
   const handleSave = async () => {
     if (activeTab === 'environment') {
-      await updateEnvironmentVars(settings.environment)
+      setIsSaving(true)
+      try {
+        const result = await envManager.saveEnvironmentVariables(envVars)
+        setSaveStatus({
+          type: result.success ? 'success' : 'error',
+          message: result.message
+        })
+        if (result.success) {
+          setHasChanges(false)
+          // Update the admin store as well
+          await updateEnvironmentVars(envVars)
+        }
+      } catch (error) {
+        setSaveStatus({
+          type: 'error',
+          message: 'Failed to save environment variables. Please try again.'
+        })
+      } finally {
+        setIsSaving(false)
+        // Clear status after 5 seconds
+        setTimeout(() => setSaveStatus({ type: null, message: '' }), 5000)
+      }
     } else if (activeTab === 'ads') {
       await updateAdsConfig(settings.ads)
+      setHasChanges(false)
     } else {
       await updateSystemSettings(settings)
+      setHasChanges(false)
     }
-    setHasChanges(false)
   }
+
+  const handleEnvVarChange = (key: keyof EnvironmentVariables, value: string) => {
+    setEnvVars(prev => ({ ...prev, [key]: value }))
+    setHasChanges(true)
+  }
+
+  const handleCopyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text)
+    setSaveStatus({
+      type: 'success',
+      message: 'Copied to clipboard!'
+    })
+    setTimeout(() => setSaveStatus({ type: null, message: '' }), 2000)
+  }
+
+  const configStatus = envManager.getConfigurationStatus()
 
   const tabs = [
     { id: 'environment', label: 'Environment Variables', icon: Database },
@@ -71,13 +114,55 @@ export function SystemConfigView() {
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">System Configuration</h1>
           <p className="text-gray-600 dark:text-gray-300">Configure platform settings and environment variables</p>
         </div>
-        {hasChanges && (
-          <Button onClick={handleSave} className="flex items-center space-x-2">
-            <Save className="w-4 h-4" />
-            <span>Save Changes</span>
-          </Button>
-        )}
+        <div className="flex items-center space-x-3">
+          {activeTab === 'environment' && (
+            <Button
+              variant="outline"
+              onClick={() => envManager.downloadEnvFile()}
+              className="flex items-center space-x-2"
+            >
+              <Download className="w-4 h-4" />
+              <span>Download .env</span>
+            </Button>
+          )}
+          {hasChanges && (
+            <Button 
+              onClick={handleSave} 
+              disabled={isSaving}
+              className="flex items-center space-x-2"
+            >
+              <Save className="w-4 h-4" />
+              <span>{isSaving ? 'Saving...' : 'Save Changes'}</span>
+            </Button>
+          )}
+        </div>
       </div>
+
+      {/* Save Status Message */}
+      {saveStatus.type && (
+        <Card className={`border-2 ${
+          saveStatus.type === 'success' 
+            ? 'border-emerald-200 bg-emerald-50 dark:border-emerald-800/50 dark:bg-emerald-900/20' 
+            : 'border-red-200 bg-red-50 dark:border-red-800/50 dark:bg-red-900/20'
+        }`}>
+          <CardContent className="p-4">
+            <div className="flex items-center space-x-3">
+              {saveStatus.type === 'success' ? (
+                <CheckCircle className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+              ) : (
+                <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400" />
+              )}
+              <p className={`font-medium ${
+                saveStatus.type === 'success' 
+                  ? 'text-emerald-800 dark:text-emerald-300' 
+                  : 'text-red-800 dark:text-red-300'
+              }`}>
+                {saveStatus.message}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Settings Navigation */}
@@ -118,6 +203,34 @@ export function SystemConfigView() {
               {/* Environment Variables */}
               {activeTab === 'environment' && (
                 <div className="space-y-6">
+                  {/* Configuration Status */}
+                  <div className="bg-gradient-to-r from-violet-50 to-purple-50 dark:from-violet-900/20 dark:to-purple-900/20 border border-violet-200 dark:border-violet-800/50 rounded-xl p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <h4 className="font-semibold text-violet-800 dark:text-violet-300 flex items-center">
+                        <Database className="w-4 h-4 mr-2" />
+                        Configuration Status
+                      </h4>
+                      <Badge 
+                        variant={configStatus.isConfigured ? "success" : "warning"}
+                        className="font-medium"
+                      >
+                        {configStatus.isConfigured ? 'Fully Configured' : `${configStatus.missingVars.length} Missing`}
+                      </Badge>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <p className="text-violet-700 dark:text-violet-300 font-medium mb-1">Configured Variables</p>
+                        <p className="text-violet-600 dark:text-violet-400">{configStatus.configuredVars.length} / {Object.keys(envVars).length}</p>
+                      </div>
+                      <div>
+                        <p className="text-violet-700 dark:text-violet-300 font-medium mb-1">Status</p>
+                        <p className="text-violet-600 dark:text-violet-400">
+                          {configStatus.isConfigured ? 'Ready for production' : 'Requires configuration'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
                   <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/50 rounded-xl p-4">
                     <h4 className="font-semibold text-blue-800 dark:text-blue-300 mb-2 flex items-center">
                       <Database className="w-4 h-4 mr-2" />
@@ -129,34 +242,116 @@ export function SystemConfigView() {
                           EXPO_PUBLIC_SUPABASE_URL
                         </label>
                         <Input
-                          value={settings.environment.EXPO_PUBLIC_SUPABASE_URL}
-                          onChange={(e) => handleSettingChange('environment', 'EXPO_PUBLIC_SUPABASE_URL', e.target.value)}
-                          className="font-mono text-sm"
+                            onClick={() => handleCopyToClipboard(envVars.VITE_SUPABASE_URL)}
+                            value={envVars.VITE_SUPABASE_URL}
+                            onChange={(e) => handleEnvVarChange('VITE_SUPABASE_URL', e.target.value)}
                           placeholder="https://your-project.supabase.co"
                         />
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-blue-700 dark:text-blue-300 mb-2">
-                          EXPO_PUBLIC_SUPABASE_ANON_KEY
+                          VITE_SUPABASE_ANON_KEY
                         </label>
-                        <Input
-                          type="password"
-                          value={settings.environment.EXPO_PUBLIC_SUPABASE_ANON_KEY}
-                          onChange={(e) => handleSettingChange('environment', 'EXPO_PUBLIC_SUPABASE_ANON_KEY', e.target.value)}
-                          className="font-mono text-sm"
-                          placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-                        />
+                        <div className="flex items-center space-x-2">
+                          <Input
+                            type="password"
+                            value={envVars.VITE_SUPABASE_ANON_KEY}
+                            onChange={(e) => handleEnvVarChange('VITE_SUPABASE_ANON_KEY', e.target.value)}
+                            className="font-mono text-sm"
+                            placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                          />
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleCopyToClipboard(envVars.VITE_SUPABASE_ANON_KEY)}
+                          >
+                            <Copy className="w-4 h-4" />
+                          </Button>
+                        </div>
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-blue-700 dark:text-blue-300 mb-2">
-                          EXPO_PUBLIC_SUPABASE_SERVICE_ROLE_KEY
+                          VITE_SUPABASE_SERVICE_ROLE_KEY
+                        </label>
+                        <div className="flex items-center space-x-2">
+                          <Input
+                            type="password"
+                            value={envVars.VITE_SUPABASE_SERVICE_ROLE_KEY}
+                            onChange={(e) => handleEnvVarChange('VITE_SUPABASE_SERVICE_ROLE_KEY', e.target.value)}
+                            className="font-mono text-sm"
+                            placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                          />
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleCopyToClipboard(envVars.VITE_SUPABASE_SERVICE_ROLE_KEY)}
+                          >
+                            <Copy className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800/50 rounded-xl p-4">
+                    <h4 className="font-semibold text-green-800 dark:text-green-300 mb-2 flex items-center">
+                      <Shield className="w-4 h-4 mr-2" />
+                      Admin Configuration
+                    </h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-orange-700 dark:text-orange-300 mb-2">
+                          VITE_ADMIN_EMAIL
+                        </label>
+                        <Input
+                          type="email"
+                          value={envVars.VITE_ADMIN_EMAIL}
+                          onChange={(e) => handleEnvVarChange('VITE_ADMIN_EMAIL', e.target.value)}
+                          className="font-mono text-sm"
+                          placeholder="admin@vidgro.com"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-orange-700 dark:text-orange-300 mb-2">
+                          VITE_ADMIN_SECRET_KEY
                         </label>
                         <Input
                           type="password"
-                          value={settings.environment.EXPO_PUBLIC_SUPABASE_SERVICE_ROLE_KEY}
-                          onChange={(e) => handleSettingChange('environment', 'EXPO_PUBLIC_SUPABASE_SERVICE_ROLE_KEY', e.target.value)}
+                          value={envVars.VITE_ADMIN_SECRET_KEY}
+                          onChange={(e) => handleEnvVarChange('VITE_ADMIN_SECRET_KEY', e.target.value)}
                           className="font-mono text-sm"
-                          placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                          placeholder="your_admin_secret_key"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800/50 rounded-xl p-4">
+                    <h4 className="font-semibold text-purple-800 dark:text-purple-300 mb-2 flex items-center">
+                      <Globe className="w-4 h-4 mr-2" />
+                      App Configuration
+                    </h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-purple-700 dark:text-purple-300 mb-2">
+                          VITE_APP_NAME
+                        </label>
+                        <Input
+                          value={envVars.VITE_APP_NAME}
+                          onChange={(e) => handleEnvVarChange('VITE_APP_NAME', e.target.value)}
+                          className="font-mono text-sm"
+                          placeholder="VidGro Admin Panel"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-purple-700 dark:text-purple-300 mb-2">
+                          VITE_API_BASE_URL
+                        </label>
+                        <Input
+                          value={envVars.VITE_API_BASE_URL}
+                          onChange={(e) => handleEnvVarChange('VITE_API_BASE_URL', e.target.value)}
+                          className="font-mono text-sm"
+                          placeholder="https://your-api-domain.com"
                         />
                       </div>
                     </div>
@@ -165,52 +360,90 @@ export function SystemConfigView() {
                   <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800/50 rounded-xl p-4">
                     <h4 className="font-semibold text-green-800 dark:text-green-300 mb-2 flex items-center">
                       <Smartphone className="w-4 h-4 mr-2" />
-                      AdMob Configuration
+                      Firebase Configuration
                     </h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm font-medium text-green-700 dark:text-green-300 mb-2">
-                          EXPO_PUBLIC_ADMOB_APP_ID
+                          VITE_FIREBASE_PROJECT_ID
                         </label>
                         <Input
-                          value={settings.environment.EXPO_PUBLIC_ADMOB_APP_ID}
-                          onChange={(e) => handleSettingChange('environment', 'EXPO_PUBLIC_ADMOB_APP_ID', e.target.value)}
+                          value={envVars.VITE_FIREBASE_PROJECT_ID}
+                          onChange={(e) => handleEnvVarChange('VITE_FIREBASE_PROJECT_ID', e.target.value)}
                           className="font-mono text-sm"
-                          placeholder="ca-app-pub-1234567890123456~1234567890"
+                          placeholder="your_firebase_project_id"
                         />
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-green-700 dark:text-green-300 mb-2">
-                          EXPO_PUBLIC_ADMOB_BANNER_ID
+                          VITE_FIREBASE_CLIENT_EMAIL
                         </label>
                         <Input
-                          value={settings.environment.EXPO_PUBLIC_ADMOB_BANNER_ID}
-                          onChange={(e) => handleSettingChange('environment', 'EXPO_PUBLIC_ADMOB_BANNER_ID', e.target.value)}
+                          type="email"
+                          value={envVars.VITE_FIREBASE_CLIENT_EMAIL}
+                          onChange={(e) => handleEnvVarChange('VITE_FIREBASE_CLIENT_EMAIL', e.target.value)}
                           className="font-mono text-sm"
-                          placeholder="ca-app-pub-1234567890123456/1234567890"
+                          placeholder="your_firebase_client_email"
                         />
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-green-700 dark:text-green-300 mb-2">
-                          EXPO_PUBLIC_ADMOB_INTERSTITIAL_ID
+                          VITE_FIREBASE_PRIVATE_KEY
                         </label>
                         <Input
-                          value={settings.environment.EXPO_PUBLIC_ADMOB_INTERSTITIAL_ID}
-                          onChange={(e) => handleSettingChange('environment', 'EXPO_PUBLIC_ADMOB_INTERSTITIAL_ID', e.target.value)}
+                          type="password"
+                          value={envVars.VITE_FIREBASE_PRIVATE_KEY}
+                          onChange={(e) => handleEnvVarChange('VITE_FIREBASE_PRIVATE_KEY', e.target.value)}
                           className="font-mono text-sm"
-                          placeholder="ca-app-pub-1234567890123456/1234567890"
+                          placeholder="your_firebase_private_key"
                         />
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-green-700 dark:text-green-300 mb-2">
-                          EXPO_PUBLIC_ADMOB_REWARDED_ID
+                          VITE_FCM_SERVER_KEY
                         </label>
                         <Input
-                          value={settings.environment.EXPO_PUBLIC_ADMOB_REWARDED_ID}
-                          onChange={(e) => handleSettingChange('environment', 'EXPO_PUBLIC_ADMOB_REWARDED_ID', e.target.value)}
+                          type="password"
+                          value={envVars.VITE_FCM_SERVER_KEY}
+                          onChange={(e) => handleEnvVarChange('VITE_FCM_SERVER_KEY', e.target.value)}
                           className="font-mono text-sm"
-                          placeholder="ca-app-pub-1234567890123456/1234567890"
+                          placeholder="your_fcm_server_key"
                         />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50 rounded-xl p-4">
+                    <h4 className="font-semibold text-red-800 dark:text-red-300 mb-2 flex items-center">
+                      <Shield className="w-4 h-4 mr-2" />
+                      Security Configuration
+                    </h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-red-700 dark:text-red-300 mb-2">
+                          VITE_JWT_SECRET
+                        </label>
+                        <Input
+                          type="password"
+                          value={envVars.VITE_JWT_SECRET}
+                          onChange={(e) => handleEnvVarChange('VITE_JWT_SECRET', e.target.value)}
+                          className="font-mono text-sm"
+                          placeholder="your_jwt_secret_key"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-red-700 dark:text-red-300 mb-2">
+                          NODE_ENV
+                        </label>
+                        <select
+                          value={envVars.NODE_ENV}
+                          onChange={(e) => handleEnvVarChange('NODE_ENV', e.target.value)}
+                          className="w-full px-3 py-2 border border-red-300 rounded-lg bg-white text-sm dark:bg-slate-800 dark:border-red-600 dark:text-white"
+                        >
+                          <option value="development">Development</option>
+                          <option value="production">Production</option>
+                          <option value="staging">Staging</option>
+                        </select>
                       </div>
                     </div>
                   </div>

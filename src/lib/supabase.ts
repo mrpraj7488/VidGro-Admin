@@ -1,10 +1,20 @@
 import { createClient } from '@supabase/supabase-js'
+import { envManager } from './envManager'
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://placeholder-project.supabase.co'
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.placeholder'
+// Get environment variables from the environment manager
+const getSupabaseConfig = () => {
+  const envVars = envManager.getEnvironmentVariables()
+  return {
+    url: envVars.VITE_SUPABASE_URL || 'https://placeholder-project.supabase.co',
+    anonKey: envVars.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.placeholder',
+    serviceRoleKey: envVars.VITE_SUPABASE_SERVICE_ROLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.placeholder'
+  }
+}
+
+const supabaseConfig = getSupabaseConfig()
 
 // Regular client for auth and basic operations
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+export const supabase = createClient(supabaseConfig.url, supabaseConfig.anonKey, {
   auth: {
     autoRefreshToken: true,
     persistSession: true,
@@ -17,7 +27,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 })
 
 // Admin client with service role key for admin operations
-export const supabaseAdmin = createClient(supabaseUrl, supabaseAnonKey, {
+export const supabaseAdmin = createClient(supabaseConfig.url, supabaseConfig.serviceRoleKey, {
   auth: {
     autoRefreshToken: false,
     persistSession: false
@@ -307,8 +317,9 @@ export const mockSystemSettings = {
 // API functions
 export const getDashboardStats = async () => {
   try {
+    const config = getSupabaseConfig()
     // Check if we're using placeholder URLs
-    if (supabaseUrl.includes('placeholder-project')) {
+    if (config.url.includes('placeholder-project')) {
       console.warn('Using mock data - Supabase not configured')
       return mockDashboardStats
     }
@@ -324,8 +335,9 @@ export const getDashboardStats = async () => {
 
 export const getUsers = async (limit = 50, offset = 0) => {
   try {
+    const config = getSupabaseConfig()
     // Check if we're using placeholder URLs
-    if (supabaseUrl.includes('placeholder-project')) {
+    if (config.url.includes('placeholder-project')) {
       console.warn('Using mock data - Supabase not configured')
       return mockUsers
     }
@@ -346,8 +358,9 @@ export const getUsers = async (limit = 50, offset = 0) => {
 
 export const getVideos = async (limit = 50, offset = 0) => {
   try {
+    const config = getSupabaseConfig()
     // Check if we're using placeholder URLs
-    if (supabaseUrl.includes('placeholder-project')) {
+    if (config.url.includes('placeholder-project')) {
       console.warn('Using mock data - Supabase not configured')
       return mockVideos
     }
@@ -381,8 +394,9 @@ export const getVideos = async (limit = 50, offset = 0) => {
 
 export const adjustUserCoins = async (userId: string, amount: number, reason: string, adminId: string) => {
   try {
+    const config = getSupabaseConfig()
     // Check if we're using placeholder URLs
-    if (supabaseUrl.includes('placeholder-project')) {
+    if (config.url.includes('placeholder-project')) {
       console.warn('Mock mode - coin adjustment simulated')
       return { success: true, message: 'Coin adjustment simulated in demo mode' }
     }
@@ -404,8 +418,9 @@ export const adjustUserCoins = async (userId: string, amount: number, reason: st
 
 export const updateVideoStatus = async (videoId: string, status: string, adminId: string, reason?: string) => {
   try {
+    const config = getSupabaseConfig()
     // Check if we're using placeholder URLs
-    if (supabaseUrl.includes('placeholder-project')) {
+    if (config.url.includes('placeholder-project')) {
       console.warn('Mock mode - video status update simulated')
       return { success: true, message: 'Video status update simulated in demo mode' }
     }
