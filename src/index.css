@@ -214,6 +214,14 @@
     filter: drop-shadow(0 0 12px rgba(139, 92, 246, 0.8));
   }
   
+  .dark .gaming-glow {
+    filter: drop-shadow(0 0 8px rgba(139, 92, 246, 0.8));
+  }
+  
+  .dark .gaming-glow:hover {
+    filter: drop-shadow(0 0 12px rgba(139, 92, 246, 1));
+  }
+  
   .gaming-pulse {
     animation: gaming-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   }

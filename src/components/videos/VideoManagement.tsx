@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { Search, Play, Pause, Eye, TrendingUp, Calendar, MoreHorizontal, Copy, Edit, RefreshCw, Trash2, Clock } from 'lucide-react'
+import { Search, Eye, TrendingUp, Calendar, MoreHorizontal, Copy } from 'lucide-react'
 import { useAdminStore } from '../../stores/adminStore'
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card'
 import { Button } from '../ui/Button'
@@ -10,7 +10,7 @@ import { formatNumber } from '../../lib/utils'
 import { format } from 'date-fns'
 
 export function VideoManagement() {
-  const { videos, videoFilters, isLoading, fetchVideos, updateVideoStatus, setVideoFilters, copyToClipboard } = useAdminStore()
+  const { videos, videoFilters, isLoading, fetchVideos, setVideoFilters, copyToClipboard } = useAdminStore()
   const [selectedVideo, setSelectedVideo] = useState(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
 
@@ -52,19 +52,11 @@ export function VideoManagement() {
     deleted: videos.filter(v => v.status === 'deleted').length
   }
 
-  const handleEditVideo = (video) => {
+  const handleViewVideo = (video) => {
     setSelectedVideo(video)
     setIsModalOpen(true)
   }
 
-  const handleStatusChange = async (videoId: string, newStatus: string) => {
-    try {
-      await updateVideoStatus(videoId, newStatus)
-      console.log(`Video ${videoId} status changed to ${newStatus}`)
-    } catch (error) {
-      console.error('Failed to update video status:', error)
-    }
-  }
   if (isLoading) {
     return (
       <div className="space-y-6">
@@ -79,15 +71,15 @@ export function VideoManagement() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Video Management</h1>
-          <p className="text-gray-600">Manage video promotions and track performance</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white gaming-text-shadow">Video Management</h1>
+          <p className="text-gray-600 dark:text-gray-300">Manage video promotions and track performance</p>
         </div>
       </div>
 
       {/* Status Overview */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         {Object.entries(statusCounts).map(([status, count]) => (
-          <Card key={status} className="text-center p-4 cursor-pointer gaming-interactive gaming-glow"
+          <Card key={status} className="text-center p-4 cursor-pointer gaming-interactive"
                 onClick={() => setVideoFilters({ status: status === videoFilters.status ? 'all' : status })}>
             <div className="gaming-metric-value !text-2xl">{count}</div>
             <div className="text-sm text-gray-500 dark:text-gray-400 capitalize">{status}</div>
@@ -115,12 +107,11 @@ export function VideoManagement() {
               className="px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm min-w-[140px] dark:bg-slate-800 dark:border-slate-600 dark:text-white"
             >
               <option value="all">All Status</option>
-              <option value="pending">Pending</option>
               <option value="active">Active</option>
-              <option value="paused">Paused</option>
               <option value="completed">Completed</option>
-              <option value="rejected">Rejected</option>
-              <option value="repromoted">Repromoted</option>
+              <option value="hold">On Hold</option>
+              <option value="repromote">Repromote</option>
+              <option value="deleted">Deleted</option>
             </select>
           </div>
         </CardContent>
@@ -137,7 +128,6 @@ export function VideoManagement() {
                   <th className="text-left">Video Status</th>
                   <th className="text-left">View Criteria</th>
                   <th className="text-left">Video ID</th>
-                  <th className="text-left">Quick Actions</th>
                   <th className="text-right">Actions</th>
                 </tr>
               </thead>
@@ -146,7 +136,7 @@ export function VideoManagement() {
                   <tr key={video.id} className="group">
                     <td className="py-4 px-6">
                       <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 bg-gradient-to-br from-violet-400 to-purple-600 rounded-full flex items-center justify-center text-white font-medium text-sm gaming-pulse">
+                        <div className="w-10 h-10 bg-gradient-to-br from-violet-400 to-purple-600 rounded-full flex items-center justify-center text-white font-medium text-sm">
                           {video.username.charAt(0).toUpperCase()}
                         </div>
                         <div>
@@ -160,76 +150,32 @@ export function VideoManagement() {
                     </td>
                     <td className="py-4 px-6">
                       <div className="flex items-center space-x-2">
-                        <Eye className="w-4 h-4 text-gray-400 gaming-glow" />
+                        <Eye className="w-4 h-4 text-gray-400" />
                         <span className="font-mono text-sm font-medium">{video.current_views}/{video.target_views}</span>
                       </div>
                     </td>
                     <td className="py-4 px-6">
                       <div className="flex items-center space-x-2">
-                        <code className="bg-violet-500/10 border border-violet-500/20 px-2 py-1 rounded text-sm font-mono text-violet-600 dark:text-violet-400 gaming-glow">{video.id.slice(0, 8)}</code>
+                        <code className="bg-violet-500/10 border border-violet-500/20 px-2 py-1 rounded text-sm font-mono text-violet-600 dark:text-violet-400">{video.id.slice(0, 8)}</code>
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => copyToClipboard(video.id)}
-                          className="opacity-0 group-hover:opacity-100 transition-opacity gaming-glow"
+                          className="opacity-0 group-hover:opacity-100 transition-opacity"
                         >
                           <Copy className="w-3 h-3" />
                         </Button>
-                      </div>
-                    </td>
-                    <td className="py-4 px-6">
-                      <div className="flex items-center space-x-2">
-                        {video.status === 'pending' && (
-                          <>
-                            <Button
-                              size="sm"
-                              variant="success"
-                              onClick={() => handleStatusChange(video.id, 'active')}
-                              className="text-xs"
-                            >
-                              Approve
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="danger"
-                              onClick={() => handleStatusChange(video.id, 'rejected')}
-                              className="text-xs"
-                            >
-                              Reject
-                            </Button>
-                          </>
-                        )}
-                        {video.status === 'active' && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleStatusChange(video.id, 'paused')}
-                            className="text-xs"
-                          >
-                            Pause
-                          </Button>
-                        )}
-                        {video.status === 'paused' && (
-                          <Button
-                            size="sm"
-                            variant="success"
-                            onClick={() => handleStatusChange(video.id, 'active')}
-                            className="text-xs"
-                          >
-                            Resume
-                          </Button>
-                        )}
                       </div>
                     </td>
                     <td className="py-4 px-6 text-right">
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => handleEditVideo(video)}
+                        onClick={() => handleViewVideo(video)}
                         className="flex items-center space-x-1"
                       >
-                        <Edit className="w-4 h-4 gaming-glow" />
-                        <span>Edit</span>
+                        <Eye className="w-4 h-4" />
+                        <span>View</span>
                       </Button>
                     </td>
                   </tr>
@@ -240,7 +186,7 @@ export function VideoManagement() {
         </CardContent>
       </Card>
 
-      {/* Video Edit Modal */}
+      {/* Video View Modal */}
       <VideoEditModal
         video={selectedVideo}
         isOpen={isModalOpen}

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { X, Copy, Save, Eye, TrendingUp, DollarSign } from 'lucide-react'
+import { X, Copy, Eye, TrendingUp, DollarSign } from 'lucide-react'
 import { useAdminStore } from '../../stores/adminStore'
 import { Button } from '../ui/Button'
 import { Input } from '../ui/Input'
@@ -13,37 +13,18 @@ interface VideoEditModalProps {
 }
 
 export function VideoEditModal({ video, isOpen, onClose }: VideoEditModalProps) {
-  const { updateVideoStatus, processRefund, copyToClipboard } = useAdminStore()
-  const [editedVideo, setEditedVideo] = useState(video || {})
-  const [refundAmount, setRefundAmount] = useState(0)
-  const [refundPercent, setRefundPercent] = useState(0)
-
-  useEffect(() => {
-    if (video) {
-      setEditedVideo(video)
-      setRefundAmount(video.refund_amount || 0)
-      setRefundPercent(video.refund_percent || 0)
-    }
-  }, [video])
+  const { copyToClipboard } = useAdminStore()
 
   if (!isOpen || !video) return null
 
-  const handleSave = async () => {
-    await updateVideoStatus(video.video_id, editedVideo.status)
-    if (editedVideo.status === 'deleted' && (refundAmount > 0 || refundPercent > 0)) {
-      await processRefund(video.video_id, refundAmount, refundPercent)
-    }
-    onClose()
-  }
-
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'active': return 'text-emerald-600 bg-emerald-50'
-      case 'completed': return 'text-blue-600 bg-blue-50'
-      case 'hold': return 'text-orange-600 bg-orange-50'
-      case 'repromote': return 'text-purple-600 bg-purple-50'
-      case 'deleted': return 'text-red-600 bg-red-50'
-      default: return 'text-gray-600 bg-gray-50'
+      case 'active': return 'text-emerald-600 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-900/20'
+      case 'completed': return 'text-blue-600 bg-blue-50 dark:text-blue-400 dark:bg-blue-900/20'
+      case 'hold': return 'text-orange-600 bg-orange-50 dark:text-orange-400 dark:bg-orange-900/20'
+      case 'repromote': return 'text-purple-600 bg-purple-50 dark:text-purple-400 dark:bg-purple-900/20'
+      case 'deleted': return 'text-red-600 bg-red-50 dark:text-red-400 dark:bg-red-900/20'
+      default: return 'text-gray-600 bg-gray-50 dark:text-gray-400 dark:bg-gray-900/20'
     }
   }
 
@@ -53,11 +34,11 @@ export function VideoEditModal({ video, isOpen, onClose }: VideoEditModalProps) 
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-violet-500/20">
           <div>
-            <h2 className="text-xl font-bold text-white gaming-glow">Edit Video Details</h2>
-            <p className="text-sm text-gray-400">Manage video promotion settings and status</p>
+            <h2 className="text-xl font-bold text-white">Video Details</h2>
+            <p className="text-sm text-gray-400">View video promotion information</p>
           </div>
           <Button variant="ghost" size="icon" onClick={onClose}>
-            <X className="w-5 h-5 text-white gaming-glow" />
+            <X className="w-5 h-5 text-white" />
           </Button>
         </div>
 
@@ -67,18 +48,18 @@ export function VideoEditModal({ video, isOpen, onClose }: VideoEditModalProps) 
             <img
               src={video.thumbnail_url}
               alt={video.title}
-              className="w-24 h-16 object-cover rounded-lg shadow-sm gaming-glow"
+              className="w-24 h-16 object-cover rounded-lg shadow-sm"
             />
             <div className="flex-1">
-              <h3 className="font-semibold text-white mb-1 gaming-glow">{video.title}</h3>
+              <h3 className="font-semibold text-white mb-1">{video.title}</h3>
               <p className="text-sm text-gray-400">by {video.username}</p>
               <div className="flex items-center space-x-4 mt-2">
                 <span className="text-xs text-gray-400 flex items-center">
-                  <Eye className="w-3 h-3 mr-1 gaming-glow" />
+                  <Eye className="w-3 h-3 mr-1" />
                   {formatNumber(video.views_count)} views
                 </span>
                 <span className="text-xs text-gray-400 flex items-center">
-                  <TrendingUp className="w-3 h-3 mr-1 gaming-glow" />
+                  <TrendingUp className="w-3 h-3 mr-1" />
                   {video.completion_rate}% completion
                 </span>
               </div>
@@ -104,7 +85,7 @@ export function VideoEditModal({ video, isOpen, onClose }: VideoEditModalProps) 
                     size="sm"
                     onClick={() => copyToClipboard(video.user_id)}
                   >
-                    <Copy className="w-4 h-4 gaming-glow" />
+                    <Copy className="w-4 h-4" />
                   </Button>
                 </div>
               </div>
@@ -124,7 +105,7 @@ export function VideoEditModal({ video, isOpen, onClose }: VideoEditModalProps) 
                     size="sm"
                     onClick={() => copyToClipboard(video.video_url)}
                   >
-                    <Copy className="w-4 h-4 gaming-glow" />
+                    <Copy className="w-4 h-4" />
                   </Button>
                 </div>
               </div>
@@ -145,7 +126,7 @@ export function VideoEditModal({ video, isOpen, onClose }: VideoEditModalProps) 
                   Criteria
                 </label>
                 <div className="px-3 py-2 gaming-card">
-                  <Badge variant="default" className="font-mono text-sm">{video.view_criteria}</Badge>
+                  <Badge variant="default" className="font-mono text-sm">{video.current_views}/{video.target_views}</Badge>
                 </div>
               </div>
             </div>
@@ -157,7 +138,7 @@ export function VideoEditModal({ video, isOpen, onClose }: VideoEditModalProps) 
                   Spent Coins
                 </label>
                 <div className="px-3 py-2 gaming-card">
-                  <span className="font-mono text-sm text-orange-400 gaming-glow">{formatNumber(video.spent_coins)}</span>
+                  <span className="font-mono text-sm text-orange-400">{formatNumber(video.spent_coins)}</span>
                 </div>
               </div>
 
@@ -165,17 +146,9 @@ export function VideoEditModal({ video, isOpen, onClose }: VideoEditModalProps) 
                 <label className="block text-sm font-medium text-gray-300 mb-2">
                   Video Status
                 </label>
-                <select
-                  value={editedVideo.status}
-                  onChange={(e) => setEditedVideo({ ...editedVideo, status: e.target.value })}
-                  className={`gaming-input w-full ${getStatusColor(editedVideo.status)} font-medium`}
-                >
-                  <option value="active">Active</option>
-                  <option value="completed">Completed</option>
-                  <option value="hold">On Hold</option>
-                  <option value="repromote">Repromote</option>
-                  <option value="deleted">Deleted</option>
-                </select>
+                <div className={`px-3 py-2 rounded-lg font-medium text-sm ${getStatusColor(video.status)}`}>
+                  {video.status.charAt(0).toUpperCase() + video.status.slice(1)}
+                </div>
               </div>
 
               <div>
@@ -183,7 +156,7 @@ export function VideoEditModal({ video, isOpen, onClose }: VideoEditModalProps) 
                   Total Watch Time (seconds)
                 </label>
                 <div className="px-3 py-2 gaming-card">
-                  <span className="font-mono text-sm text-blue-400 gaming-glow">{Math.floor(video.total_watch_time / 60)}m {video.total_watch_time % 60}s</span>
+                  <span className="font-mono text-sm text-blue-400">{Math.floor(video.total_watch_time / 60)}m {video.total_watch_time % 60}s</span>
                 </div>
               </div>
 
@@ -192,64 +165,11 @@ export function VideoEditModal({ video, isOpen, onClose }: VideoEditModalProps) 
                   Completion Rate (%)
                 </label>
                 <div className="px-3 py-2 gaming-card">
-                  <span className="font-mono text-sm text-emerald-400 gaming-glow">{video.completion_rate}%</span>
+                  <span className="font-mono text-sm text-emerald-400">{video.completion_rate}%</span>
                 </div>
               </div>
             </div>
           </div>
-
-          {/* Refund Section (only for deleted videos) */}
-          {editedVideo.status === 'deleted' && (
-            <div className="bg-red-50 border border-red-200 rounded-xl p-4 dark:bg-red-900/20 dark:border-red-800/50">
-              <h4 className="font-semibold text-red-800 dark:text-red-300 mb-3 flex items-center">
-                <DollarSign className="w-4 h-4 mr-2" />
-                Refund Configuration
-              </h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-red-700 dark:text-red-300 mb-2">
-                    Refund Amount (coins)
-                  </label>
-                  <Input
-                    type="number"
-                    value={refundAmount}
-                    onChange={(e) => setRefundAmount(Number(e.target.value))}
-                    className="border-red-300 focus:border-red-500 dark:border-red-700"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-red-700 dark:text-red-300 mb-2">
-                    Refund Percentage (%)
-                  </label>
-                  <Input
-                    type="number"
-                    min="0"
-                    max="100"
-                    value={refundPercent}
-                    onChange={(e) => setRefundPercent(Number(e.target.value))}
-                    className="border-red-300 focus:border-red-500 dark:border-red-700"
-                  />
-                </div>
-              </div>
-              {(video.refund_amount || video.refund_percent) && (
-                <div className="mt-4 pt-4 border-t border-red-200 dark:border-red-800">
-                  <h5 className="font-medium text-red-700 dark:text-red-300 mb-2">Current Refund Status:</h5>
-                  <div className="flex items-center space-x-4 text-sm">
-                    {video.refund_amount && (
-                      <span className="text-green-600 dark:text-green-400 font-semibold">
-                        {formatNumber(video.refund_amount)} coins refunded
-                      </span>
-                    )}
-                    {video.refund_percent && (
-                      <span className="text-green-600 dark:text-green-400 font-semibold">
-                        {video.refund_percent}% refund applied
-                      </span>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
 
           {/* Performance Metrics */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -258,15 +178,15 @@ export function VideoEditModal({ video, isOpen, onClose }: VideoEditModalProps) 
               <div className="text-sm text-violet-400">Total Views</div>
             </div>
             <div className="gaming-metric p-4 text-center">
-              <div className="text-2xl font-bold text-emerald-400 gaming-glow">{video.completion_rate}%</div>
+              <div className="text-2xl font-bold text-emerald-400">{video.completion_rate}%</div>
               <div className="text-sm text-emerald-400">Completion Rate</div>
             </div>
             <div className="gaming-metric p-4 text-center">
-              <div className="text-2xl font-bold text-orange-400 gaming-glow">{formatNumber(video.spent_coins)}</div>
+              <div className="text-2xl font-bold text-orange-400">{formatNumber(video.spent_coins)}</div>
               <div className="text-sm text-orange-400">Coins Spent</div>
             </div>
             <div className="gaming-metric p-4 text-center">
-              <div className="text-2xl font-bold text-blue-400 gaming-glow">{Math.floor(video.total_watch_time / 60)}m</div>
+              <div className="text-2xl font-bold text-blue-400">{Math.floor(video.total_watch_time / 60)}m</div>
               <div className="text-sm text-blue-400">Watch Time</div>
             </div>
           </div>
@@ -275,11 +195,7 @@ export function VideoEditModal({ video, isOpen, onClose }: VideoEditModalProps) 
         {/* Footer */}
         <div className="flex items-center justify-end space-x-3 p-6 border-t border-violet-500/20 gaming-card">
           <Button variant="outline" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button onClick={handleSave} className="flex items-center space-x-2">
-            <Save className="w-4 h-4 gaming-glow" />
-            <span>Save Changes</span>
+            Close
           </Button>
         </div>
       </div>

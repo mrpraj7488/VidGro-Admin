@@ -154,7 +154,7 @@ export const mockVideos: Video[] = Array.from({ length: 15 }, (_, i) => ({
   title: `Amazing Video Content ${i + 1}`,
   description: `This is a description for video ${i + 1}`,
   thumbnail_url: `https://images.pexels.com/photos/${2000 + i}/pexels-photo-${2000 + i}.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop`,
-  status: ['pending', 'active', 'paused', 'completed', 'rejected', 'repromoted'][Math.floor(Math.random() * 6)] as any,
+  status: ['active', 'completed', 'hold', 'repromote', 'deleted'][Math.floor(Math.random() * 5)] as any,
   target_views: Math.floor(Math.random() * 10000) + 1000,
   current_views: Math.floor(Math.random() * 5000),
   views_count: Math.floor(Math.random() * 100000),
