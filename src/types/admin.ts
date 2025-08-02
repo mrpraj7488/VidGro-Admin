@@ -7,7 +7,7 @@ export interface DashboardStats {
 }
 
 export interface User {
-  user_id: string
+  id: string
   username: string
   email: string
   coins: number
@@ -15,11 +15,10 @@ export interface User {
   created_at: string
   last_active: string
   videos_posted: number
-  avatar_url?: string
 }
 
 export interface Video {
-  video_id: string
+  id: string
   user_id: string
   username: string
   video_url: string
@@ -47,24 +46,6 @@ export interface BugReport {
   created_at: string
   updated_at: string
   category: string
-}
-
-export interface SystemEnvironment {
-  EXPO_PUBLIC_SUPABASE_URL: string
-  EXPO_PUBLIC_SUPABASE_ANON_KEY: string
-  EXPO_PUBLIC_SUPABASE_SERVICE_ROLE_KEY: string
-  EXPO_PUBLIC_ADMOB_APP_ID: string
-  EXPO_PUBLIC_ADMOB_BANNER_ID: string
-  EXPO_PUBLIC_ADMOB_INTERSTITIAL_ID: string
-  EXPO_PUBLIC_ADMOB_REWARDED_ID: string
-}
-
-export interface AdsConfiguration {
-  bannerAdsEnabled: boolean
-  interstitialAdsEnabled: boolean
-  rewardedAdsEnabled: boolean
-  adFrequencyMinutes: number
-  revenueSharePercent: number
 }
 
 export interface UserFilters {
@@ -123,8 +104,6 @@ export interface BugReportData {
 }
 
 export interface SystemSettings {
-  environment: SystemEnvironment
-  ads: AdsConfiguration
   general: {
     platformName: string
     supportEmail: string

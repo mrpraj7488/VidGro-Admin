@@ -1,5 +1,4 @@
 import { create } from 'zustand'
-import { subscript } from 'zustand/middleware'
 import { 
   DashboardStats, 
   User, 
@@ -28,6 +27,7 @@ import {
 import { mockBugReportData, mockSystemSettings } from '../lib/supabase'
 import { realtimeService, RealtimeEvent, createCoinAdjustmentNotification, createVideoStatusNotification } from '../services/realtimeService'
 import { envManager, EnvironmentVariables } from '../lib/envManager'
+import { logger } from '../lib/logger'
 
 interface AdminStore {
   // Dashboard data
@@ -98,6 +98,10 @@ interface AdminStore {
   setUserFilters: (filters: Partial<UserFilters>) => void
   setVideoFilters: (filters: Partial<VideoFilters>) => void
   setSelectedVideo: (video: VideoType | null) => void
+
+  // Realtime actions
+  initializeRealtime: () => void
+  disconnectRealtime: () => void
   handleRealtimeEvent: (event: RealtimeEvent) => void
 }
 
@@ -137,7 +141,7 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
         isLoading: false 
       })
     } catch (error) {
-      console.error('Failed to fetch dashboard stats:', error)
+      logger.error('Failed to fetch dashboard stats', error, 'adminStore')
       set({ isLoading: false })
     }
   },
@@ -149,7 +153,7 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
       const users = await getUsers()
       set({ users, isLoading: false })
     } catch (error) {
-      console.error('Failed to fetch users:', error)
+      logger.error('Failed to fetch users', error, 'adminStore')
       set({ isLoading: false })
     }
   },
@@ -163,9 +167,9 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
       set({ users })
       
       // TODO: Implement actual API call to update coins
-      console.log('Updated user coins:', { userId, coins })
+      logger.info('Updated user coins', { userId, coins }, 'adminStore')
     } catch (error) {
-      console.error('Failed to update user coins:', error)
+      logger.error('Failed to update user coins', error, 'adminStore')
       // Revert local state on error
       get().fetchUsers()
     }
@@ -189,10 +193,10 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
           createCoinAdjustmentNotification(amount, reason)
         )
         
-        console.log('Coins adjusted successfully:', result)
+        logger.info('Coins adjusted successfully', result, 'adminStore')
       }
     } catch (error) {
-      console.error('Failed to adjust user coins:', error)
+      logger.error('Failed to adjust user coins', error, 'adminStore')
       throw error
     }
   },
@@ -205,9 +209,9 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
       set({ users })
       
       // TODO: Implement actual API call to toggle VIP status
-      console.log('Toggled VIP status for user:', userId)
+      logger.info('Toggled VIP status for user', { userId }, 'adminStore')
     } catch (error) {
-      console.error('Failed to toggle VIP status:', error)
+      logger.error('Failed to toggle VIP status', error, 'adminStore')
       // Revert local state on error
       get().fetchUsers()
     }
@@ -220,7 +224,7 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
       const videos = await getVideos()
       set({ videos, isLoading: false })
     } catch (error) {
-      console.error('Failed to fetch videos:', error)
+      logger.error('Failed to fetch videos', error, 'adminStore')
       set({ isLoading: false })
     }
   },
@@ -247,10 +251,10 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
           )
         }
         
-        console.log('Video status updated successfully:', result)
+        logger.info('Video status updated successfully', result, 'adminStore')
       }
     } catch (error) {
-      console.error('Failed to update video status:', error)
+      logger.error('Failed to update video status', error, 'adminStore')
       throw error
     }
   },
@@ -273,9 +277,9 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
       set({ videos })
       
       // TODO: Implement actual API call for refund processing
-      console.log('Processed refund:', { videoId, amount, percent })
+      logger.info('Processed refund', { videoId, amount, percent }, 'adminStore')
     } catch (error) {
-      console.error('Failed to process refund:', error)
+      logger.error('Failed to process refund', error, 'adminStore')
       throw error
     }
   },
@@ -481,5 +485,39 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
 
   setSelectedVideo: (video) => {
     set({ selectedVideo: video })
+  },
+
+  // Realtime actions
+  initializeRealtime: () => {
+    realtimeService.initialize()
+    
+    // Subscribe to user updates
+    realtimeService.subscribeToUserUpdates((event) => {
+      get().handleRealtimeEvent(event)
+    })
+    
+    // Subscribe to video updates
+    realtimeService.subscribeToVideoUpdates((event) => {
+      get().handleRealtimeEvent(event)
+    })
+  },
+
+  disconnectRealtime: () => {
+    realtimeService.disconnect()
+  },
+
+  handleRealtimeEvent: (event: RealtimeEvent) => {
+    switch (event.type) {
+      case 'user_update':
+        // Refresh users data
+        get().fetchUsers()
+        break
+      case 'video_update':
+        // Refresh videos data
+        get().fetchVideos()
+        break
+      default:
+        logger.debug('Unhandled realtime event', event, 'adminStore')
+    }
   }
 }))

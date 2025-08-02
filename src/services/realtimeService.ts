@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase'
+import { logger } from '../lib/logger'
 
 export interface RealtimeEvent {
   type: 'user_update' | 'video_update' | 'coin_adjustment' | 'system_notification'
@@ -21,16 +22,16 @@ class RealtimeService {
     try {
       // Initialize real-time connection
       this.isConnected = true
-      console.log('Realtime service initialized')
+      logger.info('Realtime service initialized', null, 'realtimeService')
     } catch (error) {
-      console.error('Failed to initialize realtime service:', error)
+      logger.error('Failed to initialize realtime service', error, 'realtimeService')
       this.isConnected = false
     }
   }
 
   async subscribeToUserUpdates(callback: (event: RealtimeEvent) => void) {
     if (!this.isConnected) {
-      console.warn('Realtime service not connected')
+      logger.warn('Realtime service not connected', null, 'realtimeService')
       return
     }
 
@@ -51,13 +52,13 @@ class RealtimeService {
 
       this.subscriptions.set('user-updates', subscription)
     } catch (error) {
-      console.error('Failed to subscribe to user updates:', error)
+      logger.error('Failed to subscribe to user updates', error, 'realtimeService')
     }
   }
 
   async subscribeToVideoUpdates(callback: (event: RealtimeEvent) => void) {
     if (!this.isConnected) {
-      console.warn('Realtime service not connected')
+      logger.warn('Realtime service not connected', null, 'realtimeService')
       return
     }
 
@@ -78,21 +79,21 @@ class RealtimeService {
 
       this.subscriptions.set('video-updates', subscription)
     } catch (error) {
-      console.error('Failed to subscribe to video updates:', error)
+      logger.error('Failed to subscribe to video updates', error, 'realtimeService')
     }
   }
 
   async sendUserNotification(userId: string, notification: NotificationPayload) {
     try {
       // Mock implementation - in real app this would send push notification
-      console.log('Sending notification to user:', userId, notification)
+      logger.info('Sending notification to user', { userId, notification }, 'realtimeService')
       
       // Simulate API call delay
       await new Promise(resolve => setTimeout(resolve, 100))
       
       return { success: true, messageId: `msg_${Date.now()}` }
     } catch (error) {
-      console.error('Failed to send user notification:', error)
+      logger.error('Failed to send user notification', error, 'realtimeService')
       throw error
     }
   }
@@ -109,7 +110,7 @@ class RealtimeService {
         failed: results.filter(r => !r.success).length
       }
     } catch (error) {
-      console.error('Failed to send bulk notification:', error)
+      logger.error('Failed to send bulk notification', error, 'realtimeService')
       throw error
     }
   }
@@ -129,7 +130,7 @@ class RealtimeService {
     }
     
     this.isConnected = false
-    console.log('Realtime service disconnected')
+    logger.info('Realtime service disconnected', null, 'realtimeService')
   }
 
   getConnectionStatus() {

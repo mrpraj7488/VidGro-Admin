@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import { envManager } from './envManager'
+import { logger } from './logger'
 
 // Get environment variables from the environment manager
 const getSupabaseConfig = () => {
@@ -147,7 +148,6 @@ export const mockUsers: Profile[] = Array.from({ length: 20 }, (_, i) => ({
   updated_at: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString(),
   last_active: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString(),
   videos_posted: Math.floor(Math.random() * 50),
-  avatar_url: `https://images.pexels.com/photos/${1000 + i}/pexels-photo-${1000 + i}.jpeg?auto=compress&cs=tinysrgb&w=100&h=100&fit=crop`,
   referral_code: `REF${String(i + 1).padStart(4, '0')}`,
   total_earned: Math.floor(Math.random() * 50000),
   total_spent: Math.floor(Math.random() * 30000)
@@ -163,7 +163,7 @@ export const mockVideos: Video[] = Array.from({ length: 15 }, (_, i) => ({
   youtube_video_id: `example${i + 1}`,
   title: `Amazing Video Content ${i + 1}`,
   description: `This is a description for video ${i + 1}`,
-  thumbnail_url: `https://images.pexels.com/photos/${2000 + i}/pexels-photo-${2000 + i}.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop`,
+  thumbnail_url: `https://images.pexels.com/photos/2000/pexels-photo-2000.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop`,
   status: ['active', 'completed', 'hold', 'repromote', 'deleted'][Math.floor(Math.random() * 5)] as any,
   target_views: Math.floor(Math.random() * 10000) + 1000,
   current_views: Math.floor(Math.random() * 5000),
@@ -207,7 +207,7 @@ export const mockAnalyticsData = {
   topVideos: Array.from({ length: 5 }, (_, i) => ({
     id: `top-video-${i + 1}`,
     title: `Top Performing Video ${i + 1}`,
-    thumbnail: `https://images.pexels.com/photos/${3000 + i}/pexels-photo-${3000 + i}.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop`,
+    thumbnail: `https://images.pexels.com/photos/3000/pexels-photo-3000.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop`,
     views: Math.floor(Math.random() * 100000) + 50000,
     completionRate: Math.floor(Math.random() * 30) + 70,
     coinsEarned: Math.floor(Math.random() * 5000) + 2000
@@ -252,24 +252,7 @@ export const mockBugReportData = {
   }))
 }
 
-// Mock system settings
 export const mockSystemSettings = {
-  environment: {
-    EXPO_PUBLIC_SUPABASE_URL: 'https://your-project.supabase.co',
-    EXPO_PUBLIC_SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
-    EXPO_PUBLIC_SUPABASE_SERVICE_ROLE_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
-    EXPO_PUBLIC_ADMOB_APP_ID: 'ca-app-pub-1234567890123456~1234567890',
-    EXPO_PUBLIC_ADMOB_BANNER_ID: 'ca-app-pub-1234567890123456/1234567890',
-    EXPO_PUBLIC_ADMOB_INTERSTITIAL_ID: 'ca-app-pub-1234567890123456/1234567890',
-    EXPO_PUBLIC_ADMOB_REWARDED_ID: 'ca-app-pub-1234567890123456/1234567890'
-  },
-  ads: {
-    bannerAdsEnabled: true,
-    interstitialAdsEnabled: true,
-    rewardedAdsEnabled: true,
-    adFrequencyMinutes: 5,
-    revenueSharePercent: 70
-  },
   general: {
     platformName: 'VidGro',
     supportEmail: 'support@vidgro.com',
@@ -320,7 +303,7 @@ export const getDashboardStats = async () => {
     const config = getSupabaseConfig()
     // Check if we're using placeholder URLs
     if (config.url.includes('placeholder-project')) {
-      console.warn('Using mock data - Supabase not configured')
+      logger.warn('Using mock data - Supabase not configured', null, 'supabase')
       return mockDashboardStats
     }
     
@@ -328,7 +311,7 @@ export const getDashboardStats = async () => {
     if (error) throw error
     return data || mockDashboardStats
   } catch (error) {
-    console.warn('Using mock data for dashboard stats:', error)
+    logger.warn('Using mock data for dashboard stats', error, 'supabase')
     return mockDashboardStats
   }
 }
@@ -338,7 +321,7 @@ export const getUsers = async (limit = 50, offset = 0) => {
     const config = getSupabaseConfig()
     // Check if we're using placeholder URLs
     if (config.url.includes('placeholder-project')) {
-      console.warn('Using mock data - Supabase not configured')
+      logger.warn('Using mock data - Supabase not configured', null, 'supabase')
       return mockUsers
     }
     
@@ -351,7 +334,7 @@ export const getUsers = async (limit = 50, offset = 0) => {
     if (error) throw error
     return data || mockUsers
   } catch (error) {
-    console.warn('Using mock data for users:', error)
+    logger.warn('Using mock data for users', error, 'supabase')
     return mockUsers
   }
 }
@@ -361,7 +344,7 @@ export const getVideos = async (limit = 50, offset = 0) => {
     const config = getSupabaseConfig()
     // Check if we're using placeholder URLs
     if (config.url.includes('placeholder-project')) {
-      console.warn('Using mock data - Supabase not configured')
+      logger.warn('Using mock data - Supabase not configured', null, 'supabase')
       return mockVideos
     }
     
@@ -387,7 +370,7 @@ export const getVideos = async (limit = 50, offset = 0) => {
     
     return transformedData
   } catch (error) {
-    console.warn('Using mock data for videos:', error)
+    logger.warn('Using mock data for videos', error, 'supabase')
     return mockVideos
   }
 }
@@ -397,7 +380,7 @@ export const adjustUserCoins = async (userId: string, amount: number, reason: st
     const config = getSupabaseConfig()
     // Check if we're using placeholder URLs
     if (config.url.includes('placeholder-project')) {
-      console.warn('Mock mode - coin adjustment simulated')
+      logger.info('Mock mode - coin adjustment simulated', { userId, amount, reason }, 'supabase')
       return { success: true, message: 'Coin adjustment simulated in demo mode' }
     }
     
@@ -411,7 +394,7 @@ export const adjustUserCoins = async (userId: string, amount: number, reason: st
     if (error) throw error
     return data
   } catch (error) {
-    console.error('Failed to adjust user coins:', error)
+    logger.error('Failed to adjust user coins', error, 'supabase')
     throw error
   }
 }
@@ -421,7 +404,7 @@ export const updateVideoStatus = async (videoId: string, status: string, adminId
     const config = getSupabaseConfig()
     // Check if we're using placeholder URLs
     if (config.url.includes('placeholder-project')) {
-      console.warn('Mock mode - video status update simulated')
+      logger.info('Mock mode - video status update simulated', { videoId, status, reason }, 'supabase')
       return { success: true, message: 'Video status update simulated in demo mode' }
     }
     
@@ -435,7 +418,7 @@ export const updateVideoStatus = async (videoId: string, status: string, adminId
     if (error) throw error
     return data
   } catch (error) {
-    console.error('Failed to update video status:', error)
+    logger.error('Failed to update video status', error, 'supabase')
     throw error
   }
 }

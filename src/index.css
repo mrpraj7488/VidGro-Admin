@@ -27,11 +27,8 @@
     --popover-foreground: 222.2 84% 4.9%;
     
     /* Gaming theme variables */
-    --gaming-primary: 139 92% 46%;
-    --gaming-secondary: 262 83% 58%;
-    --gaming-accent: 45 93% 47%;
-    --gaming-glow: 139 92% 46%;
-    --gaming-shadow: 0 0 0;
+    --gaming-primary: 262 83% 58%;
+    --gaming-glow: 262 83% 58%;
   }
   
   .dark {
@@ -56,11 +53,8 @@
     --popover-foreground: 210 40% 98%;
     
     /* Dark mode gaming variables */
-    --gaming-primary: 139 92% 46%;
-    --gaming-secondary: 262 83% 58%;
-    --gaming-accent: 45 93% 47%;
-    --gaming-glow: 139 92% 46%;
-    --gaming-shadow: 0 0 20px;
+    --gaming-primary: 262 83% 58%;
+    --gaming-glow: 262 83% 58%;
   }
   
   * {
@@ -126,10 +120,7 @@
     left: 0;
     right: 0;
     height: 1px;
-    background: linear-gradient(90deg, 
-      transparent 0%, 
-      hsl(var(--gaming-primary)) 50%, 
-      transparent 100%);
+    background: linear-gradient(90deg, transparent 0%, #8b5cf6 50%, transparent 100%);
     opacity: 0;
     transition: opacity 0.3s ease;
   }
@@ -329,10 +320,7 @@
     transform: translateX(-50%);
     width: 60%;
     height: 2px;
-    background: linear-gradient(90deg, 
-      transparent 0%, 
-      hsl(var(--gaming-primary)) 50%, 
-      transparent 100%);
+    background: linear-gradient(90deg, transparent 0%, #8b5cf6 50%, transparent 100%);
     opacity: 0;
     transition: opacity 0.3s ease;
   }
@@ -485,7 +473,7 @@
     transform: translateY(-50%);
     width: 2px;
     height: 0;
-    background: linear-gradient(180deg, #8b5cf6 0%, #06b6d4 100%);
+    background: #8b5cf6;
     border-radius: 0 2px 2px 0;
     transition: height 0.3s ease;
   }
