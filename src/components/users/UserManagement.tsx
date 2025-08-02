@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react'
-import { Search, Filter, MoreHorizontal, Crown, Coins, Calendar, Plus, Minus, DollarSign } from 'lucide-react'
+import { Search, Filter, MoreHorizontal, Crown, Coins, Calendar, Plus, Minus, DollarSign, UserPlus, Ban } from 'lucide-react'
 import { useAdminStore } from '../../stores/adminStore'
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card'
 import { Button } from '../ui/Button'
 import { Input } from '../ui/Input'
 import { Badge } from '../ui/Badge'
+import { UserProfilePanel } from './UserProfilePanel'
+import { CreateUserModal } from './CreateUserModal'
 import { formatNumber } from '../../lib/utils'
 import { format } from 'date-fns'
 
@@ -120,6 +122,9 @@ export function UserManagement() {
   const { users, userFilters, isLoading, fetchUsers, adjustUserCoins, toggleUserVip, setUserFilters } = useAdminStore()
   const [selectedUser, setSelectedUser] = useState<any>(null)
   const [isAdjustModalOpen, setIsAdjustModalOpen] = useState(false)
+  const [isProfilePanelOpen, setIsProfilePanelOpen] = useState(false)
+  const [isCreateUserModalOpen, setIsCreateUserModalOpen] = useState(false)
+  const [profileUser, setProfileUser] = useState<any>(null)
 
   useEffect(() => {
     fetchUsers()
@@ -155,11 +160,27 @@ export function UserManagement() {
     setIsAdjustModalOpen(false)
   }
 
+  const openProfilePanel = (user: any) => {
+    setProfileUser(user)
+    setIsProfilePanelOpen(true)
+  }
+
+  const closeProfilePanel = () => {
+    setProfileUser(null)
+    setIsProfilePanelOpen(false)
+  }
+
+  const handleCreateUser = async (userData: any) => {
+    // TODO: Implement user creation
+    console.log('Creating user:', userData)
+    await fetchUsers() // Refresh users list
+  }
+
   if (isLoading) {
     return (
       <div className="space-y-6">
-        <div className="h-16 bg-gray-200 dark:bg-slate-700 animate-pulse rounded-xl" />
-        <div className="h-96 bg-gray-200 dark:bg-slate-700 animate-pulse rounded-xl" />
+        <div className="h-16 gaming-skeleton rounded-xl" />
+        <div className="h-96 gaming-skeleton rounded-xl" />
       </div>
     )
   }
@@ -195,7 +216,16 @@ export function UserManagement() {
       {/* Header with Search and Filters */}
       <Card>
         <CardHeader>
-          <CardTitle>User Management</CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle>User Management</CardTitle>
+            <Button 
+              onClick={() => setIsCreateUserModalOpen(true)}
+              className="flex items-center space-x-2"
+            >
+              <UserPlus className="w-4 h-4" />
+              <span>Create User</span>
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="flex flex-col sm:flex-row gap-4">
@@ -299,7 +329,12 @@ export function UserManagement() {
                       </span>
                     </td>
                     <td className="py-4 px-6 text-right">
-                      <Button variant="ghost" size="icon">
+                      <Button 
+                        variant="ghost" 
+                        size="icon"
+                        onClick={() => openProfilePanel(user)}
+                        className="gaming-interactive"
+                      >
                         <MoreHorizontal className="w-4 h-4" strokeWidth={2} />
                       </Button>
                     </td>
@@ -317,6 +352,20 @@ export function UserManagement() {
         onClose={closeAdjustModal}
         user={selectedUser}
         onAdjust={handleCoinAdjustment}
+      />
+
+      {/* User Profile Panel */}
+      <UserProfilePanel
+        isOpen={isProfilePanelOpen}
+        onClose={closeProfilePanel}
+        user={profileUser}
+      />
+
+      {/* Create User Modal */}
+      <CreateUserModal
+        isOpen={isCreateUserModalOpen}
+        onClose={() => setIsCreateUserModalOpen(false)}
+        onCreateUser={handleCreateUser}
       />
     </div>
   )
