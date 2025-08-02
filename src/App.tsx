@@ -32,12 +32,12 @@ function AppContent() {
 
   // Show auth modal if not authenticated
   React.useEffect(() => {
-    if (!isLoading && !isAuthenticated && !user) {
+    if (!isLoading && !isAuthenticated) {
       setIsAuthModalOpen(true)
     } else {
       setIsAuthModalOpen(false)
     }
-  }, [isAuthenticated, isLoading, user])
+  }, [isAuthenticated, isLoading])
 
   const handleOpenAdminSettings = () => {
     setIsAdminSettingsOpen(true)

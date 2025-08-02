@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Bell, Settings, User, Moon, Sun, Search, Menu, X, LogOut, Shield } from 'lucide-react'
+import { Bell, User, Moon, Sun, Search, Menu, X, LogOut, Shield, Settings } from 'lucide-react'
 import { Button } from '../ui/Button'
 import { Input } from '../ui/Input'
 import { Badge } from '../ui/Badge'
@@ -31,8 +31,7 @@ export function Header({ isPopupOpen, onOpenSettings }: HeaderProps) {
     // Show confirmation before logout
     if (window.confirm('Are you sure you want to log out?')) {
       logout()
-      // Force page reload to ensure clean state
-      window.location.reload()
+      // The AuthProvider will handle redirecting to sign in
     }
   }
 
@@ -116,16 +115,6 @@ export function Header({ isPopupOpen, onOpenSettings }: HeaderProps) {
               )}
             </Button>
 
-            {/* Settings */}
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleOpenSettings}
-              className="gaming-interactive"
-            >
-              <Settings className="w-5 h-5" />
-            </Button>
-
             {/* Admin Profile */}
             <div className="relative">
               <Button
@@ -166,7 +155,7 @@ export function Header({ isPopupOpen, onOpenSettings }: HeaderProps) {
                       className="w-full flex items-center space-x-3 px-3 py-2 text-left hover:bg-violet-500/10 rounded-lg transition-colors text-gray-700 dark:text-gray-300"
                     >
                       <Settings className="w-4 h-4" />
-                      <span>Account Settings</span>
+                      <span>Admin Settings</span>
                     </button>
                     
                     <button

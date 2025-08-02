@@ -102,6 +102,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     localStorage.removeItem('vidgro_admin_user')
     // Clear any other stored data that might interfere
     sessionStorage.clear()
+    // Force page reload to ensure clean state and redirect to auth
+    window.location.reload()
   }
 
   return (
