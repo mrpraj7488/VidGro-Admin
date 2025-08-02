@@ -13,7 +13,7 @@ import { SystemConfigView } from './components/settings/SystemConfigView'
 import { InboxView } from './components/inbox/InboxView'
 
 function AppContent() {
-  const { isAuthenticated, isLoading, login, signup } = useAuth()
+  const { isAuthenticated, isLoading, login, signup, user } = useAuth()
   const [activeTab, setActiveTab] = useState('dashboard')
   const [isPopupOpen, setIsPopupOpen] = useState(false)
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
