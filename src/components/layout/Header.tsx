@@ -75,63 +75,61 @@ export function Header({ isPopupOpen = false }: HeaderProps) {
 
   return (
     <>
-      <header className={`fixed top-0 left-0 right-0 z-30 transition-all duration-500 ease-in-out ${
+      <header className={`fixed top-0 left-0 right-0 z-30 transition-all duration-300 ease-in-out ${
         isHeaderVisible ? 'translate-y-0' : '-translate-y-full'
       }`}>
-        {/* Neon glow background */}
-        <div className="absolute inset-0 bg-gradient-to-r from-violet-500/10 via-purple-500/10 to-violet-500/10 backdrop-blur-xl border-b border-violet-500/30" />
-        <div className="absolute inset-0 bg-black/20" />
+        {/* Header background */}
+        <div className="absolute inset-0 bg-slate-900/95 backdrop-blur-xl border-b border-violet-500/20" />
         
-        {/* Neon border glow */}
-        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-violet-500 to-transparent opacity-60" />
-        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-purple-400 to-transparent opacity-40 blur-sm" />
+        {/* Subtle bottom border */}
+        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-violet-500/50 to-transparent" />
         
-        <div className="flex items-center justify-between px-4 md:px-6 py-4">
+        <div className="flex items-center justify-between px-3 sm:px-4 md:px-6 py-3 sm:py-4 relative z-10">
           {/* Left Section - Mobile Menu & Search */}
-          <div className="flex items-center space-x-4 flex-1 relative z-10">
+          <div className="flex items-center space-x-2 sm:space-x-4 flex-1">
             {/* Mobile Menu Button */}
             <Button
               variant="ghost"
               size="icon"
               onClick={toggleMobileMenu}
-              className="md:hidden gaming-interactive hover:bg-violet-500/20 hover:shadow-[0_0_15px_rgba(139,92,246,0.5)]"
+              className="md:hidden hover:bg-violet-500/20"
             >
               {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </Button>
 
             {/* Search Bar */}
-            <div className="relative max-w-md w-full hidden sm:block">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-violet-400 w-4 h-4 drop-shadow-[0_0_8px_rgba(139,92,246,0.6)]" />
+            <div className="relative max-w-sm sm:max-w-md w-full hidden sm:block">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-violet-400 w-4 h-4" />
               <Input
                 placeholder="Search users, videos, or reports..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 !bg-violet-500/10 border-violet-500/40 backdrop-blur-sm hover:border-violet-500/60 focus:border-violet-500 focus:shadow-[0_0_20px_rgba(139,92,246,0.3)]"
+                className="pl-10 !bg-violet-500/10 border-violet-500/30 hover:border-violet-500/50 focus:border-violet-500 text-sm"
               />
             </div>
           </div>
 
           {/* Right Section - Actions */}
-          <div className="flex items-center space-x-3 relative z-10">
+          <div className="flex items-center space-x-2 sm:space-x-3">
             {/* Mobile Search Button */}
             <Button
               variant="ghost"
               size="icon"
-              className="sm:hidden gaming-interactive hover:bg-violet-500/20 hover:shadow-[0_0_15px_rgba(139,92,246,0.5)]"
+              className="sm:hidden hover:bg-violet-500/20"
             >
-              <Search className="w-5 h-5 drop-shadow-[0_0_8px_rgba(139,92,246,0.6)]" />
+              <Search className="w-4 h-4 sm:w-5 sm:h-5" />
             </Button>
 
             {/* Notifications */}
             <Button
               variant="ghost"
               size="icon"
-              className="relative gaming-interactive hover:bg-violet-500/20 hover:shadow-[0_0_15px_rgba(139,92,246,0.5)]"
+              className="relative hover:bg-violet-500/20"
             >
-              <Bell className="w-5 h-5 drop-shadow-[0_0_8px_rgba(139,92,246,0.6)]" />
+              <Bell className="w-4 h-4 sm:w-5 sm:h-5" />
               <Badge 
                 variant="danger" 
-                className="absolute -top-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center text-xs gaming-pulse shadow-[0_0_15px_rgba(239,68,68,0.8)]"
+                className="absolute -top-1 -right-1 w-4 h-4 sm:w-5 sm:h-5 rounded-full flex items-center justify-center text-xs"
               >
                 3
               </Badge>
@@ -142,12 +140,12 @@ export function Header({ isPopupOpen = false }: HeaderProps) {
               variant="ghost"
               size="icon"
               onClick={toggleDarkMode}
-              className="gaming-interactive hover:bg-violet-500/20 hover:shadow-[0_0_15px_rgba(139,92,246,0.5)]"
+              className="hover:bg-violet-500/20"
             >
               {isDarkMode ? (
-                <Sun className="w-5 h-5 text-yellow-400 drop-shadow-[0_0_12px_rgba(251,191,36,0.8)]" />
+                <Sun className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-400" />
               ) : (
-                <Moon className="w-5 h-5 text-violet-400 drop-shadow-[0_0_12px_rgba(139,92,246,0.8)]" />
+                <Moon className="w-4 h-4 sm:w-5 sm:h-5 text-violet-400" />
               )}
             </Button>
 
@@ -156,9 +154,9 @@ export function Header({ isPopupOpen = false }: HeaderProps) {
               variant="ghost"
               size="icon"
               onClick={toggleSettings}
-              className="relative gaming-interactive hover:bg-violet-500/20 hover:shadow-[0_0_15px_rgba(139,92,246,0.5)]"
+              className="relative hover:bg-violet-500/20"
             >
-              <div className="w-8 h-8 bg-gradient-to-br from-violet-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-[0_0_20px_rgba(139,92,246,0.8)] hover:shadow-[0_0_25px_rgba(139,92,246,1)]">
+              <div className="w-7 h-7 sm:w-8 sm:h-8 bg-gradient-to-br from-violet-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-xs sm:text-sm">
                 A
               </div>
             </Button>
@@ -167,18 +165,15 @@ export function Header({ isPopupOpen = false }: HeaderProps) {
 
         {/* Mobile Menu Overlay */}
         {isMobileMenuOpen && (
-          <div className="md:hidden absolute top-full left-0 right-0 border-t border-violet-500/30 p-4 backdrop-blur-xl bg-black/30">
-            {/* Neon glow for mobile menu */}
-            <div className="absolute inset-0 bg-gradient-to-b from-violet-500/10 to-transparent" />
-            <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-violet-500 to-transparent opacity-60" />
+          <div className="md:hidden absolute top-full left-0 right-0 border-t border-violet-500/20 p-4 bg-slate-900/95 backdrop-blur-xl">
             
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-violet-400 w-4 h-4 drop-shadow-[0_0_8px_rgba(139,92,246,0.6)]" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-violet-400 w-4 h-4" />
               <Input
                 placeholder="Search..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 !bg-violet-500/10 border-violet-500/40 backdrop-blur-sm"
+                className="pl-10 !bg-violet-500/10 border-violet-500/30"
               />
             </div>
           </div>
