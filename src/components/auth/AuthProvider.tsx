@@ -100,10 +100,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = () => {
     setUser(null)
     localStorage.removeItem('vidgro_admin_user')
-    // Clear any other stored data that might interfere
-    sessionStorage.clear()
-    // Force page reload to ensure clean state and redirect to auth
-    window.location.reload()
+    // Clear any other stored data
+    try {
+      sessionStorage.clear()
+      // Clear any other VidGro related data
+      Object.keys(localStorage).forEach(key => {
+        if (key.startsWith('vidgro_')) {
+          localStorage.removeItem(key)
+        }
+      })
+    } catch (error) {
+      console.error('Error clearing storage:', error)
+    }
   }
 
   return (

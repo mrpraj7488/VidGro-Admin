@@ -85,6 +85,17 @@ function AppContent() {
     )
   }
 
+  // Show auth modal if not authenticated
+  if (!isAuthenticated) {
+    return (
+      <AuthModal
+        isOpen={true}
+        onClose={() => {}} // Prevent closing when not authenticated
+        onLogin={login}
+        onSignup={signup}
+      />
+    )
+  }
   return (
     <>
       <ErrorBoundary>
@@ -106,13 +117,6 @@ function AppContent() {
         </div>
       </ErrorBoundary>
 
-      {/* Auth Modal */}
-      <AuthModal
-        isOpen={isAuthModalOpen}
-        onClose={() => {}} // Prevent closing when not authenticated
-        onLogin={login}
-        onSignup={signup}
-      />
 
       {/* Admin Settings Panel */}
       <AdminSettingsPanel

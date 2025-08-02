@@ -28,18 +28,12 @@ export function Header({ isPopupOpen, onOpenSettings }: HeaderProps) {
 
   const handleLogout = () => {
     setIsProfileMenuOpen(false)
-    // Show confirmation before logout
-    if (window.confirm('Are you sure you want to log out?')) {
-      logout()
-      // The AuthProvider will handle redirecting to sign in
-    }
+    logout()
   }
 
   const handleOpenSettings = () => {
     setIsProfileMenuOpen(false)
-    if (onOpenSettings) {
-      onOpenSettings()
-    }
+    onOpenSettings?.()
   }
 
   // Initialize dark mode on component mount
@@ -47,6 +41,20 @@ export function Header({ isPopupOpen, onOpenSettings }: HeaderProps) {
     document.documentElement.classList.add('dark')
   }, [])
 
+  // Close profile menu when clicking outside
+  React.useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Element
+      if (isProfileMenuOpen && !target.closest('.profile-menu-container')) {
+        setIsProfileMenuOpen(false)
+      }
+    }
+
+    if (isProfileMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+      return () => document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [isProfileMenuOpen])
   return (
     <>
       <header className="gaming-header sticky top-0 z-30 border-b border-violet-500/20">
@@ -116,7 +124,7 @@ export function Header({ isPopupOpen, onOpenSettings }: HeaderProps) {
             </Button>
 
             {/* Admin Profile */}
-            <div className="relative">
+            <div className="relative profile-menu-container">
               <Button
                 variant="ghost"
                 size="icon"
@@ -187,14 +195,6 @@ export function Header({ isPopupOpen, onOpenSettings }: HeaderProps) {
           </div>
         )}
       </header>
-
-      {/* Backdrop for profile menu */}
-      {isProfileMenuOpen && (
-        <div
-          className="fixed inset-0 z-40"
-          onClick={() => setIsProfileMenuOpen(false)}
-        />
-      )}
     </>
   )
 }
