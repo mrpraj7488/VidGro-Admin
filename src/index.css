@@ -518,28 +518,27 @@
   
   .gaming-header-enhanced {
     @apply relative;
-    min-height: 4rem;
-    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    background: linear-gradient(135deg,
+      rgba(255, 255, 255, 0.95) 0%,
+      rgba(255, 255, 255, 0.9) 100%);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(139, 92, 246, 0.15);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    min-height: 3.5rem;
   }
   
   .dark .gaming-header-enhanced {
-    /* Enhanced dark mode styling handled in component */
+    background: linear-gradient(135deg,
+      rgba(15, 15, 35, 0.95) 0%,
+      rgba(26, 26, 46, 0.9) 100%);
+    border-bottom: 1px solid rgba(139, 92, 246, 0.25);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
   }
   
-  /* Enhanced notification glow animation */
-  @keyframes notification-pulse {
-    0%, 100% {
-      box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
-      transform: scale(1);
+  @media (min-width: 768px) {
+    .gaming-header-enhanced {
+      min-height: 4rem;
     }
-    50% {
-      box-shadow: 0 0 0 8px rgba(239, 68, 68, 0);
-      transform: scale(1.05);
-    }
-  }
-  
-  .notification-glow {
-    animation: notification-pulse 2s infinite;
   }
   
   .gaming-stats-grid {
