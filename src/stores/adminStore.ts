@@ -193,13 +193,13 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
 
   adjustUserCoins: async (userId: string, amount: number, reason: string) => {
     try {
-      const adminId = 'current-admin-id' // TODO: Get from auth context
+      const adminId = 'admin-1' // Get from auth context in real implementation
       const result = await adjustUserCoins(userId, amount, reason, adminId)
       
       if (result.success) {
         // Update local state
         const users = get().users.map(user => 
-          user.id === userId ? { ...user, coins: result.newBalance } : user
+          user.id === userId ? { ...user, coins: result.newBalance || user.coins + amount } : user
         )
         set({ users })
         
@@ -252,7 +252,7 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
 
   updateVideoStatus: async (videoId: string, status: string) => {
     try {
-      const adminId = 'current-admin-id' // TODO: Get from auth context
+      const adminId = 'admin-1' // Get from auth context in real implementation
       const result = await updateVideoStatusAPI(videoId, status, adminId)
       
       if (result.success) {

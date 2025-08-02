@@ -15,6 +15,18 @@ interface VideoEditModalProps {
 export function VideoEditModal({ video, isOpen, onClose }: VideoEditModalProps) {
   const { copyToClipboard } = useAdminStore()
 
+  // Dispatch popup state events
+  React.useEffect(() => {
+    if (isOpen) {
+      window.dispatchEvent(new CustomEvent('popupStateChange', { detail: { isOpen: true } }))
+    }
+    return () => {
+      if (isOpen) {
+        window.dispatchEvent(new CustomEvent('popupStateChange', { detail: { isOpen: false } }))
+      }
+    }
+  }, [isOpen])
+
   if (!isOpen || !video) return null
 
   const getStatusColor = (status: string) => {

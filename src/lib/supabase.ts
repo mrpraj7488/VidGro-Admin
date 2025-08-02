@@ -6,9 +6,9 @@ import { logger } from './logger'
 const getSupabaseConfig = () => {
   const envVars = envManager.getEnvironmentVariables()
   return {
-    url: envVars.VITE_SUPABASE_URL || 'https://placeholder-project.supabase.co',
-    anonKey: envVars.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.placeholder',
-    serviceRoleKey: envVars.VITE_SUPABASE_SERVICE_ROLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.placeholder'
+    url: envVars.VITE_SUPABASE_URL || 'https://your-project.supabase.co',
+    anonKey: envVars.VITE_SUPABASE_ANON_KEY || 'your_supabase_anon_key',
+    serviceRoleKey: envVars.VITE_SUPABASE_SERVICE_ROLE_KEY || 'your_service_role_key'
   }
 }
 
@@ -320,7 +320,7 @@ export const getDashboardStats = async (): Promise<DashboardStats> => {
   try {
     const config = getSupabaseConfig()
     // Check if we're using placeholder URLs
-    if (config.url.includes('placeholder-project')) {
+    if (config.url.includes('your-project')) {
       logger.warn('Using mock data - Supabase not configured', null, 'supabase')
       return mockDashboardStats
     }
@@ -361,7 +361,7 @@ export const getUsers = async (
   try {
     const config = getSupabaseConfig()
     // Check if we're using placeholder URLs
-    if (config.url.includes('placeholder-project')) {
+    if (config.url.includes('your-project')) {
       logger.warn('Using mock data - Supabase not configured', null, 'supabase')
       return mockUsers
     }
@@ -394,7 +394,7 @@ export const getVideos = async (
   try {
     const config = getSupabaseConfig()
     // Check if we're using placeholder URLs
-    if (config.url.includes('placeholder-project')) {
+    if (config.url.includes('your-project')) {
       logger.warn('Using mock data - Supabase not configured', null, 'supabase')
       return mockVideos
     }
@@ -432,11 +432,11 @@ export const adjustUserCoins = async (
   amount: number, 
   reason: string, 
   adminId: string
-) => {
+): Promise<{ success: boolean; message: string; newBalance?: number }> => {
   try {
     const config = getSupabaseConfig()
     // Check if we're using placeholder URLs
-    if (config.url.includes('placeholder-project')) {
+    if (config.url.includes('your-project')) {
       logger.info('Mock mode - coin adjustment simulated', { userId, amount, reason }, 'supabase')
       return { success: true, message: 'Coin adjustment simulated in demo mode', newBalance: 1000 + amount }
     }
@@ -461,11 +461,11 @@ export const updateVideoStatus = async (
   status: string, 
   adminId: string, 
   reason?: string
-) => {
+): Promise<{ success: boolean; message: string }> => {
   try {
     const config = getSupabaseConfig()
     // Check if we're using placeholder URLs
-    if (config.url.includes('placeholder-project')) {
+    if (config.url.includes('your-project')) {
       logger.info('Mock mode - video status update simulated', { videoId, status, reason }, 'supabase')
       return { success: true, message: 'Video status update simulated in demo mode' }
     }
@@ -488,7 +488,7 @@ export const updateVideoStatus = async (
 export const getUserGrowthAnalytics = async (daysBack = 30) => {
   try {
     const config = getSupabaseConfig()
-    if (config.url.includes('placeholder-project')) {
+    if (config.url.includes('your-project')) {
       return mockAnalyticsData.userGrowthData
     }
     
@@ -507,7 +507,7 @@ export const getUserGrowthAnalytics = async (daysBack = 30) => {
 export const getVideoPerformanceAnalytics = async (daysBack = 30) => {
   try {
     const config = getSupabaseConfig()
-    if (config.url.includes('placeholder-project')) {
+    if (config.url.includes('your-project')) {
       return mockAnalyticsData.coinTransactionData
     }
     
@@ -526,7 +526,7 @@ export const getVideoPerformanceAnalytics = async (daysBack = 30) => {
 export const getCoinEconomyAnalytics = async (daysBack = 30) => {
   try {
     const config = getSupabaseConfig()
-    if (config.url.includes('placeholder-project')) {
+    if (config.url.includes('your-project')) {
       return mockAnalyticsData.coinTransactionData
     }
     
@@ -545,7 +545,7 @@ export const getCoinEconomyAnalytics = async (daysBack = 30) => {
 export const getSystemConfig = async () => {
   try {
     const config = getSupabaseConfig()
-    if (config.url.includes('placeholder-project')) {
+    if (config.url.includes('your-project')) {
       return mockSystemSettings
     }
     
@@ -567,7 +567,7 @@ export const getAdminLogs = async (
 ): Promise<AdminLog[]> => {
   try {
     const config = getSupabaseConfig()
-    if (config.url.includes('placeholder-project')) {
+    if (config.url.includes('your-project')) {
       return []
     }
     
@@ -589,7 +589,7 @@ export const getAdminLogs = async (
 export const checkAdminPermission = async (adminEmail: string, permission: string): Promise<boolean> => {
   try {
     const config = getSupabaseConfig()
-    if (config.url.includes('placeholder-project')) {
+    if (config.url.includes('your-project')) {
       return true // Allow all permissions in demo mode
     }
     

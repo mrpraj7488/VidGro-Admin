@@ -1,10 +1,11 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
+import { envManager } from '../../lib/envManager'
 
 interface User {
   id: string
   email: string
   username: string
-  role: 'admin' | 'super_admin'
+  role: 'super_admin' | 'content_moderator' | 'analytics_viewer' | 'user_support'
 }
 
 interface AuthContextType {
@@ -43,29 +44,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = async (email: string, password: string) => {
     setIsLoading(true)
     try {
-      // Mock authentication - in real app, this would call your auth API
+      // Check for default admin credentials
+      const envVars = envManager.getEnvironmentVariables()
+      const isDefaultAdmin = email === envVars.VITE_ADMIN_EMAIL && 
+                            password === envVars.VITE_ADMIN_SECRET_KEY
+      
+      if (!isDefaultAdmin) {
+        throw new Error('Invalid credentials')
+      }
+      
       await new Promise(resolve => setTimeout(resolve, 1000)) // Simulate API call
       
-      // For demo purposes, accept any email/password combination
-      // But preserve admin settings if they exist
-      const existingUser = localStorage.getItem('vidgro_admin_user')
-      let userData
-      
-      if (existingUser) {
-        // Preserve existing user data
-        userData = JSON.parse(existingUser)
-        // Update with new login info if different
-        userData.email = email
-        userData.username = email.split('@')[0]
-      } else {
-        // Create new user data
-        userData = {
-          id: 'admin-1',
-          email,
-          username: email.split('@')[0],
-          role: 'admin'
-        }
+      // Create admin user data
+      const userData = {
+        id: 'admin-1',
+        email,
+        username: 'admin',
+        role: 'super_admin' as const
       }
+      
       setUser(userData)
       localStorage.setItem('vidgro_admin_user', JSON.stringify(userData))
     } catch (error) {
@@ -78,14 +75,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signup = async (email: string, password: string, username: string) => {
     setIsLoading(true)
     try {
-      // Mock signup - in real app, this would call your auth API
+      // In real implementation, this would create admin account via Supabase
       await new Promise(resolve => setTimeout(resolve, 1000)) // Simulate API call
       
       const mockUser: User = {
         id: `admin-${Date.now()}`,
         email,
         username,
-        role: 'admin'
+        role: 'content_moderator'
       }
       
       setUser(mockUser)

@@ -59,6 +59,15 @@ export function VideoManagement() {
   const handleViewVideo = (video) => {
     setSelectedVideo(video)
     setIsModalOpen(true)
+    // Dispatch popup state change event
+    window.dispatchEvent(new CustomEvent('popupStateChange', { detail: { isOpen: true } }))
+  }
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false)
+    setSelectedVideo(null)
+    // Dispatch popup state change event
+    window.dispatchEvent(new CustomEvent('popupStateChange', { detail: { isOpen: false } }))
   }
 
   if (isLoading) {
@@ -195,10 +204,7 @@ export function VideoManagement() {
       <VideoEditModal
         video={selectedVideo}
         isOpen={isModalOpen}
-        onClose={() => {
-          setIsModalOpen(false)
-          setSelectedVideo(null)
-        }}
+        onClose={handleCloseModal}
       />
     </div>
   )

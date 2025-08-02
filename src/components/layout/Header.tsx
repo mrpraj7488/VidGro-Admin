@@ -146,13 +146,16 @@ export function Header({ isPopupOpen, onOpenSettings }: HeaderProps) {
                       </div>
                       <div>
                         <p className="font-medium text-gray-900 dark:text-white">{user?.username || 'Admin'}</p>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">{user?.email || 'admin@vidgro.com'}</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">{user?.email}</p>
                       </div>
                     </div>
                     <div className="mt-2">
                       <Badge variant="vip" className="text-xs">
                         <Shield className="w-3 h-3 mr-1" />
-                        {user?.role === 'super_admin' ? 'Super Admin' : 'Admin'}
+                        {user?.role === 'super_admin' ? 'Super Admin' : 
+                         user?.role === 'content_moderator' ? 'Content Moderator' :
+                         user?.role === 'analytics_viewer' ? 'Analytics Viewer' :
+                         user?.role === 'user_support' ? 'User Support' : 'Admin'}
                       </Badge>
                     </div>
                   </div>

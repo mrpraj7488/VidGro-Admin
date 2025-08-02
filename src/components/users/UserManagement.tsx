@@ -39,11 +39,23 @@ export function UserManagement() {
 
   const handleCoinAdjustment = async (amount: number, reason: string) => {
     if (!selectedUser) return
-    await adjustUserCoins(selectedUser.id, amount, reason)
+    try {
+      await adjustUserCoins(selectedUser.id, amount, reason)
+      // Refresh users list to show updated data
+      await fetchUsers()
+    } catch (error) {
+      console.error('Failed to adjust coins:', error)
+    }
   }
 
   const handleVipToggle = async (userId: string) => {
-    await toggleUserVip(userId)
+    try {
+      await toggleUserVip(userId)
+      // Refresh users list to show updated data
+      await fetchUsers()
+    } catch (error) {
+      console.error('Failed to toggle VIP status:', error)
+    }
   }
 
   const openAdjustModal = (user: any) => {

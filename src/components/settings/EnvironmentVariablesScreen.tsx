@@ -196,7 +196,7 @@ export function EnvironmentVariablesScreen() {
                   <div key={key}>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       {key}
-                      {!value || value.startsWith('your_') ? (
+                      {!value || value.startsWith('your_') || value.startsWith('your-') ? (
                         <Badge variant="warning" className="ml-2 text-xs">Required</Badge>
                       ) : (
                         <Badge variant="success" className="ml-2 text-xs">Configured</Badge>
@@ -209,7 +209,7 @@ export function EnvironmentVariablesScreen() {
                         onChange={(e) => handleInputChange(key as keyof EnvironmentVariables, e.target.value)}
                         placeholder={`Enter ${key.toLowerCase().replace(/_/g, ' ')}`}
                         className={`pr-10 ${
-                          !value || value.startsWith('your_') 
+                          !value || value.startsWith('your_') || value.startsWith('your-')
                             ? 'border-orange-300 dark:border-orange-600' 
                             : 'border-emerald-300 dark:border-emerald-600'
                         }`}

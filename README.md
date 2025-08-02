@@ -203,16 +203,17 @@ The admin panel will be available at `http://localhost:5173`
 
 ### Default Admin Account
 
-The system supports admin authentication through the `admin_profiles` table. Create your first admin account:
+The system comes with a default admin account for initial access:
 
-```sql
-INSERT INTO admin_profiles (email, role, permissions, is_active) 
-VALUES (
-  'admin@vidgro.com', 
-  'super_admin', 
-  '{"user_management": true, "video_management": true, "analytics": true, "system_config": true}'::jsonb,
-  true
-);
+- **Email**: `admin@vidgro.com`
+- **Password**: `vidgro_admin_secret_2024`
+- **Role**: `super_admin`
+
+You can customize these credentials in your `.env` file:
+
+```env
+VITE_ADMIN_EMAIL=admin@vidgro.com
+VITE_ADMIN_SECRET_KEY=vidgro_admin_secret_2024
 ```
 
 ### Admin Roles
