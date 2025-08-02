@@ -112,14 +112,3 @@ function App() {
 }
 
 export default App
-
-              </div>
-            </main>
-          </div>
-        </div>
-      </div>
-    </ErrorBoundary>
-  )
-}
-
-export default App
