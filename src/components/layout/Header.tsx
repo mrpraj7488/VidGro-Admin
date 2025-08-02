@@ -56,7 +56,7 @@ export function Header() {
       </div>
       
       <div className="flex items-center space-x-3">
-        <Button variant="ghost" size="icon" className="relative gaming-pulse gaming-sparkle">
+        <Button variant="ghost" size="icon" className="relative gaming-pulse gaming-sparkle gaming-shine-enhanced">
           <Bell className="w-5 h-5 gaming-icon-glow" strokeWidth={2} />
           <span className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-to-r from-red-500 to-red-600 rounded-full shadow-lg shadow-red-500/50"></span>
         </Button>
@@ -64,7 +64,7 @@ export function Header() {
         <ThemeToggle />
         
         <div className="flex items-center space-x-3 pl-3">
-          <div className="w-8 h-8 bg-gradient-to-br from-violet-500 to-purple-600 rounded-full flex items-center justify-center shadow-lg gaming-pulse gaming-shine">
+          <div className="w-8 h-8 bg-gradient-to-br from-violet-500 to-purple-600 rounded-full flex items-center justify-center shadow-lg gaming-pulse gaming-shine-enhanced">
             <User className="w-4 h-4 text-white gaming-icon-glow" strokeWidth={2} />
           </div>
           <div className="hidden sm:block">

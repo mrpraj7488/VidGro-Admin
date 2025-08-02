@@ -273,11 +273,11 @@
   
   .gaming-icon-glow {
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    filter: drop-shadow(0 0 8px rgba(139, 92, 246, 0.4));
+    filter: drop-shadow(2px 2px 8px rgba(139, 92, 246, 0.6));
   }
   
   .gaming-icon-glow:hover {
-    filter: drop-shadow(0 0 12px rgba(139, 92, 246, 0.8));
+    filter: drop-shadow(3px 3px 12px rgba(139, 92, 246, 0.9));
     transform: scale(1.1);
   }
   
@@ -318,6 +318,7 @@
   .gaming-metric {
     @apply gaming-card p-6 text-center;
     position: relative;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
   
   .gaming-metric::after {
@@ -340,6 +341,11 @@
     opacity: 1;
   }
   
+  .gaming-metric:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 25px rgba(139, 92, 246, 0.3);
+  }
+  
   .gaming-metric-value {
     @apply text-3xl font-bold gaming-gradient-text;
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -356,6 +362,38 @@
   
   .gaming-interactive:active {
     transform: scale(0.98);
+  }
+  
+  /* Enhanced shine effect for better visibility */
+  .gaming-shine-enhanced {
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .gaming-shine-enhanced::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -100%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(
+      45deg,
+      transparent 20%,
+      rgba(255, 255, 255, 0.15) 40%,
+      rgba(139, 92, 246, 0.3) 50%,
+      rgba(255, 255, 255, 0.15) 60%,
+      transparent 80%
+    );
+    opacity: 0;
+    transition: all 0.6s ease;
+    pointer-events: none;
+  }
+  
+  .gaming-shine-enhanced:hover::before {
+    opacity: 1;
+    left: 100%;
+    transition: all 0.8s ease;
   }
   
   .gaming-table {
@@ -377,6 +415,18 @@
   
   .gaming-table tr:hover td {
     background: rgba(139, 92, 246, 0.05);
+  }
+  
+  /* Enhanced card hover effects */
+  .gaming-card-enhanced {
+    @apply gaming-card;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  .gaming-card-enhanced:hover {
+    transform: translateY(-6px) scale(1.02);
+    box-shadow: 0 15px 35px rgba(139, 92, 246, 0.25), 
+                0 5px 15px rgba(139, 92, 246, 0.15);
   }
   
   .gaming-modal {

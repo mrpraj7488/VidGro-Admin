@@ -39,7 +39,7 @@ export function StatsCard({
   }
 
   return (
-    <Card className="gaming-metric gaming-shine group gaming-interactive">
+    <Card className="gaming-metric gaming-shine-enhanced group gaming-interactive">
       <CardContent className="p-6 relative">
         <div className="flex items-center justify-between">
           <div>
@@ -58,7 +58,6 @@ export function StatsCard({
             <Icon className="w-6 h-6 text-white gaming-icon-glow" strokeWidth={2} />
           </div>
         </div>
-        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
       </CardContent>
     </Card>
   )

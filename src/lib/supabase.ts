@@ -183,6 +183,8 @@ export const mockChartData = Array.from({ length: 30 }, (_, i) => ({
 export const mockAnalyticsData = {
   dailyActiveUsers: 12453,
   coinTransactions: 8924,
+  totalPromoted: 2847,
+  videosDeleted: 156,
   userGrowthData: Array.from({ length: 30 }, (_, i) => ({
     date: new Date(Date.now() - (29 - i) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     activeUsers: Math.floor(Math.random() * 800) + 400

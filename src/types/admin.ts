@@ -89,6 +89,8 @@ export interface ChartDataPoint {
 export interface AnalyticsData {
   dailyActiveUsers: number
   coinTransactions: number
+  totalPromoted: number
+  videosDeleted: number
   userGrowthData: Array<{
     date: string
     activeUsers: number
