@@ -45,28 +45,28 @@ export function DashboardView() {
       <div className="gaming-stats-grid">
         <StatsCard
           title="Total Users"
-          value={dashboardStats.totalUsers}
+          value={dashboardStats.total_users}
           change={12.5}
           icon={Users}
           color="violet"
         />
         <StatsCard
           title="Active Videos"
-          value={dashboardStats.activeVideos}
+          value={dashboardStats.active_videos}
           change={15.2}
           icon={Video}
           color="orange"
         />
         <StatsCard
           title="VIP Users"
-          value={dashboardStats.vipUsers}
+          value={dashboardStats.vip_users}
           change={8.3}
           icon={Crown}
           color="emerald"
         />
         <StatsCard
           title="Monthly Revenue"
-          value={dashboardStats.monthlyRevenue}
+          value={dashboardStats.monthly_revenue}
           change={15.2}
           icon={DollarSign}
           format="currency"
