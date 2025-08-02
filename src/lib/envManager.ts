@@ -21,6 +21,12 @@ export interface EnvironmentVariables {
   VITE_FIREBASE_PRIVATE_KEY: string
   VITE_FCM_SERVER_KEY: string
   
+  // AdMob Configuration
+  ADMOB_APP_ID: string
+  ADMOB_BANNER_ID: string
+  ADMOB_INTERSTITIAL_ID: string
+  ADMOB_REWARDED_ID: string
+  
   // Security
   VITE_JWT_SECRET: string
   
@@ -40,6 +46,10 @@ export const defaultEnvironmentVariables: EnvironmentVariables = {
   VITE_FIREBASE_CLIENT_EMAIL: 'your_firebase_client_email',
   VITE_FIREBASE_PRIVATE_KEY: 'your_firebase_private_key',
   VITE_FCM_SERVER_KEY: 'your_fcm_server_key',
+  ADMOB_APP_ID: 'ca-app-pub-1234567890123456~1234567890',
+  ADMOB_BANNER_ID: 'ca-app-pub-1234567890123456/1234567890',
+  ADMOB_INTERSTITIAL_ID: 'ca-app-pub-1234567890123456/1234567890',
+  ADMOB_REWARDED_ID: 'ca-app-pub-1234567890123456/1234567890',
   VITE_JWT_SECRET: 'your_jwt_secret_key',
   NODE_ENV: 'development'
 }
@@ -74,6 +84,10 @@ export class EnvironmentManager {
       VITE_FIREBASE_CLIENT_EMAIL: import.meta.env.VITE_FIREBASE_CLIENT_EMAIL,
       VITE_FIREBASE_PRIVATE_KEY: import.meta.env.VITE_FIREBASE_PRIVATE_KEY,
       VITE_FCM_SERVER_KEY: import.meta.env.VITE_FCM_SERVER_KEY,
+      ADMOB_APP_ID: import.meta.env.ADMOB_APP_ID,
+      ADMOB_BANNER_ID: import.meta.env.ADMOB_BANNER_ID,
+      ADMOB_INTERSTITIAL_ID: import.meta.env.ADMOB_INTERSTITIAL_ID,
+      ADMOB_REWARDED_ID: import.meta.env.ADMOB_REWARDED_ID,
       VITE_JWT_SECRET: import.meta.env.VITE_JWT_SECRET,
       NODE_ENV: import.meta.env.NODE_ENV
     }
@@ -158,6 +172,12 @@ VITE_FIREBASE_PROJECT_ID=${vars.VITE_FIREBASE_PROJECT_ID}
 VITE_FIREBASE_CLIENT_EMAIL=${vars.VITE_FIREBASE_CLIENT_EMAIL}
 VITE_FIREBASE_PRIVATE_KEY=${vars.VITE_FIREBASE_PRIVATE_KEY}
 VITE_FCM_SERVER_KEY=${vars.VITE_FCM_SERVER_KEY}
+
+# AdMob Configuration
+ADMOB_APP_ID=${vars.ADMOB_APP_ID}
+ADMOB_BANNER_ID=${vars.ADMOB_BANNER_ID}
+ADMOB_INTERSTITIAL_ID=${vars.ADMOB_INTERSTITIAL_ID}
+ADMOB_REWARDED_ID=${vars.ADMOB_REWARDED_ID}
 
 # Security
 VITE_JWT_SECRET=${vars.VITE_JWT_SECRET}

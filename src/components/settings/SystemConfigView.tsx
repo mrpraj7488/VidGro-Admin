@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Settings, Save, Database, Smartphone, DollarSign, Globe, Shield, Bell, Download, CheckCircle, AlertTriangle, Copy, Eye, EyeOff } from 'lucide-react'
+import { Settings, Save, Database, Smartphone, DollarSign, Globe, Shield, Bell, Download, CheckCircle, AlertTriangle, Copy, Eye, EyeOff, HardDrive, Mail, Activity } from 'lucide-react'
 import { useAdminStore } from '../../stores/adminStore'
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card'
 import { Button } from '../ui/Button'
@@ -104,6 +104,9 @@ export function SystemConfigView() {
 
   const tabs = [
     { id: 'environment', label: 'Environment Variables', icon: Database },
+    { id: 'backup', label: 'Backup & Restore', icon: HardDrive },
+    { id: 'email', label: 'Email SMTP', icon: Mail },
+    { id: 'health', label: 'System Health', icon: Activity },
     { id: 'ads', label: 'Ads Configuration', icon: Smartphone },
     { id: 'general', label: 'General Settings', icon: Settings },
     { id: 'economy', label: 'Economy Settings', icon: DollarSign },
@@ -449,7 +452,7 @@ export function SystemConfigView() {
                   <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800/50 rounded-xl p-4">
                     <h4 className="font-semibold text-green-800 dark:text-green-300 mb-2 flex items-center">
                       <Smartphone className="w-4 h-4 mr-2" />
-                      Firebase Configuration
+                      Firebase & AdMob Configuration
                     </h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
@@ -553,6 +556,90 @@ export function SystemConfigView() {
                           </Button>
                         </div>
                       </div>
+                      <div>
+                        <label className="block text-sm font-medium text-green-700 dark:text-green-300 mb-2">
+                          ADMOB_APP_ID
+                        </label>
+                        <div className="flex items-center space-x-2">
+                          <Input
+                            value={envVars.ADMOB_APP_ID || ''}
+                            onChange={(e) => handleEnvVarChange('ADMOB_APP_ID' as any, e.target.value)}
+                            className="font-mono text-sm flex-1"
+                            placeholder="ca-app-pub-1234567890123456~1234567890"
+                          />
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleCopyToClipboard(envVars.ADMOB_APP_ID || '')}
+                            disabled={!envVars.ADMOB_APP_ID || (envVars.ADMOB_APP_ID as any)?.startsWith('ca-app-pub-')}
+                          >
+                            <Copy className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-green-700 dark:text-green-300 mb-2">
+                          ADMOB_BANNER_ID
+                        </label>
+                        <div className="flex items-center space-x-2">
+                          <Input
+                            value={envVars.ADMOB_BANNER_ID || ''}
+                            onChange={(e) => handleEnvVarChange('ADMOB_BANNER_ID' as any, e.target.value)}
+                            className="font-mono text-sm flex-1"
+                            placeholder="ca-app-pub-1234567890123456/1234567890"
+                          />
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleCopyToClipboard(envVars.ADMOB_BANNER_ID || '')}
+                            disabled={!envVars.ADMOB_BANNER_ID}
+                          >
+                            <Copy className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-green-700 dark:text-green-300 mb-2">
+                          ADMOB_INTERSTITIAL_ID
+                        </label>
+                        <div className="flex items-center space-x-2">
+                          <Input
+                            value={envVars.ADMOB_INTERSTITIAL_ID || ''}
+                            onChange={(e) => handleEnvVarChange('ADMOB_INTERSTITIAL_ID' as any, e.target.value)}
+                            className="font-mono text-sm flex-1"
+                            placeholder="ca-app-pub-1234567890123456/1234567890"
+                          />
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleCopyToClipboard(envVars.ADMOB_INTERSTITIAL_ID || '')}
+                            disabled={!envVars.ADMOB_INTERSTITIAL_ID}
+                          >
+                            <Copy className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-green-700 dark:text-green-300 mb-2">
+                          ADMOB_REWARDED_ID
+                        </label>
+                        <div className="flex items-center space-x-2">
+                          <Input
+                            value={envVars.ADMOB_REWARDED_ID || ''}
+                            onChange={(e) => handleEnvVarChange('ADMOB_REWARDED_ID' as any, e.target.value)}
+                            className="font-mono text-sm flex-1"
+                            placeholder="ca-app-pub-1234567890123456/1234567890"
+                          />
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleCopyToClipboard(envVars.ADMOB_REWARDED_ID || '')}
+                            disabled={!envVars.ADMOB_REWARDED_ID}
+                          >
+                            <Copy className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
                     </div>
                   </div>
 
@@ -618,6 +705,21 @@ export function SystemConfigView() {
                     </div>
                   </div>
                 </div>
+              )}
+
+              {/* Backup Tab */}
+              {activeTab === 'backup' && (
+                <BackupScreen />
+              )}
+
+              {/* Email SMTP Tab */}
+              {activeTab === 'email' && (
+                <EmailSMTPScreen />
+              )}
+
+              {/* System Health Tab */}
+              {activeTab === 'health' && (
+                <SystemHealthScreen />
               )}
 
               {/* Ads Configuration */}
