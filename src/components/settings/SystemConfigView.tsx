@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Settings, Save, Database, Smartphone, DollarSign, Globe, Shield, Bell, Download, CheckCircle, AlertTriangle, Copy } from 'lucide-react'
+import { Settings, Save, Database, Smartphone, DollarSign, Globe, Shield, Bell, Download, CheckCircle, AlertTriangle, Copy, Eye, EyeOff } from 'lucide-react'
 import { useAdminStore } from '../../stores/adminStore'
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card'
 import { Button } from '../ui/Button'
@@ -15,6 +15,7 @@ export function SystemConfigView() {
   const [saveStatus, setSaveStatus] = useState<{ type: 'success' | 'error' | null, message: string }>({ type: null, message: '' })
   const [isSaving, setIsSaving] = useState(false)
   const [settings, setSettings] = useState(systemSettings)
+  const [visibleSecrets, setVisibleSecrets] = useState<Record<string, boolean>>({})
 
   useEffect(() => {
     fetchSystemSettings()
@@ -76,6 +77,15 @@ export function SystemConfigView() {
   }
 
   const handleCopyToClipboard = (text: string) => {
+    if (!text || text.trim() === '' || text.startsWith('your_')) {
+      setSaveStatus({
+        type: 'error',
+        message: 'No value to copy. Please enter a valid value first.'
+      })
+      setTimeout(() => setSaveStatus({ type: null, message: '' }), 3000)
+      return
+    }
+    
     navigator.clipboard.writeText(text)
     setSaveStatus({
       type: 'success',
@@ -84,6 +94,12 @@ export function SystemConfigView() {
     setTimeout(() => setSaveStatus({ type: null, message: '' }), 2000)
   }
 
+  const toggleSecretVisibility = (key: string) => {
+    setVisibleSecrets(prev => ({
+      ...prev,
+      [key]: !prev[key]
+    }))
+  }
   const configStatus = envManager.getConfigurationStatus()
 
   const tabs = [
@@ -239,14 +255,24 @@ export function SystemConfigView() {
                     <div className="grid grid-cols-1 gap-4">
                       <div>
                         <label className="block text-sm font-medium text-blue-700 dark:text-blue-300 mb-2">
-                          EXPO_PUBLIC_SUPABASE_URL
+                          VITE_SUPABASE_URL
                         </label>
-                        <Input
-                            onClick={() => handleCopyToClipboard(envVars.VITE_SUPABASE_URL)}
+                        <div className="flex items-center space-x-2">
+                          <Input
                             value={envVars.VITE_SUPABASE_URL}
                             onChange={(e) => handleEnvVarChange('VITE_SUPABASE_URL', e.target.value)}
-                          placeholder="https://your-project.supabase.co"
-                        />
+                            placeholder="https://your-project.supabase.co"
+                            className="flex-1"
+                          />
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleCopyToClipboard(envVars.VITE_SUPABASE_URL)}
+                            disabled={!envVars.VITE_SUPABASE_URL || envVars.VITE_SUPABASE_URL.startsWith('your_')}
+                          >
+                            <Copy className="w-4 h-4" />
+                          </Button>
+                        </div>
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-blue-700 dark:text-blue-300 mb-2">
@@ -254,7 +280,7 @@ export function SystemConfigView() {
                         </label>
                         <div className="flex items-center space-x-2">
                           <Input
-                            type="password"
+                            type={visibleSecrets['VITE_SUPABASE_ANON_KEY'] ? "text" : "password"}
                             value={envVars.VITE_SUPABASE_ANON_KEY}
                             onChange={(e) => handleEnvVarChange('VITE_SUPABASE_ANON_KEY', e.target.value)}
                             className="font-mono text-sm"
@@ -263,7 +289,15 @@ export function SystemConfigView() {
                           <Button
                             variant="outline"
                             size="sm"
+                            onClick={() => toggleSecretVisibility('VITE_SUPABASE_ANON_KEY')}
+                          >
+                            {visibleSecrets['VITE_SUPABASE_ANON_KEY'] ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
                             onClick={() => handleCopyToClipboard(envVars.VITE_SUPABASE_ANON_KEY)}
+                            disabled={!envVars.VITE_SUPABASE_ANON_KEY || envVars.VITE_SUPABASE_ANON_KEY.startsWith('your_')}
                           >
                             <Copy className="w-4 h-4" />
                           </Button>
@@ -275,7 +309,7 @@ export function SystemConfigView() {
                         </label>
                         <div className="flex items-center space-x-2">
                           <Input
-                            type="password"
+                            type={visibleSecrets['VITE_SUPABASE_SERVICE_ROLE_KEY'] ? "text" : "password"}
                             value={envVars.VITE_SUPABASE_SERVICE_ROLE_KEY}
                             onChange={(e) => handleEnvVarChange('VITE_SUPABASE_SERVICE_ROLE_KEY', e.target.value)}
                             className="font-mono text-sm"
@@ -284,7 +318,15 @@ export function SystemConfigView() {
                           <Button
                             variant="outline"
                             size="sm"
+                            onClick={() => toggleSecretVisibility('VITE_SUPABASE_SERVICE_ROLE_KEY')}
+                          >
+                            {visibleSecrets['VITE_SUPABASE_SERVICE_ROLE_KEY'] ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
                             onClick={() => handleCopyToClipboard(envVars.VITE_SUPABASE_SERVICE_ROLE_KEY)}
+                            disabled={!envVars.VITE_SUPABASE_SERVICE_ROLE_KEY || envVars.VITE_SUPABASE_SERVICE_ROLE_KEY.startsWith('your_')}
                           >
                             <Copy className="w-4 h-4" />
                           </Button>
@@ -303,25 +345,52 @@ export function SystemConfigView() {
                         <label className="block text-sm font-medium text-orange-700 dark:text-orange-300 mb-2">
                           VITE_ADMIN_EMAIL
                         </label>
-                        <Input
-                          type="email"
-                          value={envVars.VITE_ADMIN_EMAIL}
-                          onChange={(e) => handleEnvVarChange('VITE_ADMIN_EMAIL', e.target.value)}
-                          className="font-mono text-sm"
-                          placeholder="admin@vidgro.com"
-                        />
+                        <div className="flex items-center space-x-2">
+                          <Input
+                            type="email"
+                            value={envVars.VITE_ADMIN_EMAIL}
+                            onChange={(e) => handleEnvVarChange('VITE_ADMIN_EMAIL', e.target.value)}
+                            className="font-mono text-sm flex-1"
+                            placeholder="admin@vidgro.com"
+                          />
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleCopyToClipboard(envVars.VITE_ADMIN_EMAIL)}
+                            disabled={!envVars.VITE_ADMIN_EMAIL || envVars.VITE_ADMIN_EMAIL.startsWith('your_')}
+                          >
+                            <Copy className="w-4 h-4" />
+                          </Button>
+                        </div>
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-orange-700 dark:text-orange-300 mb-2">
                           VITE_ADMIN_SECRET_KEY
                         </label>
-                        <Input
-                          type="password"
-                          value={envVars.VITE_ADMIN_SECRET_KEY}
-                          onChange={(e) => handleEnvVarChange('VITE_ADMIN_SECRET_KEY', e.target.value)}
-                          className="font-mono text-sm"
-                          placeholder="your_admin_secret_key"
-                        />
+                        <div className="flex items-center space-x-2">
+                          <Input
+                            type={visibleSecrets['VITE_ADMIN_SECRET_KEY'] ? "text" : "password"}
+                            value={envVars.VITE_ADMIN_SECRET_KEY}
+                            onChange={(e) => handleEnvVarChange('VITE_ADMIN_SECRET_KEY', e.target.value)}
+                            className="font-mono text-sm flex-1"
+                            placeholder="your_admin_secret_key"
+                          />
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => toggleSecretVisibility('VITE_ADMIN_SECRET_KEY')}
+                          >
+                            {visibleSecrets['VITE_ADMIN_SECRET_KEY'] ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleCopyToClipboard(envVars.VITE_ADMIN_SECRET_KEY)}
+                            disabled={!envVars.VITE_ADMIN_SECRET_KEY || envVars.VITE_ADMIN_SECRET_KEY.startsWith('your_')}
+                          >
+                            <Copy className="w-4 h-4" />
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -336,23 +405,43 @@ export function SystemConfigView() {
                         <label className="block text-sm font-medium text-purple-700 dark:text-purple-300 mb-2">
                           VITE_APP_NAME
                         </label>
-                        <Input
-                          value={envVars.VITE_APP_NAME}
-                          onChange={(e) => handleEnvVarChange('VITE_APP_NAME', e.target.value)}
-                          className="font-mono text-sm"
-                          placeholder="VidGro Admin Panel"
-                        />
+                        <div className="flex items-center space-x-2">
+                          <Input
+                            value={envVars.VITE_APP_NAME}
+                            onChange={(e) => handleEnvVarChange('VITE_APP_NAME', e.target.value)}
+                            className="font-mono text-sm flex-1"
+                            placeholder="VidGro Admin Panel"
+                          />
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleCopyToClipboard(envVars.VITE_APP_NAME)}
+                            disabled={!envVars.VITE_APP_NAME || envVars.VITE_APP_NAME.startsWith('your_')}
+                          >
+                            <Copy className="w-4 h-4" />
+                          </Button>
+                        </div>
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-purple-700 dark:text-purple-300 mb-2">
                           VITE_API_BASE_URL
                         </label>
-                        <Input
-                          value={envVars.VITE_API_BASE_URL}
-                          onChange={(e) => handleEnvVarChange('VITE_API_BASE_URL', e.target.value)}
-                          className="font-mono text-sm"
-                          placeholder="https://your-api-domain.com"
-                        />
+                        <div className="flex items-center space-x-2">
+                          <Input
+                            value={envVars.VITE_API_BASE_URL}
+                            onChange={(e) => handleEnvVarChange('VITE_API_BASE_URL', e.target.value)}
+                            className="font-mono text-sm flex-1"
+                            placeholder="https://your-api-domain.com"
+                          />
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleCopyToClipboard(envVars.VITE_API_BASE_URL)}
+                            disabled={!envVars.VITE_API_BASE_URL || envVars.VITE_API_BASE_URL.startsWith('your_')}
+                          >
+                            <Copy className="w-4 h-4" />
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -367,48 +456,102 @@ export function SystemConfigView() {
                         <label className="block text-sm font-medium text-green-700 dark:text-green-300 mb-2">
                           VITE_FIREBASE_PROJECT_ID
                         </label>
-                        <Input
-                          value={envVars.VITE_FIREBASE_PROJECT_ID}
-                          onChange={(e) => handleEnvVarChange('VITE_FIREBASE_PROJECT_ID', e.target.value)}
-                          className="font-mono text-sm"
-                          placeholder="your_firebase_project_id"
-                        />
+                        <div className="flex items-center space-x-2">
+                          <Input
+                            value={envVars.VITE_FIREBASE_PROJECT_ID}
+                            onChange={(e) => handleEnvVarChange('VITE_FIREBASE_PROJECT_ID', e.target.value)}
+                            className="font-mono text-sm flex-1"
+                            placeholder="your_firebase_project_id"
+                          />
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleCopyToClipboard(envVars.VITE_FIREBASE_PROJECT_ID)}
+                            disabled={!envVars.VITE_FIREBASE_PROJECT_ID || envVars.VITE_FIREBASE_PROJECT_ID.startsWith('your_')}
+                          >
+                            <Copy className="w-4 h-4" />
+                          </Button>
+                        </div>
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-green-700 dark:text-green-300 mb-2">
                           VITE_FIREBASE_CLIENT_EMAIL
                         </label>
-                        <Input
-                          type="email"
-                          value={envVars.VITE_FIREBASE_CLIENT_EMAIL}
-                          onChange={(e) => handleEnvVarChange('VITE_FIREBASE_CLIENT_EMAIL', e.target.value)}
-                          className="font-mono text-sm"
-                          placeholder="your_firebase_client_email"
-                        />
+                        <div className="flex items-center space-x-2">
+                          <Input
+                            type="email"
+                            value={envVars.VITE_FIREBASE_CLIENT_EMAIL}
+                            onChange={(e) => handleEnvVarChange('VITE_FIREBASE_CLIENT_EMAIL', e.target.value)}
+                            className="font-mono text-sm flex-1"
+                            placeholder="your_firebase_client_email"
+                          />
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleCopyToClipboard(envVars.VITE_FIREBASE_CLIENT_EMAIL)}
+                            disabled={!envVars.VITE_FIREBASE_CLIENT_EMAIL || envVars.VITE_FIREBASE_CLIENT_EMAIL.startsWith('your_')}
+                          >
+                            <Copy className="w-4 h-4" />
+                          </Button>
+                        </div>
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-green-700 dark:text-green-300 mb-2">
                           VITE_FIREBASE_PRIVATE_KEY
                         </label>
-                        <Input
-                          type="password"
-                          value={envVars.VITE_FIREBASE_PRIVATE_KEY}
-                          onChange={(e) => handleEnvVarChange('VITE_FIREBASE_PRIVATE_KEY', e.target.value)}
-                          className="font-mono text-sm"
-                          placeholder="your_firebase_private_key"
-                        />
+                        <div className="flex items-center space-x-2">
+                          <Input
+                            type={visibleSecrets['VITE_FIREBASE_PRIVATE_KEY'] ? "text" : "password"}
+                            value={envVars.VITE_FIREBASE_PRIVATE_KEY}
+                            onChange={(e) => handleEnvVarChange('VITE_FIREBASE_PRIVATE_KEY', e.target.value)}
+                            className="font-mono text-sm flex-1"
+                            placeholder="your_firebase_private_key"
+                          />
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => toggleSecretVisibility('VITE_FIREBASE_PRIVATE_KEY')}
+                          >
+                            {visibleSecrets['VITE_FIREBASE_PRIVATE_KEY'] ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleCopyToClipboard(envVars.VITE_FIREBASE_PRIVATE_KEY)}
+                            disabled={!envVars.VITE_FIREBASE_PRIVATE_KEY || envVars.VITE_FIREBASE_PRIVATE_KEY.startsWith('your_')}
+                          >
+                            <Copy className="w-4 h-4" />
+                          </Button>
+                        </div>
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-green-700 dark:text-green-300 mb-2">
                           VITE_FCM_SERVER_KEY
                         </label>
-                        <Input
-                          type="password"
-                          value={envVars.VITE_FCM_SERVER_KEY}
-                          onChange={(e) => handleEnvVarChange('VITE_FCM_SERVER_KEY', e.target.value)}
-                          className="font-mono text-sm"
-                          placeholder="your_fcm_server_key"
-                        />
+                        <div className="flex items-center space-x-2">
+                          <Input
+                            type={visibleSecrets['VITE_FCM_SERVER_KEY'] ? "text" : "password"}
+                            value={envVars.VITE_FCM_SERVER_KEY}
+                            onChange={(e) => handleEnvVarChange('VITE_FCM_SERVER_KEY', e.target.value)}
+                            className="font-mono text-sm flex-1"
+                            placeholder="your_fcm_server_key"
+                          />
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => toggleSecretVisibility('VITE_FCM_SERVER_KEY')}
+                          >
+                            {visibleSecrets['VITE_FCM_SERVER_KEY'] ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleCopyToClipboard(envVars.VITE_FCM_SERVER_KEY)}
+                            disabled={!envVars.VITE_FCM_SERVER_KEY || envVars.VITE_FCM_SERVER_KEY.startsWith('your_')}
+                          >
+                            <Copy className="w-4 h-4" />
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -423,27 +566,54 @@ export function SystemConfigView() {
                         <label className="block text-sm font-medium text-red-700 dark:text-red-300 mb-2">
                           VITE_JWT_SECRET
                         </label>
-                        <Input
-                          type="password"
-                          value={envVars.VITE_JWT_SECRET}
-                          onChange={(e) => handleEnvVarChange('VITE_JWT_SECRET', e.target.value)}
-                          className="font-mono text-sm"
-                          placeholder="your_jwt_secret_key"
-                        />
+                        <div className="flex items-center space-x-2">
+                          <Input
+                            type={visibleSecrets['VITE_JWT_SECRET'] ? "text" : "password"}
+                            value={envVars.VITE_JWT_SECRET}
+                            onChange={(e) => handleEnvVarChange('VITE_JWT_SECRET', e.target.value)}
+                            className="font-mono text-sm flex-1"
+                            placeholder="your_jwt_secret_key"
+                          />
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => toggleSecretVisibility('VITE_JWT_SECRET')}
+                          >
+                            {visibleSecrets['VITE_JWT_SECRET'] ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleCopyToClipboard(envVars.VITE_JWT_SECRET)}
+                            disabled={!envVars.VITE_JWT_SECRET || envVars.VITE_JWT_SECRET.startsWith('your_')}
+                          >
+                            <Copy className="w-4 h-4" />
+                          </Button>
+                        </div>
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-red-700 dark:text-red-300 mb-2">
                           NODE_ENV
                         </label>
-                        <select
-                          value={envVars.NODE_ENV}
-                          onChange={(e) => handleEnvVarChange('NODE_ENV', e.target.value)}
-                          className="w-full px-3 py-2 border border-red-300 rounded-lg bg-white text-sm dark:bg-slate-800 dark:border-red-600 dark:text-white"
-                        >
-                          <option value="development">Development</option>
-                          <option value="production">Production</option>
-                          <option value="staging">Staging</option>
-                        </select>
+                        <div className="flex items-center space-x-2">
+                          <select
+                            value={envVars.NODE_ENV}
+                            onChange={(e) => handleEnvVarChange('NODE_ENV', e.target.value)}
+                            className="flex-1 px-3 py-2 border border-red-300 rounded-lg bg-white text-sm dark:bg-slate-800 dark:border-red-600 dark:text-white"
+                          >
+                            <option value="development">Development</option>
+                            <option value="production">Production</option>
+                            <option value="staging">Staging</option>
+                          </select>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleCopyToClipboard(envVars.NODE_ENV)}
+                            disabled={!envVars.NODE_ENV}
+                          >
+                            <Copy className="w-4 h-4" />
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   </div>
