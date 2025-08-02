@@ -58,7 +58,7 @@ export function Header() {
       <div className="flex items-center space-x-3">
         <Button variant="ghost" size="icon" className="relative gaming-pulse gaming-sparkle gaming-shine-enhanced">
           <Bell className="w-5 h-5 gaming-icon-glow" strokeWidth={2} />
-          <span className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-to-r from-red-500 to-red-600 rounded-full shadow-lg shadow-red-500/50"></span>
+          <span className="absolute -top-1 -right-1 w-4 h-4 bg-gradient-to-r from-red-500 to-red-600 rounded-full border-2 border-white dark:border-slate-800 shadow-lg shadow-red-500/50 animate-pulse"></span>
         </Button>
         
         <ThemeToggle />
