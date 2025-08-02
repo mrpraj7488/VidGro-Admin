@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { ErrorBoundary } from './components/common/ErrorBoundary'
 import { AuthProvider, useAuth } from './components/auth/AuthProvider'
 import { AuthModal } from './components/auth/AuthModal'
+import { AdminSettingsPanel } from './components/admin/AdminSettingsPanel'
 import { Sidebar } from './components/layout/Sidebar'
 import { Header } from './components/layout/Header'
 import { DashboardView } from './components/dashboard/DashboardView'
@@ -17,6 +18,7 @@ function AppContent() {
   const [activeTab, setActiveTab] = useState('dashboard')
   const [isPopupOpen, setIsPopupOpen] = useState(false)
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
+  const [isAdminSettingsOpen, setIsAdminSettingsOpen] = useState(false)
 
   // Track popup state for header visibility
   React.useEffect(() => {
@@ -36,6 +38,18 @@ function AppContent() {
       setIsAuthModalOpen(false)
     }
   }, [isAuthenticated, isLoading, user])
+
+  const handleOpenAdminSettings = () => {
+    setIsAdminSettingsOpen(true)
+    // Dispatch popup state change event
+    window.dispatchEvent(new CustomEvent('popupStateChange', { detail: { isOpen: true } }))
+  }
+
+  const handleCloseAdminSettings = () => {
+    setIsAdminSettingsOpen(false)
+    // Dispatch popup state change event
+    window.dispatchEvent(new CustomEvent('popupStateChange', { detail: { isOpen: false } }))
+  }
   
   const renderContent = () => {
     switch (activeTab) {
@@ -78,7 +92,7 @@ function AppContent() {
           <div className="flex">
             <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
             <div className="flex-1">
-              <Header isPopupOpen={isPopupOpen} />
+              <Header isPopupOpen={isPopupOpen} onOpenSettings={handleOpenAdminSettings} />
               <main className="p-4 md:p-6 dark:text-white min-h-screen relative pt-16 sm:pt-20">
                 <div className="absolute inset-0 bg-gradient-to-br from-violet-500/5 via-transparent to-emerald-500/5 pointer-events-none" />
                 <div className="relative z-10">
@@ -98,6 +112,12 @@ function AppContent() {
         onClose={() => {}} // Prevent closing when not authenticated
         onLogin={login}
         onSignup={signup}
+      />
+
+      {/* Admin Settings Panel */}
+      <AdminSettingsPanel
+        isOpen={isAdminSettingsOpen}
+        onClose={handleCloseAdminSettings}
       />
     </>
   )

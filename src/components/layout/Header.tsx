@@ -3,17 +3,16 @@ import { Bell, Settings, User, Moon, Sun, Search, Menu, X, LogOut, Shield } from
 import { Button } from '../ui/Button'
 import { Input } from '../ui/Input'
 import { Badge } from '../ui/Badge'
-import { AdminSettingsPanel } from '../admin/AdminSettingsPanel'
 import { useAuth } from '../auth/AuthProvider'
 
 interface HeaderProps {
   isPopupOpen?: boolean
+  onOpenSettings?: () => void
 }
 
-export function Header({ isPopupOpen }: HeaderProps) {
+export function Header({ isPopupOpen, onOpenSettings }: HeaderProps) {
   const { user, logout } = useAuth()
   const [isDarkMode, setIsDarkMode] = useState(true)
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false)
@@ -21,10 +20,6 @@ export function Header({ isPopupOpen }: HeaderProps) {
   const toggleDarkMode = () => {
     setIsDarkMode(!isDarkMode)
     document.documentElement.classList.toggle('dark')
-  }
-
-  const toggleSettings = () => {
-    setIsSettingsOpen(!isSettingsOpen)
   }
 
   const toggleMobileMenu = () => {
@@ -36,6 +31,15 @@ export function Header({ isPopupOpen }: HeaderProps) {
     // Show confirmation before logout
     if (window.confirm('Are you sure you want to log out?')) {
       logout()
+      // Force page reload to ensure clean state
+      window.location.reload()
+    }
+  }
+
+  const handleOpenSettings = () => {
+    setIsProfileMenuOpen(false)
+    if (onOpenSettings) {
+      onOpenSettings()
     }
   }
 
@@ -116,6 +120,7 @@ export function Header({ isPopupOpen }: HeaderProps) {
             <Button
               variant="ghost"
               size="icon"
+              onClick={handleOpenSettings}
               className="gaming-interactive"
             >
               <Settings className="w-5 h-5" />
@@ -157,7 +162,7 @@ export function Header({ isPopupOpen }: HeaderProps) {
                   
                   <div className="p-2">
                     <button
-                      onClick={toggleSettings}
+                      onClick={handleOpenSettings}
                       className="w-full flex items-center space-x-3 px-3 py-2 text-left hover:bg-violet-500/10 rounded-lg transition-colors text-gray-700 dark:text-gray-300"
                     >
                       <Settings className="w-4 h-4" />
@@ -201,12 +206,6 @@ export function Header({ isPopupOpen }: HeaderProps) {
           onClick={() => setIsProfileMenuOpen(false)}
         />
       )}
-
-      {/* Admin Settings Panel */}
-      <AdminSettingsPanel
-        isOpen={isSettingsOpen}
-        onClose={() => setIsSettingsOpen(false)}
-      />
     </>
   )
 }
