@@ -283,7 +283,6 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
   // Analytics actions
   fetchAnalytics: async (dateRange) => {
     set({ isLoading: true })
-    await new Promise(resolve => setTimeout(resolve, 500))
     set({ analyticsData: mockAnalyticsData, isLoading: false })
   },
 
@@ -291,7 +290,6 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
   moderationData: null,
   fetchModerationData: async () => {
     set({ isLoading: true })
-    await new Promise(resolve => setTimeout(resolve, 500))
     set({ 
       moderationData: {
         pendingCount: 15,
@@ -311,14 +309,12 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
 
   moderateContent: async (itemId: string, action: 'approve' | 'reject' | 'flag') => {
     // Mock implementation
-    await new Promise(resolve => setTimeout(resolve, 300))
   },
 
   // Economy actions
   economyData: null,
   fetchEconomyData: async () => {
     set({ isLoading: true })
-    await new Promise(resolve => setTimeout(resolve, 500))
     set({ 
       economyData: {
         totalCoinsCirculation: 2500000,
@@ -342,7 +338,6 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
   },
 
   updateCoinSettings: async (settings: any) => {
-    await new Promise(resolve => setTimeout(resolve, 300))
     const currentData = get().economyData
     if (currentData) {
       set({
@@ -357,7 +352,6 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
   // Bug report actions
   fetchBugReports: async () => {
     set({ isLoading: true })
-    await new Promise(resolve => setTimeout(resolve, 400))
     set({ bugReportData: mockBugReportData, isLoading: false })
   },
 
@@ -434,7 +428,6 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
   // System settings actions
   fetchSystemSettings: async () => {
     set({ isLoading: true })
-    await new Promise(resolve => setTimeout(resolve, 300))
     set({ systemSettings: mockSystemSettings, isLoading: false })
   },
 
@@ -471,7 +464,6 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
   },
 
   updateSystemSettings: async (newSettings) => {
-    await new Promise(resolve => setTimeout(resolve, 500))
     set({ systemSettings: newSettings })
   },
   // Utility actions
