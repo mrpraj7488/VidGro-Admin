@@ -51,32 +51,26 @@ export function DashboardView() {
           color="violet"
         />
         <StatsCard
-          title="Daily Active Users"
-          value={dashboardStats.dailyActiveUsers || 12453}
-          change={8.7}
-          icon={Users}
-          color="emerald"
-        />
-        <StatsCard
-          title="Coin Transactions"
-          value={dashboardStats.coinTransactions || 8924}
-          change={15.3}
-          icon={DollarSign}
+          title="Active Videos"
+          value={dashboardStats.activeVideos}
+          change={15.2}
+          icon={Video}
           color="orange"
         />
         <StatsCard
-          title="Total Promoted"
-          value={dashboardStats.totalPromoted || 45732}
-          change={12.8}
-          icon={TrendingUp}
-          color="blue"
+          title="VIP Users"
+          value={dashboardStats.vipUsers}
+          change={8.3}
+          icon={Crown}
+          color="emerald"
         />
         <StatsCard
-          title="Deleted Videos"
-          value={dashboardStats.deletedVideos || 234}
-          change={-5.2}
-          icon={Video}
-          color="violet"
+          title="Monthly Revenue"
+          value={dashboardStats.monthlyRevenue}
+          change={15.2}
+          icon={DollarSign}
+          format="currency"
+          color="blue"
         />
       </div>
 
