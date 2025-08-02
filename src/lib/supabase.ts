@@ -485,6 +485,58 @@ export const updateVideoStatus = async (
   }
 }
 
+// Add VIP toggle function
+export const toggleUserVip = async (userId: string, adminId: string = 'admin-1') => {
+  try {
+    const config = getSupabaseConfig()
+    if (config.url.includes('your-project')) {
+      logger.info('Mock mode - VIP toggle simulated', { userId }, 'supabase')
+      return { success: true, message: 'VIP status toggled in demo mode' }
+    }
+    
+    // Get current VIP status
+    const { data: userData, error: userError } = await supabaseAdmin
+      .from('profiles')
+      .select('is_vip')
+      .eq('id', userId)
+      .single()
+    
+    if (userError) throw userError
+    
+    const newVipStatus = !userData.is_vip
+    
+    // Update VIP status
+    const { error: updateError } = await supabaseAdmin
+      .from('profiles')
+      .update({ 
+        is_vip: newVipStatus,
+        vip_expires_at: newVipStatus ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() : null,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', userId)
+    
+    if (updateError) throw updateError
+    
+    // Log the action
+    await supabaseAdmin.rpc('log_admin_action', {
+      admin_id_param: adminId,
+      action_param: 'toggle_vip_status',
+      target_type_param: 'profile',
+      target_id_param: userId,
+      old_values_param: { is_vip: userData.is_vip },
+      new_values_param: { is_vip: newVipStatus },
+      ip_address_param: 'admin_panel',
+      user_agent_param: 'admin_panel',
+      details_param: { reason: 'VIP status toggled by admin' }
+    })
+    
+    return { success: true, message: 'VIP status updated successfully', newStatus: newVipStatus }
+  } catch (error) {
+    logger.error('Failed to toggle VIP status', error, 'supabase')
+    throw error
+  }
+}
+
 export const getUserGrowthAnalytics = async (daysBack = 30) => {
   try {
     const config = getSupabaseConfig()

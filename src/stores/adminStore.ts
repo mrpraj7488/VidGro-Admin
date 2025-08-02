@@ -18,6 +18,7 @@ import {
   getUsers,
   getVideos,
   adjustUserCoins,
+  toggleUserVip,
   updateVideoStatus as updateVideoStatusAPI,
   getUserGrowthAnalytics,
   getVideoPerformanceAnalytics,
