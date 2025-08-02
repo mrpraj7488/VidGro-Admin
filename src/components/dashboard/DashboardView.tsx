@@ -37,12 +37,12 @@ export function DashboardView() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
+        <h1 className="text-3xl font-bold gaming-gradient-text gaming-text-shadow">Dashboard</h1>
         <p className="text-gray-600 dark:text-gray-300 mt-1">Overview of your VidGro platform</p>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="gaming-stats-grid">
         <StatsCard
           title="Total Users"
           value={dashboardStats.totalUsers}
@@ -78,8 +78,8 @@ export function DashboardView() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <TrendingUp className="w-5 h-5 text-violet-600 dark:text-violet-400" />
+            <CardTitle className="flex items-center space-x-2 gaming-text-shadow">
+              <TrendingUp className="w-5 h-5 text-violet-600 dark:text-violet-400 gaming-glow" />
               <span>User Growth Trend</span>
             </CardTitle>
           </CardHeader>
@@ -118,8 +118,8 @@ export function DashboardView() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Activity className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+            <CardTitle className="flex items-center space-x-2 gaming-text-shadow">
+              <Activity className="w-5 h-5 text-emerald-600 dark:text-emerald-400 gaming-glow" />
               <span>Platform Activity</span>
             </CardTitle>
           </CardHeader>
@@ -148,8 +148,8 @@ export function DashboardView() {
       {/* Recent Activity */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <Activity className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+          <CardTitle className="flex items-center space-x-2 gaming-text-shadow">
+            <Activity className="w-5 h-5 text-gray-600 dark:text-gray-400 gaming-glow" />
             <span>Recent Platform Activity</span>
           </CardTitle>
         </CardHeader>
@@ -162,21 +162,21 @@ export function DashboardView() {
               { action: 'Video completed promotion', user: 'creator101', time: '12 minutes ago', type: 'promotion', amount: '1.2K views' },
               { action: 'New user registered', user: 'user202', time: '15 minutes ago', type: 'user', amount: '50 bonus coins' }
             ].map((activity, index) => (
-              <div key={index} className="flex items-center space-x-4 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
-                <div className={`w-3 h-3 rounded-full ${
+              <div key={index} className="flex items-center space-x-4 p-3 rounded-lg hover:bg-violet-50/50 dark:hover:bg-violet-900/20 transition-all duration-300 gaming-interactive">
+                <div className={`w-3 h-3 rounded-full gaming-pulse ${
                   activity.type === 'user' ? 'bg-violet-500' :
                   activity.type === 'vip' ? 'bg-yellow-500' :
                   activity.type === 'video' ? 'bg-emerald-500' :
                   activity.type === 'coin' ? 'bg-orange-500' : 'bg-blue-500'
                 }`} />
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-gray-900 dark:text-white">
+                  <p className="text-sm font-medium text-gray-900 dark:text-white gaming-text-shadow">
                     {activity.action}
                   </p>
                   <p className="text-xs text-gray-500 dark:text-gray-400">by {activity.user}</p>
                 </div>
                 <div className="text-right">
-                  <span className="text-sm font-medium text-gray-900 dark:text-white">{activity.amount}</span>
+                  <span className="text-sm font-medium text-gray-900 dark:text-white gaming-text-shadow">{activity.amount}</span>
                   <p className="text-xs text-gray-400 dark:text-gray-500">{activity.time}</p>
                 </div>
               </div>

@@ -36,15 +36,18 @@ function App() {
 
   return (
     <ErrorBoundary>
-      <div className="min-h-screen bg-gray-50 dark:bg-slate-900 transition-colors duration-200">
+      <div className="min-h-screen transition-colors duration-300">
         <div className="flex">
           <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
           <div className="flex-1">
             <Header />
-            <main className="p-4 md:p-6 dark:text-white min-h-[calc(100vh-4rem)]">
+            <main className="p-4 md:p-6 dark:text-white min-h-[calc(100vh-4rem)] relative">
+              <div className="absolute inset-0 bg-gradient-to-br from-violet-500/5 via-transparent to-emerald-500/5 pointer-events-none" />
+              <div className="relative z-10">
               <ErrorBoundary>
                 {renderContent()}
               </ErrorBoundary>
+              </div>
             </main>
           </div>
         </div>
