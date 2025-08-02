@@ -30,12 +30,12 @@ function AppContent() {
 
   // Show auth modal if not authenticated
   React.useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
+    if (!isLoading && !isAuthenticated && !user) {
       setIsAuthModalOpen(true)
     } else {
       setIsAuthModalOpen(false)
     }
-  }, [isAuthenticated, isLoading])
+  }, [isAuthenticated, isLoading, user])
   
   const renderContent = () => {
     switch (activeTab) {

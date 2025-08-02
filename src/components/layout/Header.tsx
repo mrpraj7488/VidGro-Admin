@@ -32,8 +32,11 @@ export function Header({ isPopupOpen }: HeaderProps) {
   }
 
   const handleLogout = () => {
-    logout()
     setIsProfileMenuOpen(false)
+    // Show confirmation before logout
+    if (window.confirm('Are you sure you want to log out?')) {
+      logout()
+    }
   }
 
   // Initialize dark mode on component mount

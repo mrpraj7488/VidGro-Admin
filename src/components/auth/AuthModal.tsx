@@ -76,7 +76,8 @@ export function AuthModal({ isOpen, onClose, onLogin, onSignup }: AuthModalProps
       } else {
         await onSignup(formData.email, formData.password, formData.username)
       }
-      onClose()
+      // Don't call onClose here - let the parent component handle it
+      // The modal will close automatically when authentication succeeds
     } catch (error) {
       console.error('Auth error:', error)
       setErrors({ general: 'Authentication failed. Please try again.' })

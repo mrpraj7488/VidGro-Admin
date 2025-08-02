@@ -47,15 +47,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await new Promise(resolve => setTimeout(resolve, 1000)) // Simulate API call
       
       // For demo purposes, accept any email/password combination
-      const mockUser: User = {
-        id: 'admin-1',
-        email,
-        username: email.split('@')[0],
-        role: 'admin'
-      }
+      // But preserve admin settings if they exist
+      const existingUser = localStorage.getItem('vidgro_admin_user')
+      let userData
       
-      setUser(mockUser)
-      localStorage.setItem('vidgro_admin_user', JSON.stringify(mockUser))
+      if (existingUser) {
+        // Preserve existing user data
+        userData = JSON.parse(existingUser)
+        // Update with new login info if different
+        userData.email = email
+        userData.username = email.split('@')[0]
+      } else {
+        // Create new user data
+        userData = {
+          id: 'admin-1',
+          email,
+          username: email.split('@')[0],
+          role: 'admin'
+        }
+      }
+      setUser(userData)
+      localStorage.setItem('vidgro_admin_user', JSON.stringify(userData))
     } catch (error) {
       throw new Error('Login failed')
     } finally {
@@ -88,6 +100,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = () => {
     setUser(null)
     localStorage.removeItem('vidgro_admin_user')
+    // Clear any other stored data that might interfere
+    sessionStorage.clear()
   }
 
   return (
