@@ -6,7 +6,6 @@ import { Button } from '../ui/Button'
 import { Input } from '../ui/Input'
 import { Badge } from '../ui/Badge'
 import { CreateBugModal } from './CreateBugModal'
-import { BugReportsSkeleton } from './BugReportsSkeleton'
 import { formatNumber } from '../../lib/utils'
 import { format } from 'date-fns'
 
@@ -23,10 +22,6 @@ export function BugReportsView() {
   useEffect(() => {
     fetchBugReports()
   }, [fetchBugReports])
-
-  if (isLoading || !bugReportData) {
-    return <BugReportsSkeleton />
-  }
 
   const getPriorityBadge = (priority: string) => {
     switch (priority) {
@@ -75,7 +70,7 @@ export function BugReportsView() {
       <div className="flex justify-between items-center animate-slide-down">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Bug Reports</h1>
-          <p className="text-gray-600">Track and manage application issues and bugs</p>
+          <p className="text-gray-600 dark:text-gray-400">Track and manage application issues and bugs</p>
         </div>
         <Button 
           onClick={() => setIsCreateModalOpen(true)}
@@ -87,13 +82,15 @@ export function BugReportsView() {
       </div>
 
       {/* Stats Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-stagger-children">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 animate-stagger-children">
         <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200 dark:from-orange-900/20 dark:to-orange-800/20 dark:border-orange-700/50 animate-slide-up">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-orange-700 dark:text-orange-300 mb-1">New Bugs</p>
-                <p className="text-3xl font-bold text-orange-600 dark:text-orange-400">{bugReportData.newBugs}</p>
+                <p className="text-2xl md:text-3xl font-bold text-orange-600 dark:text-orange-400">
+                  {bugReportData ? bugReportData.newBugs : '--'}
+                </p>
               </div>
               <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg flex items-center justify-center">
                 <Bug className="w-6 h-6 text-white" />
@@ -107,7 +104,9 @@ export function BugReportsView() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-emerald-700 dark:text-emerald-300 mb-1">Bugs Fixed Today</p>
-                <p className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">{bugReportData.bugsFixedToday}</p>
+                <p className="text-2xl md:text-3xl font-bold text-emerald-600 dark:text-emerald-400">
+                  {bugReportData ? bugReportData.bugsFixedToday : '--'}
+                </p>
               </div>
               <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-lg flex items-center justify-center">
                 <CheckCircle className="w-6 h-6 text-white" />
@@ -120,7 +119,7 @@ export function BugReportsView() {
       {/* Filters */}
       <Card className="animate-slide-up">
         <CardContent className="p-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
               <Input
@@ -134,7 +133,7 @@ export function BugReportsView() {
             <select
               value={filters.status}
               onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-              className="px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm dark:bg-slate-800 dark:border-slate-600 dark:text-white"
+              className="px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-violet-500"
             >
               <option value="all">All Status</option>
               <option value="new">New</option>
@@ -146,7 +145,7 @@ export function BugReportsView() {
             <select
               value={filters.priority}
               onChange={(e) => setFilters({ ...filters, priority: e.target.value })}
-              className="px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm dark:bg-slate-800 dark:border-slate-600 dark:text-white"
+              className="px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-violet-500"
             >
               <option value="all">All Priority</option>
               <option value="critical">Critical</option>
@@ -158,7 +157,7 @@ export function BugReportsView() {
             <select
               value={filters.category}
               onChange={(e) => setFilters({ ...filters, category: e.target.value })}
-              className="px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm dark:bg-slate-800 dark:border-slate-600 dark:text-white"
+              className="px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-violet-500"
             >
               <option value="all">All Categories</option>
               <option value="UI/UX">UI/UX</option>
@@ -173,7 +172,8 @@ export function BugReportsView() {
 
       {/* Bug Reports List */}
       <div className="space-y-4 animate-stagger-children">
-        {filteredBugs.map((bug) => (
+        {bugReportData && filteredBugs.length > 0 ? (
+          filteredBugs.map((bug) => (
           <Card key={bug.bug_id} className="hover:shadow-md transition-all duration-300 dark:hover:shadow-slate-900/40 animate-slide-up hover:scale-[1.01]">
             <CardContent className="p-6">
               <div className="flex items-start justify-between mb-4">
@@ -184,7 +184,7 @@ export function BugReportsView() {
                     {getPriorityBadge(bug.priority)}
                     <Badge variant="default" className="text-xs">{bug.category}</Badge>
                   </div>
-                  <p className="text-gray-600 dark:text-gray-300 text-sm mb-3 line-clamp-2">{bug.description}</p>
+                  <p className="text-gray-600 dark:text-gray-400 text-sm mb-3 line-clamp-2">{bug.description}</p>
                   
                   <div className="flex items-center space-x-6 text-sm text-gray-500 dark:text-gray-400">
                     <div className="flex items-center space-x-1">
@@ -231,6 +231,47 @@ export function BugReportsView() {
             </CardContent>
           </Card>
         ))}
+        ) : bugReportData && filteredBugs.length === 0 ? (
+          <Card>
+            <CardContent className="p-12 text-center">
+              <Bug className="w-12 h-12 text-gray-400 dark:text-gray-600 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No bug reports found</h3>
+              <p className="text-gray-500 dark:text-gray-400">Try adjusting your filters or create a new bug report.</p>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="space-y-4">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <Card key={i}>
+                <CardContent className="p-6">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-3 mb-2">
+                        <div className="h-6 w-48 bg-gray-200 dark:bg-gray-700 rounded" />
+                        <div className="h-6 w-16 bg-gray-200 dark:bg-gray-700 rounded-full" />
+                        <div className="h-6 w-12 bg-gray-200 dark:bg-gray-700 rounded-full" />
+                        <div className="h-6 w-20 bg-gray-200 dark:bg-gray-700 rounded-full" />
+                      </div>
+                      <div className="h-4 w-full bg-gray-200 dark:bg-gray-700 rounded mb-2" />
+                      <div className="h-4 w-3/4 bg-gray-200 dark:bg-gray-700 rounded mb-3" />
+                      
+                      <div className="flex items-center space-x-6">
+                        <div className="h-4 w-32 bg-gray-200 dark:bg-gray-700 rounded" />
+                        <div className="h-4 w-24 bg-gray-200 dark:bg-gray-700 rounded" />
+                        <div className="h-4 w-28 bg-gray-200 dark:bg-gray-700 rounded" />
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center space-x-2">
+                      <div className="h-8 w-20 bg-gray-200 dark:bg-gray-700 rounded" />
+                      <div className="h-8 w-24 bg-gray-200 dark:bg-gray-700 rounded" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Create Bug Modal */}
