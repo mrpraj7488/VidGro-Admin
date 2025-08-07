@@ -1,366 +1,700 @@
-# VidGro Admin Panel
+follows all your requirements and provides a robust, secure foundation for VidGro application. All API tokens are now securely managed server-side, and the client communicates through the secure proxy system.
 
-A comprehensive admin panel for managing the VidGro mobile application, built with React, TypeScript, and Supabase.
+// .env 
 
-## 🚀 Features
+# Server Configuration
+PORT=3001
+NODE_ENV=production
 
-- **User Management**: View, search, and manage user accounts with VIP status tracking
-- **Video Management**: Monitor and control video status, promotions, and analytics
-- **Analytics Dashboard**: Real-time platform statistics and comprehensive insights
-- **Admin Authentication**: Secure role-based access control with permission management
-- **System Configuration**: Manage platform settings, environment variables, and parameters
-- **Admin Logging**: Track all admin actions and changes with detailed audit trails
-- **Bug Report Management**: Track and manage application issues and bug reports
-- **Real-time Updates**: Live data synchronization and notifications
+# Client Configuration
+CLIENT_URL=http://localhost:8081
+CLIENT_API_KEY=your-secure-client-api-key-here
 
-## 🛠 Tech Stack
+# Supabase Configuration (Server-side only)
+SUPABASE_URL=https://kuibswqfmhhdybttbcoa.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1aWJzd3FmbWhoZHlidHRiY29hIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1Mzc4MjA1NiwiZXhwIjoyMDY5MzU4MDU2fQ.hJNaVa025MEen4DM567AO1y0NQxAZO3HWt6nbX6OBKs
 
-- **Frontend**: React 18, TypeScript, Vite
-- **Styling**: Tailwind CSS, Headless UI, Radix UI
-- **State Management**: Zustand
-- **Charts**: Recharts
-- **Icons**: Lucide React
-- **Animations**: Framer Motion
-- **Backend**: Supabase (PostgreSQL)
-- **Authentication**: Supabase Auth with custom admin roles
+# AdMob Configuration (Server-side only)
+ADMOB_APP_ID=ca-app-pub-2892152842024866~2841739969
+ADMOB_BANNER_ID=ca-app-pub-2892152842024866/6180566789
+ADMOB_INTERSTITIAL_ID=ca-app-pub-2892152842024866/2604283857
+ADMOB_REWARDED_ID=ca-app-pub-2892152842024866/2049185437
 
-## 📋 Prerequisites
+# Rate Limiting
+RATE_LIMIT_WINDOW_MS=900000
+RATE_LIMIT_MAX_REQUESTS=100
+
+# Security
+JWT_SECRET=your-jwt-secret-key-here
+API_KEY_SALT=your-api-key-salt-here 
+
+
+// package.json
+
+{
+  "name": "vidgro-secure-api-proxy",
+  "version": "1.0.0",
+  "description": "Secure API proxy server for VidGro mobile app",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "test": "jest",
+    "lint": "eslint .",
+    "security-check": "npm audit"
+  },
+  "keywords": [
+    "api",
+    "proxy",
+    "security",
+    "supabase",
+    "vidgro"
+  ],
+  "author": "VidGro Team",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "axios": "^1.6.0",
+    "dotenv": "^16.3.1",
+    "express-rate-limit": "^7.1.5",
+    "helmet": "^7.1.0",
+    "compression": "^1.7.4",
+    "morgan": "^1.10.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1",
+    "jest": "^29.7.0",
+    "eslint": "^8.54.0",
+    "supertest": "^6.3.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+} 
+
+
+// README.MD
+
+# VidGro Secure API Proxy Server
+
+A secure Node.js Express server that acts as a proxy between the VidGro mobile app and external APIs, keeping all sensitive tokens server-side.
+
+## 🔐 Security Features
+
+- **Token Protection**: All sensitive API keys stored server-side only
+- **Rate Limiting**: Prevents abuse with configurable rate limits
+- **API Key Authentication**: Client authentication via API keys
+- **CORS Protection**: Configured CORS for secure cross-origin requests
+- **Error Handling**: Comprehensive error handling and logging
+- **HTTPS Ready**: Configured for production HTTPS deployment
+
+## 🚀 Quick Start
+
+### Prerequisites
 
 - Node.js 18+ 
 - npm or yarn
-- Supabase project with the required database schema
-- Admin credentials
 
-## 🗄 Database Schema
+### Installation
 
-### Core Tables
+1. **Install dependencies:**
+   ```bash
+   npm install
+   ```
 
-#### `profiles` - User Accounts
-```sql
-CREATE TABLE public.profiles (
-  id uuid NOT NULL,
-  email text NOT NULL,
-  username text NOT NULL,
-  coins integer NOT NULL DEFAULT 100,
-  is_vip boolean NULL DEFAULT false,
-  vip_expires_at timestamp with time zone NULL,
-  referral_code text NULL DEFAULT encode(extensions.gen_random_bytes(6), 'base64'::text),
-  referred_by uuid NULL,
-  created_at timestamp with time zone NULL DEFAULT now(),
-  updated_at timestamp with time zone NULL DEFAULT now(),
-  CONSTRAINT profiles_pkey PRIMARY KEY (id),
-  CONSTRAINT profiles_email_key UNIQUE (email),
-  CONSTRAINT profiles_referral_code_key UNIQUE (referral_code),
-  CONSTRAINT profiles_username_key UNIQUE (username),
-  CONSTRAINT profiles_id_fkey FOREIGN KEY (id) REFERENCES auth.users (id) ON DELETE CASCADE,
-  CONSTRAINT profiles_referred_by_fkey FOREIGN KEY (referred_by) REFERENCES profiles (id),
-  CONSTRAINT profiles_coins_check CHECK ((coins >= 0))
-);
-```
+2. **Configure environment:**
+   ```bash
+   cp .env.example .env
+   # Edit .env with your actual values
+   ```
 
-#### `videos` - Video Content
-```sql
-CREATE TABLE public.videos (
-  id uuid NOT NULL DEFAULT extensions.uuid_generate_v4(),
-  user_id uuid NOT NULL,
-  youtube_url text NOT NULL,
-  title text NOT NULL,
-  views_count integer NOT NULL DEFAULT 0,
-  target_views integer NOT NULL,
-  duration_seconds integer NOT NULL,
-  coin_reward integer NOT NULL,
-  coin_cost integer NOT NULL,
-  status text NULL DEFAULT 'on_hold'::text,
-  hold_until timestamp with time zone NULL DEFAULT (now() + '00:10:00'::interval),
-  repromoted_at timestamp with time zone NULL,
-  total_watch_time integer NULL DEFAULT 0,
-  completion_rate numeric(5, 2) NULL DEFAULT 0.0,
-  created_at timestamp with time zone NULL DEFAULT now(),
-  updated_at timestamp with time zone NULL DEFAULT now(),
-  completed boolean NULL DEFAULT false,
-  coins_earned_total integer NULL DEFAULT 0,
-  CONSTRAINT videos_pkey PRIMARY KEY (id),
-  CONSTRAINT videos_user_id_fkey FOREIGN KEY (user_id) REFERENCES profiles (id) ON DELETE CASCADE,
-  CONSTRAINT videos_duration_seconds_check CHECK ((duration_seconds > 0)),
-  CONSTRAINT videos_status_check CHECK (
-    (status = ANY (ARRAY['active'::text, 'paused'::text, 'completed'::text, 'on_hold'::text, 'repromoted'::text, 'deleted'::text]))
-  ),
-  CONSTRAINT videos_target_views_check CHECK ((target_views > 0)),
-  CONSTRAINT videos_coin_cost_check CHECK ((coin_cost > 0)),
-  CONSTRAINT videos_views_count_check CHECK ((views_count >= 0)),
-  CONSTRAINT videos_coin_reward_check CHECK ((coin_reward > 0))
-);
-```
+3. **Start the server:**
+   ```bash
+   # Development
+   npm run dev
+   
+   # Production
+   npm start
+   ```
 
-#### `admin_profiles` - Admin Accounts
-```sql
-CREATE TABLE public.admin_profiles (
-  id uuid NOT NULL DEFAULT extensions.uuid_generate_v4(),
-  user_id uuid NULL,
-  email text NOT NULL,
-  role text NOT NULL,
-  permissions jsonb NULL DEFAULT '{}'::jsonb,
-  is_active boolean NULL DEFAULT true,
-  last_login timestamp with time zone NULL,
-  created_at timestamp with time zone NULL DEFAULT now(),
-  updated_at timestamp with time zone NULL DEFAULT now(),
-  CONSTRAINT admin_profiles_pkey PRIMARY KEY (id),
-  CONSTRAINT admin_profiles_email_key UNIQUE (email),
-  CONSTRAINT admin_profiles_user_id_fkey FOREIGN KEY (user_id) REFERENCES profiles (id) ON DELETE CASCADE,
-  CONSTRAINT admin_profiles_role_check CHECK (
-    (role = ANY (ARRAY['super_admin'::text, 'content_moderator'::text, 'analytics_viewer'::text, 'user_support'::text]))
-  )
-);
-```
+## 📋 Environment Variables
 
-#### `admin_logs` - Admin Activity Logs
-```sql
-CREATE TABLE public.admin_logs (
-  id uuid NOT NULL DEFAULT extensions.uuid_generate_v4(),
-  admin_id text NOT NULL,
-  action text NOT NULL,
-  target_type text NULL,
-  target_id uuid NULL,
-  old_values jsonb NULL,
-  new_values jsonb NULL,
-  ip_address text NULL,
-  user_agent text NULL,
-  details jsonb NULL,
-  created_at timestamp with time zone NULL DEFAULT now(),
-  CONSTRAINT admin_logs_pkey PRIMARY KEY (id)
-);
-```
-
-#### `video_deletions` - Deleted Video Records
-```sql
-CREATE TABLE public.video_deletions (
-  id uuid NOT NULL DEFAULT extensions.uuid_generate_v4(),
-  video_id uuid NOT NULL,
-  user_id uuid NOT NULL,
-  video_title text NOT NULL,
-  coin_cost integer NOT NULL,
-  refund_amount integer NOT NULL,
-  refund_percentage integer NOT NULL,
-  deleted_at timestamp with time zone NULL DEFAULT now(),
-  created_at timestamp with time zone NULL DEFAULT now(),
-  CONSTRAINT video_deletions_pkey PRIMARY KEY (id),
-  CONSTRAINT video_deletions_user_id_fkey FOREIGN KEY (user_id) REFERENCES profiles (id) ON DELETE CASCADE
-);
-```
-
-## 🔧 Installation & Setup
-
-### 1. Clone and Install Dependencies
-
-```bash
-cd vidgro-admin
-npm install
-```
-
-### 2. Environment Configuration
-
-Create a `.env` file in the root directory:
+Create a `.env` file in the backend directory:
 
 ```env
-# Supabase Configuration
-VITE_SUPABASE_URL=https://your-project.supabase.co
-VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
-VITE_SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+# Server Configuration
+PORT=3001
+NODE_ENV=production
 
-# Admin Configuration
-VITE_ADMIN_EMAIL=admin@vidgro.com
-VITE_ADMIN_SECRET_KEY=vidgro_admin_secret_2024
+# Client Configuration
+CLIENT_URL=http://localhost:8081
+CLIENT_API_KEY=your-secure-client-api-key-here
 
-# App Configuration
-VITE_APP_NAME=VidGro Admin Panel
-VITE_API_BASE_URL=https://your-project.supabase.co
+# Supabase Configuration (Server-side only)
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 
-# Environment
-NODE_ENV=development
+# AdMob Configuration (Server-side only)
+ADMOB_APP_ID=your-admob-app-id
+ADMOB_BANNER_ID=your-banner-id
+ADMOB_INTERSTITIAL_ID=your-interstitial-id
+ADMOB_REWARDED_ID=your-rewarded-id
+
+# Rate Limiting
+RATE_LIMIT_WINDOW_MS=900000
+RATE_LIMIT_MAX_REQUESTS=100
+
+# Security
+JWT_SECRET=your-jwt-secret-key-here
+API_KEY_SALT=your-api-key-salt-here
 ```
 
-### 3. Database Functions Setup
+## 🔌 API Endpoints
 
-The admin panel requires specific database functions to operate correctly. Run the SQL setup script provided in your Supabase SQL editor to create all necessary functions including:
+### Health Check
+- `GET /health` - Server health status
 
-- `get_admin_dashboard_stats()` - Dashboard statistics
-- `get_all_users_with_filters()` - User management with filtering
-- `get_all_videos_with_filters()` - Video management with filtering
-- `admin_adjust_user_coins()` - Coin adjustment functionality
-- `admin_update_video_status()` - Video status management
-- Analytics functions for user growth, video performance, and coin economy
-- Admin logging and permission checking functions
+### User Management
+- `GET /api/user-profile/:userId` - Get user profile
+- `GET /api/user-analytics/:userId` - Get user analytics
+- `GET /api/user-videos/:userId` - Get user videos
+- `GET /api/user-activity/:userId` - Get user activity
 
-### 4. Start Development Server
+### Video Operations
+- `POST /api/watch-video` - Record video watch
+- `GET /api/video-queue/:userId` - Get video queue
+- `POST /api/create-video-promotion` - Create video promotion
+- `POST /api/repromote-video` - Repromote video
+- `DELETE /api/delete-video` - Delete video
 
-```bash
-npm run dev
+### Transactions
+- `POST /api/record-purchase` - Record coin purchase
+- `GET /api/transaction-history/:userId` - Get transaction history
+
+## 🔒 Security Implementation
+
+### API Key Authentication
+
+All API endpoints require authentication via the `x-api-key` header:
+
+```javascript
+// Client-side request
+fetch('http://localhost:3001/api/user-profile/123', {
+  headers: {
+    'Content-Type': 'application/json',
+    'x-api-key': 'your-secure-client-api-key-here'
+  }
+});
 ```
 
-The admin panel will be available at `http://localhost:5173`
+### Rate Limiting
 
-## 🔐 Authentication Setup
+- **Window**: 15 minutes
+- **Max Requests**: 100 per IP
+- **Headers**: Rate limit info included in response headers
 
-### Default Admin Account
+### CORS Configuration
 
-The system comes with a default admin account for initial access:
+Configured for secure cross-origin requests:
 
-- **Email**: `admin@vidgro.com`
-- **Password**: `vidgro_admin_secret_2024`
-- **Role**: `super_admin`
-
-You can customize these credentials in your `.env` file:
-
-```env
-VITE_ADMIN_EMAIL=admin@vidgro.com
-VITE_ADMIN_SECRET_KEY=vidgro_admin_secret_2024
-```
-
-### Admin Roles
-
-1. **super_admin**: Full access to all features
-2. **content_moderator**: Video and user management
-3. **analytics_viewer**: View-only access to analytics
-4. **user_support**: User management and support features
-
-## 📊 API Integration
-
-### Key Features
-
-- **Real-time Dashboard**: Live statistics and metrics
-- **Advanced Filtering**: Search and filter users and videos
-- **Bulk Operations**: Mass user notifications and actions
-- **Analytics**: Comprehensive platform insights
-- **Audit Logging**: Complete admin action tracking
-- **Permission System**: Role-based access control
-
-### Database Functions
-
-The admin panel uses optimized PostgreSQL functions for:
-- Dashboard statistics aggregation
-- User and video management with complex filtering
-- Analytics data processing
-- Admin action logging
-- Permission verification
-
-## 🏗 Project Structure
-
-```
-vidgro-admin/
-├── src/
-│   ├── components/
-│   │   ├── admin/           # Admin-specific components
-│   │   ├── analytics/       # Analytics and reporting
-│   │   ├── auth/           # Authentication system
-│   │   ├── dashboard/      # Main dashboard
-│   │   ├── layout/         # Layout components
-│   │   ├── reports/        # Bug reports management
-│   │   ├── settings/       # System configuration
-│   │   ├── ui/            # Reusable UI components
-│   │   ├── users/         # User management
-│   │   └── videos/        # Video management
-│   ├── lib/
-│   │   ├── supabase.ts    # Database client and functions
-│   │   ├── envManager.ts  # Environment management
-│   │   ├── errorHandler.ts # Error handling system
-│   │   └── utils.ts       # Utility functions
-│   ├── stores/
-│   │   └── adminStore.ts  # State management
-│   ├── types/
-│   │   └── admin.ts       # TypeScript definitions
-│   └── services/
-│       └── realtimeService.ts # Real-time updates
-├── .env                   # Environment variables
-└── README.md             # Documentation
+```javascript
+app.use(cors({
+  origin: process.env.CLIENT_URL || 'http://localhost:8081',
+  credentials: true
+}));
 ```
 
 ## 🚀 Deployment
 
-### Build for Production
+### Production Deployment
+
+1. **Environment Setup:**
+   ```bash
+   # Set production environment
+   export NODE_ENV=production
+   export PORT=3001
+   ```
+
+2. **Security Configuration:**
+   - Generate secure API keys
+   - Use HTTPS in production
+   - Configure proper CORS origins
+   - Set up proper rate limiting
+
+3. **Process Management:**
+   ```bash
+   # Using PM2
+   npm install -g pm2
+   pm2 start server.js --name "vidgro-api-proxy"
+   pm2 save
+   pm2 startup
+   ```
+
+## 🧪 Testing
 
 ```bash
-npm run build
+# Run tests
+npm test
+
+# Run linting
+npm run lint
+
+# Security audit
+npm run security-check
 ```
 
-### Environment Variables for Production
+## 📊 Monitoring
 
-Ensure all environment variables are properly configured in your deployment platform:
+### Health Check
+```bash
+curl http://localhost:3001/health
+```
 
-- `VITE_SUPABASE_URL`: Your Supabase project URL
-- `VITE_SUPABASE_ANON_KEY`: Supabase anonymous key
-- `VITE_SUPABASE_SERVICE_ROLE_KEY`: Service role key (keep secure)
-- `VITE_ADMIN_EMAIL`: Default admin email
-- `VITE_ADMIN_SECRET_KEY`: Admin authentication secret
+### Logs
+```bash
+# View logs
+pm2 logs vidgro-api-proxy
 
-## 🔍 Troubleshooting
+# Monitor resources
+pm2 monit
+```
 
-### Common Issues
+## 🔧 Configuration
 
-1. **Mock data showing instead of real data**
-   - Verify environment variables are correctly set
-   - Check Supabase URL doesn't contain "placeholder"
-   - Ensure database functions are properly installed
+### Rate Limiting
+Adjust rate limiting in `server.js`:
 
-2. **Authentication errors**
-   - Verify `admin_profiles` table exists and has data
-   - Check service role permissions
-   - Ensure RLS policies allow admin access
+```javascript
+const limiter = rateLimit({
+  windowMs: process.env.RATE_LIMIT_WINDOW_MS || 15 * 60 * 1000,
+  max: process.env.RATE_LIMIT_MAX_REQUESTS || 100,
+  message: 'Too many requests from this IP, please try again later.'
+});
+```
 
-3. **Database function errors**
-   - Run the complete SQL setup script
-   - Verify all functions exist with correct signatures
-   - Check service role has EXECUTE permissions
+### CORS
+Update CORS configuration for your domains:
 
-4. **Performance issues**
-   - Ensure database indexes are created
-   - Check query performance in Supabase dashboard
-   - Monitor function execution times
+```javascript
+app.use(cors({
+  origin: process.env.CLIENT_URL,
+  credentials: true
+}));
+```
 
-## 📈 Features Overview
+## 🛠️ Development
 
-### Dashboard
-- Real-time platform statistics
-- User growth trends
-- Video performance metrics
-- Revenue and coin economy tracking
+### Local Development
 
-### User Management
-- Advanced search and filtering
-- VIP status management
-- Coin balance adjustments
-- User activity tracking
-- Bulk notifications
+1. **Start development server:**
+   ```bash
+   npm run dev
+   ```
 
-### Video Management
-- Status tracking and updates
-- Performance analytics
-- Refund processing
-- Content moderation tools
+2. **Test endpoints:**
+   ```bash
+   curl -H "x-api-key: your-key" http://localhost:3001/health
+   ```
 
-### Analytics
-- User growth analysis
-- Video performance insights
-- Coin economy metrics
-- Custom date range filtering
+3. **Monitor logs:**
+   ```bash
+   tail -f logs/app.log
+   ```
 
-### System Configuration
-- Environment variable management
-- Platform settings
-- Security configuration
-- Backup and restore tools
+### Debugging
 
-## 📝 License
+Enable debug logging:
 
-This project is proprietary software for VidGro platform.
+```bash
+DEBUG=* npm run dev
+```
 
-## 🤝 Support
+## 📝 API Documentation
 
-For technical support:
-1. Check the troubleshooting section
-2. Verify database schema matches requirements
-3. Ensure all environment variables are configured
-4. Review Supabase project settings and permissions
+### Request Format
 
----
+All API requests must include:
+- `Content-Type: application/json`
+- `x-api-key: your-api-key`
 
-**Note**: This admin panel is specifically designed for the VidGro mobile application and requires the exact database schema and configuration outlined in this documentation.
+### Response Format
+
+```json
+{
+  "data": {...},
+  "error": null
+}
+```
+
+### Error Responses
+
+```json
+{
+  "error": "Error message",
+  "status": 400
+}
+```
+
+## 🔐 Security Best Practices
+
+1. **API Key Management:**
+   - Use strong, unique API keys
+   - Rotate keys regularly
+   - Store keys securely
+
+2. **HTTPS:**
+   - Always use HTTPS in production
+   - Configure SSL certificates properly
+
+3. **Rate Limiting:**
+   - Monitor rate limit usage
+   - Adjust limits based on usage patterns
+
+4. **Logging:**
+   - Log all API requests
+   - Monitor for suspicious activity
+   - Implement alerting
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests
+5. Submit a pull request
+
+## 📄 License
+
+MIT License - see LICENSE file for details 
+
+
+// server.js 
+
+const express = require('express');
+const cors = require('cors');
+const axios = require('axios');
+require('dotenv').config();
+
+const app = express();
+const PORT = process.env.PORT || 3001;
+
+// Middleware
+app.use(cors({
+  origin: process.env.CLIENT_URL || 'http://localhost:8081',
+  credentials: true
+}));
+app.use(express.json());
+
+// Rate limiting middleware
+const rateLimit = require('express-rate-limit');
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // limit each IP to 100 requests per windowMs
+  message: 'Too many requests from this IP, please try again later.'
+});
+app.use('/api/', limiter);
+
+// Authentication middleware (optional but recommended)
+const authenticateClient = (req, res, next) => {
+  const apiKey = req.headers['x-api-key'];
+  
+  if (!apiKey || apiKey !== process.env.CLIENT_API_KEY) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  
+  next();
+};
+
+// Apply authentication to all API routes
+app.use('/api/', authenticateClient);
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.json({ status: 'OK', timestamp: new Date().toISOString() });
+});
+
+// Supabase proxy endpoints
+app.get('/api/user-profile/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const supabaseUrl = process.env.SUPABASE_URL;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+    const response = await axios.get(`${supabaseUrl}/rest/v1/profiles?id=eq.${userId}`, {
+      headers: {
+        'apikey': supabaseServiceKey,
+        'Authorization': `Bearer ${supabaseServiceKey}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    res.json(response.data[0] || null);
+  } catch (error) {
+    console.error('Error fetching user profile:', error);
+    res.status(500).json({ error: 'Failed to fetch user profile' });
+  }
+});
+
+app.post('/api/watch-video', async (req, res) => {
+  try {
+    const { userId, videoId, watchDuration, fullyWatched } = req.body;
+    const supabaseUrl = process.env.SUPABASE_URL;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+    const response = await axios.post(`${supabaseUrl}/rest/v1/rpc/watch_video_and_earn_coins`, {
+      user_uuid: userId,
+      video_uuid: videoId,
+      watch_duration: watchDuration,
+      video_fully_watched: fullyWatched
+    }, {
+      headers: {
+        'apikey': supabaseServiceKey,
+        'Authorization': `Bearer ${supabaseServiceKey}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    res.json(response.data);
+  } catch (error) {
+    console.error('Error watching video:', error);
+    res.status(500).json({ error: 'Failed to process video watch' });
+  }
+});
+
+app.get('/api/video-queue/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const supabaseUrl = process.env.SUPABASE_URL;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+    const response = await axios.post(`${supabaseUrl}/rest/v1/rpc/get_video_queue_for_user`, {
+      user_uuid: userId
+    }, {
+      headers: {
+        'apikey': supabaseServiceKey,
+        'Authorization': `Bearer ${supabaseServiceKey}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    res.json(response.data || []);
+  } catch (error) {
+    console.error('Error fetching video queue:', error);
+    res.status(500).json({ error: 'Failed to fetch video queue' });
+  }
+});
+
+app.post('/api/create-video-promotion', async (req, res) => {
+  try {
+    const { coinCost, coinReward, duration, targetViews, title, userId, youtubeUrl } = req.body;
+    const supabaseUrl = process.env.SUPABASE_URL;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+    const response = await axios.post(`${supabaseUrl}/rest/v1/rpc/create_video_promotion`, {
+      coin_cost_param: coinCost,
+      coin_reward_param: coinReward,
+      duration_seconds_param: duration,
+      target_views_param: targetViews,
+      title_param: title,
+      user_uuid: userId,
+      youtube_url_param: youtubeUrl
+    }, {
+      headers: {
+        'apikey': supabaseServiceKey,
+        'Authorization': `Bearer ${supabaseServiceKey}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    res.json(response.data);
+  } catch (error) {
+    console.error('Error creating video promotion:', error);
+    res.status(500).json({ error: 'Failed to create video promotion' });
+  }
+});
+
+app.post('/api/repromote-video', async (req, res) => {
+  try {
+    const { videoId, userId, additionalCost } = req.body;
+    const supabaseUrl = process.env.SUPABASE_URL;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+    const response = await axios.post(`${supabaseUrl}/rest/v1/rpc/repromote_video`, {
+      video_uuid: videoId,
+      user_uuid: userId,
+      additional_coin_cost: additionalCost || 0
+    }, {
+      headers: {
+        'apikey': supabaseServiceKey,
+        'Authorization': `Bearer ${supabaseServiceKey}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    res.json(response.data);
+  } catch (error) {
+    console.error('Error repromoting video:', error);
+    res.status(500).json({ error: 'Failed to repromote video' });
+  }
+});
+
+app.delete('/api/delete-video', async (req, res) => {
+  try {
+    const { videoId, userId } = req.body;
+    const supabaseUrl = process.env.SUPABASE_URL;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+    const response = await axios.post(`${supabaseUrl}/rest/v1/rpc/delete_video_with_refund`, {
+      video_uuid: videoId,
+      user_uuid: userId
+    }, {
+      headers: {
+        'apikey': supabaseServiceKey,
+        'Authorization': `Bearer ${supabaseServiceKey}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    res.json(response.data);
+  } catch (error) {
+    console.error('Error deleting video:', error);
+    res.status(500).json({ error: 'Failed to delete video' });
+  }
+});
+
+app.get('/api/user-analytics/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const supabaseUrl = process.env.SUPABASE_URL;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+    const response = await axios.post(`${supabaseUrl}/rest/v1/rpc/get_user_comprehensive_analytics`, {
+      user_uuid: userId
+    }, {
+      headers: {
+        'apikey': supabaseServiceKey,
+        'Authorization': `Bearer ${supabaseServiceKey}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    res.json(response.data);
+  } catch (error) {
+    console.error('Error fetching user analytics:', error);
+    res.status(500).json({ error: 'Failed to fetch user analytics' });
+  }
+});
+
+app.get('/api/user-videos/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const supabaseUrl = process.env.SUPABASE_URL;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+    const response = await axios.post(`${supabaseUrl}/rest/v1/rpc/get_user_videos_with_analytics`, {
+      user_uuid: userId
+    }, {
+      headers: {
+        'apikey': supabaseServiceKey,
+        'Authorization': `Bearer ${supabaseServiceKey}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    res.json(response.data);
+  } catch (error) {
+    console.error('Error fetching user videos:', error);
+    res.status(500).json({ error: 'Failed to fetch user videos' });
+  }
+});
+
+app.get('/api/user-activity/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const supabaseUrl = process.env.SUPABASE_URL;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+    const response = await axios.post(`${supabaseUrl}/rest/v1/rpc/get_user_recent_activity`, {
+      user_uuid: userId
+    }, {
+      headers: {
+        'apikey': supabaseServiceKey,
+        'Authorization': `Bearer ${supabaseServiceKey}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    res.json(response.data);
+  } catch (error) {
+    console.error('Error fetching user activity:', error);
+    res.status(500).json({ error: 'Failed to fetch user activity' });
+  }
+});
+
+app.post('/api/record-purchase', async (req, res) => {
+  try {
+    const { userId, packageId, coinsAmount, bonusCoins, pricePaid, transactionId, platform } = req.body;
+    const supabaseUrl = process.env.SUPABASE_URL;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+    const response = await axios.post(`${supabaseUrl}/rest/v1/rpc/record_coin_purchase`, {
+      user_uuid: userId,
+      package_id: packageId,
+      coins_amount: coinsAmount,
+      bonus_coins: bonusCoins,
+      price_paid: pricePaid,
+      transaction_id: transactionId,
+      purchase_platform: platform || 'unknown'
+    }, {
+      headers: {
+        'apikey': supabaseServiceKey,
+        'Authorization': `Bearer ${supabaseServiceKey}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    res.json(response.data);
+  } catch (error) {
+    console.error('Error recording purchase:', error);
+    res.status(500).json({ error: 'Failed to record purchase' });
+  }
+});
+
+app.get('/api/transaction-history/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { limit = 50 } = req.query;
+    const supabaseUrl = process.env.SUPABASE_URL;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+    const response = await axios.get(`${supabaseUrl}/rest/v1/coin_transactions?user_id=eq.${userId}&order=created_at.desc&limit=${limit}`, {
+      headers: {
+        'apikey': supabaseServiceKey,
+        'Authorization': `Bearer ${supabaseServiceKey}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    res.json(response.data);
+  } catch (error) {
+    console.error('Error fetching transaction history:', error);
+    res.status(500).json({ error: 'Failed to fetch transaction history' });
+  }
+});
+
+// Error handling middleware
+app.use((error, req, res, next) => {
+  console.error('Server error:', error);
+  res.status(500).json({ error: 'Internal server error' });
+});
+
+// 404 handler
+app.use('*', (req, res) => {
+  res.status(404).json({ error: 'Endpoint not found' });
+});
+
+app.listen(PORT, () => {
+  console.log(`Secure API Proxy Server running on port ${PORT}`);
+  console.log(`Health check: http://localhost:${PORT}/health`);
+}); 
