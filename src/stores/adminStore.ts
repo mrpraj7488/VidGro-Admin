@@ -10,8 +10,9 @@ import {
   BugReportData,
   BugReport,
   SystemSettings,
-  SystemEnvironment,
-  AdsConfiguration
+  RuntimeConfig,
+  ConfigAuditLog,
+  ClientRuntimeConfig
 } from '../types/admin'
 import { 
   getDashboardStats,
@@ -26,6 +27,11 @@ import {
   getSystemConfig,
   getAdminLogs,
   checkAdminPermission,
+  getRuntimeConfig,
+  upsertRuntimeConfig,
+  deleteRuntimeConfig,
+  getConfigAuditLogs,
+  getClientRuntimeConfig,
   Profile,
   Video as VideoType
 } from '../lib/supabase'
@@ -58,6 +64,12 @@ interface AdminStore {
   // System settings
   systemSettings: SystemSettings | null
   
+  // Runtime configuration
+  runtimeConfig: RuntimeConfig[]
+  configAuditLogs: ConfigAuditLog[]
+  clientConfig: ClientRuntimeConfig | null
+  selectedEnvironment: string
+  
   // Actions
   fetchDashboardStats: () => Promise<void>
   fetchUsers: () => Promise<void>
@@ -65,6 +77,9 @@ interface AdminStore {
   fetchAnalytics: (dateRange?: [Date | null, Date | null]) => Promise<void>
   fetchBugReports: () => Promise<void>
   fetchSystemSettings: () => Promise<void>
+  fetchRuntimeConfig: (environment?: string) => Promise<void>
+  fetchConfigAuditLogs: (configKey?: string, environment?: string) => Promise<void>
+  fetchClientConfig: (environment?: string) => Promise<void>
   initializeRealtime: () => void
   disconnectRealtime: () => void
   
@@ -95,8 +110,13 @@ interface AdminStore {
   
   // System settings actions
   updateEnvironmentVars: (vars: Partial<EnvironmentVariables>) => Promise<void>
-  updateAdsConfig: (config: Partial<AdsConfiguration>) => Promise<void>
   updateSystemSettings: (settings: SystemSettings) => Promise<void>
+  
+  // Runtime config actions
+  saveRuntimeConfig: (key: string, value: string, isPublic: boolean, environment?: string, description?: string, category?: string, reason?: string) => Promise<void>
+  deleteRuntimeConfigItem: (key: string, environment?: string, reason?: string) => Promise<void>
+  clearConfigCache: () => Promise<void>
+  setSelectedEnvironment: (environment: string) => void
   
   // Utility actions
   copyToClipboard: (text: string) => void
@@ -133,6 +153,10 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
   systemSettings: null,
   moderationData: null,
   economyData: null,
+  runtimeConfig: [],
+  configAuditLogs: [],
+  clientConfig: null,
+  selectedEnvironment: 'production',
 
   // Dashboard actions
   fetchDashboardStats: async () => {
@@ -516,16 +540,80 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
     }
   },
 
-  updateAdsConfig: async (config: Partial<AdsConfiguration>) => {
-    const currentSettings = get().systemSettings
-    if (currentSettings) {
-      set({
-        systemSettings: {
-          ...currentSettings,
-          ads: { ...currentSettings.ads, ...config }
-        }
-      })
+  // Runtime config actions
+  fetchRuntimeConfig: async (environment = 'production') => {
+    set({ isLoading: true })
+    try {
+      const config = await getRuntimeConfig(environment)
+      set({ runtimeConfig: config, isLoading: false })
+    } catch (error) {
+      logger.error('Failed to fetch runtime config', error, 'adminStore')
+      set({ isLoading: false })
     }
+  },
+
+  fetchConfigAuditLogs: async (configKey, environment) => {
+    try {
+      const logs = await getConfigAuditLogs(configKey, environment)
+      set({ configAuditLogs: logs })
+    } catch (error) {
+      logger.error('Failed to fetch config audit logs', error, 'adminStore')
+    }
+  },
+
+  fetchClientConfig: async (environment = 'production') => {
+    try {
+      const config = await getClientRuntimeConfig(environment)
+      set({ clientConfig: config })
+    } catch (error) {
+      logger.error('Failed to fetch client config', error, 'adminStore')
+    }
+  },
+
+  saveRuntimeConfig: async (key, value, isPublic, environment = 'production', description, category = 'general', reason) => {
+    try {
+      const result = await upsertRuntimeConfig(key, value, isPublic, environment, description, category, reason)
+      if (result.success) {
+        // Refresh runtime config
+        await get().fetchRuntimeConfig(environment)
+        // Refresh audit logs
+        await get().fetchConfigAuditLogs()
+        logger.info('Runtime config saved successfully', result, 'adminStore')
+      }
+    } catch (error) {
+      logger.error('Failed to save runtime config', error, 'adminStore')
+      throw error
+    }
+  },
+
+  deleteRuntimeConfigItem: async (key, environment = 'production', reason) => {
+    try {
+      const result = await deleteRuntimeConfig(key, environment, reason)
+      if (result.success) {
+        // Refresh runtime config
+        await get().fetchRuntimeConfig(environment)
+        // Refresh audit logs
+        await get().fetchConfigAuditLogs()
+        logger.info('Runtime config deleted successfully', result, 'adminStore')
+      }
+    } catch (error) {
+      logger.error('Failed to delete runtime config', error, 'adminStore')
+      throw error
+    }
+  },
+
+  clearConfigCache: async () => {
+    try {
+      // This would call the backend API to clear cache
+      logger.info('Config cache cleared', null, 'adminStore')
+    } catch (error) {
+      logger.error('Failed to clear config cache', error, 'adminStore')
+      throw error
+    }
+  },
+
+  setSelectedEnvironment: (environment) => {
+    set({ selectedEnvironment: environment })
   },
 
   updateSystemSettings: async (newSettings) => {

@@ -212,6 +212,38 @@ export interface SystemSettings {
   }
 }
 
+export interface RuntimeConfig {
+  id: string
+  key: string
+  value: string
+  isPublic: boolean
+  environment: string
+  description?: string
+  category: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface ConfigAuditLog {
+  id: string
+  configKey: string
+  environment: string
+  action: 'create' | 'update' | 'delete'
+  oldValue?: string
+  newValue?: string
+  adminEmail: string
+  ipAddress?: string
+  timestamp: string
+  reason?: string
+}
+
+export interface ClientRuntimeConfig {
+  config: Record<string, string>
+  categories: Record<string, Record<string, string>>
+  environment: string
+  timestamp: string
+}
+
 export interface SystemEnvironment {
   VITE_SUPABASE_URL: string
   VITE_SUPABASE_ANON_KEY: string

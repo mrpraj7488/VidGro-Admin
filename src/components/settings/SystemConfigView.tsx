@@ -7,6 +7,7 @@ import { BackupScreen } from './BackupScreen'
 import { EmailSMTPScreen } from './EmailSMTPScreen'
 import { SystemHealthScreen } from './SystemHealthScreen'
 import { EnvironmentVariablesScreen } from './EnvironmentVariablesScreen'
+import { RuntimeConfigScreen } from './RuntimeConfigScreen'
 
 export function SystemConfigView() {
   const [activeScreen, setActiveScreen] = useState('settings')
@@ -25,6 +26,13 @@ export function SystemConfigView() {
       icon: Server,
       description: 'Manage API keys and environment configuration',
       color: 'blue'
+    },
+    { 
+      id: 'runtime', 
+      label: 'Runtime Config', 
+      icon: Server,
+      description: 'Dynamic configuration for mobile clients',
+      color: 'purple'
     },
     { 
       id: 'backup', 
@@ -87,6 +95,16 @@ export function SystemConfigView() {
         glow: isActive ? 'shadow-red-500/25' : ''
       }
     }
+    
+    const purple = {
+      bg: isActive ? 'bg-purple-500/20 dark:bg-purple-500/30' : 'bg-purple-500/5 dark:bg-purple-500/10',
+      border: isActive ? 'border-purple-500/50 dark:border-purple-400/50' : 'border-purple-500/20 dark:border-purple-500/30',
+      icon: isActive ? 'bg-purple-500 text-white' : 'bg-purple-100 dark:bg-purple-900/50 text-purple-600 dark:text-purple-400',
+      text: isActive ? 'text-purple-700 dark:text-purple-300' : 'text-gray-700 dark:text-gray-300',
+      glow: isActive ? 'shadow-purple-500/25' : ''
+    }
+    
+    colors.purple = purple
     return colors[color] || colors.violet
   }
 
@@ -96,6 +114,8 @@ export function SystemConfigView() {
         return <SettingsView />
       case 'environment':
         return <EnvironmentVariablesScreen />
+      case 'runtime':
+        return <RuntimeConfigScreen />
       case 'backup':
         return <BackupScreen />
       case 'email':

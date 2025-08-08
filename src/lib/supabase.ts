@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { envManager } from './envManager'
 import { logger } from './logger'
+import { RuntimeConfig, ConfigAuditLog, ClientRuntimeConfig } from '../types/admin'
 
 // Get environment variables from the environment manager
 const getSupabaseConfig = () => {
@@ -655,5 +656,189 @@ export const checkAdminPermission = async (adminEmail: string, permission: strin
   } catch (error) {
     logger.warn('Failed to check admin permission', error, 'supabase')
     return false
+  }
+}
+
+// Runtime Configuration API functions
+export const getRuntimeConfig = async (environment = 'production'): Promise<RuntimeConfig[]> => {
+  try {
+    const config = getSupabaseConfig()
+    if (config.url.includes('your-project')) {
+      logger.warn('Using mock data - Supabase not configured', null, 'supabase')
+      return []
+    }
+    
+    const { data, error } = await supabaseAdmin.rpc('get_all_runtime_config', {
+      env_name: environment
+    })
+    
+    if (error) throw error
+    
+    return data?.map(item => ({
+      id: item.id,
+      key: item.key,
+      value: item.value,
+      isPublic: item.is_public,
+      environment: item.environment,
+      description: item.description,
+      category: item.category,
+      createdAt: item.created_at,
+      updatedAt: item.updated_at
+    })) || []
+  } catch (error) {
+    logger.error('Failed to fetch runtime config', error, 'supabase')
+    return []
+  }
+}
+
+export const upsertRuntimeConfig = async (
+  key: string,
+  value: string,
+  isPublic: boolean,
+  environment = 'production',
+  description?: string,
+  category = 'general',
+  reason?: string
+): Promise<{ success: boolean; message: string; configId?: string }> => {
+  try {
+    const config = getSupabaseConfig()
+    if (config.url.includes('your-project')) {
+      logger.info('Mock mode - config upsert simulated', { key, environment }, 'supabase')
+      return { success: true, message: 'Configuration saved in demo mode', configId: 'mock-id' }
+    }
+    
+    const { data, error } = await supabaseAdmin.rpc('upsert_runtime_config', {
+      config_key: key,
+      config_value: value,
+      is_public_param: isPublic,
+      env_name: environment,
+      description_param: description,
+      category_param: category,
+      admin_email_param: 'admin@vidgro.com', // Get from auth context
+      reason_param: reason
+    })
+    
+    if (error) throw error
+    return data[0] || { success: false, message: 'Unknown error' }
+  } catch (error) {
+    logger.error('Failed to upsert runtime config', error, 'supabase')
+    throw error
+  }
+}
+
+export const deleteRuntimeConfig = async (
+  key: string,
+  environment = 'production',
+  reason?: string
+): Promise<{ success: boolean; message: string }> => {
+  try {
+    const config = getSupabaseConfig()
+    if (config.url.includes('your-project')) {
+      logger.info('Mock mode - config deletion simulated', { key, environment }, 'supabase')
+      return { success: true, message: 'Configuration deleted in demo mode' }
+    }
+    
+    const { data, error } = await supabaseAdmin.rpc('delete_runtime_config', {
+      config_key: key,
+      env_name: environment,
+      admin_email_param: 'admin@vidgro.com', // Get from auth context
+      reason_param: reason
+    })
+    
+    if (error) throw error
+    return data[0] || { success: false, message: 'Unknown error' }
+  } catch (error) {
+    logger.error('Failed to delete runtime config', error, 'supabase')
+    throw error
+  }
+}
+
+export const getConfigAuditLogs = async (
+  configKey?: string,
+  environment?: string,
+  daysBack = 30,
+  limit = 100
+): Promise<ConfigAuditLog[]> => {
+  try {
+    const config = getSupabaseConfig()
+    if (config.url.includes('your-project')) {
+      logger.warn('Using mock data - Supabase not configured', null, 'supabase')
+      return []
+    }
+    
+    const { data, error } = await supabaseAdmin.rpc('get_config_audit_logs', {
+      config_key_filter: configKey || null,
+      env_filter: environment || null,
+      days_back: daysBack,
+      limit_count: limit
+    })
+    
+    if (error) throw error
+    
+    return data?.map(item => ({
+      id: item.id,
+      configKey: item.config_key,
+      environment: item.environment,
+      action: item.action,
+      oldValue: item.old_value,
+      newValue: item.new_value,
+      adminEmail: item.admin_email,
+      ipAddress: item.ip_address,
+      timestamp: item.timestamp,
+      reason: item.reason
+    })) || []
+  } catch (error) {
+    logger.error('Failed to fetch config audit logs', error, 'supabase')
+    return []
+  }
+}
+
+export const getClientRuntimeConfig = async (environment = 'production'): Promise<ClientRuntimeConfig | null> => {
+  try {
+    const config = getSupabaseConfig()
+    if (config.url.includes('your-project')) {
+      logger.warn('Using mock data - Supabase not configured', null, 'supabase')
+      return {
+        config: {
+          'SUPABASE_URL': 'https://kuibswqfmhhdybttbcoa.supabase.co',
+          'ADMOB_APP_ID': 'ca-app-pub-2892152842024866~2841739969',
+          'FEATURE_ADS_ENABLED': 'true'
+        },
+        categories: {
+          supabase: { 'SUPABASE_URL': 'https://kuibswqfmhhdybttbcoa.supabase.co' },
+          admob: { 'ADMOB_APP_ID': 'ca-app-pub-2892152842024866~2841739969' },
+          features: { 'FEATURE_ADS_ENABLED': 'true' }
+        },
+        environment,
+        timestamp: new Date().toISOString()
+      }
+    }
+    
+    const { data, error } = await supabaseAdmin.rpc('get_public_runtime_config', {
+      env_name: environment
+    })
+    
+    if (error) throw error
+    
+    const configData: Record<string, string> = {}
+    const categories: Record<string, Record<string, string>> = {}
+    
+    data?.forEach(item => {
+      configData[item.key] = item.value
+      if (!categories[item.category]) {
+        categories[item.category] = {}
+      }
+      categories[item.category][item.key] = item.value
+    })
+    
+    return {
+      config: configData,
+      categories,
+      environment,
+      timestamp: new Date().toISOString()
+    }
+  } catch (error) {
+    logger.error('Failed to fetch client runtime config', error, 'supabase')
+    return null
   }
 }
