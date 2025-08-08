@@ -78,11 +78,14 @@ API_KEY_SALT=your-api-key-salt-here
 
 # VidGro Secure API Proxy Server
 
-A secure Node.js Express server that acts as a proxy between the VidGro mobile app and external APIs, keeping all sensitive tokens server-side.
+A secure Node.js Express server that acts as a centralized configuration hub and API proxy for the VidGro mobile app, managing runtime configuration, API keys, and secure token delivery.
 
 ## 🔐 Security Features
 
 - **Token Protection**: All sensitive API keys stored server-side only
+- **Runtime Configuration**: Dynamic config delivery to mobile clients
+- **Environment Management**: Separate configs for dev/staging/production
+- **Audit Logging**: Complete change tracking for security compliance
 - **Rate Limiting**: Prevents abuse with configurable rate limits
 - **API Key Authentication**: Client authentication via API keys
 - **CORS Protection**: Configured CORS for secure cross-origin requests
@@ -153,7 +156,15 @@ API_KEY_SALT=your-api-key-salt-here
 ## 🔌 API Endpoints
 
 ### Health Check
-- `GET /health` - Server health status
+- `GET /health` - Server health status with cache metrics
+
+### Runtime Configuration
+- `GET /api/client-runtime-config` - Get public configuration for mobile clients
+- `GET /api/admin/runtime-config` - Get all configuration (admin only)
+- `POST /api/admin/runtime-config` - Create/update configuration (admin only)
+- `DELETE /api/admin/runtime-config/:key` - Delete configuration (admin only)
+- `GET /api/admin/config-audit-logs` - Get configuration change history (admin only)
+- `POST /api/admin/clear-config-cache` - Clear configuration cache (admin only)
 
 ### User Management
 - `GET /api/user-profile/:userId` - Get user profile
@@ -172,6 +183,69 @@ API_KEY_SALT=your-api-key-salt-here
 - `POST /api/record-purchase` - Record coin purchase
 - `GET /api/transaction-history/:userId` - Get transaction history
 
+## 🔧 Runtime Configuration System
+
+### Overview
+The runtime configuration system allows dynamic management of application settings, API keys, and feature flags without requiring app updates or server restarts.
+
+### Configuration Types
+
+#### Public Configuration (Client-Accessible)
+- Supabase URL and anonymous key
+- AdMob ad unit IDs
+- Feature flags
+- App version requirements
+- Maintenance mode flags
+
+#### Private Configuration (Backend-Only)
+- Supabase service role key
+- JWT secrets
+- Encryption keys
+- Third-party API secrets
+
+### Environment Support
+- **Production**: Live app configuration
+- **Staging**: Testing environment configuration
+- **Development**: Local development configuration
+
+### Client Integration
+
+Mobile apps can fetch their runtime configuration:
+
+```javascript
+// Fetch configuration for current environment
+const response = await fetch('https://your-api.com/api/client-runtime-config', {
+  headers: {
+    'x-api-key': 'your-client-api-key',
+    'x-env': 'production',
+    'x-app-version': '1.0.0'
+  }
+});
+
+const { data } = await response.json();
+
+// Use configuration
+const supabaseUrl = data.config.SUPABASE_URL;
+const adsEnabled = data.config.FEATURE_ADS_ENABLED === 'true';
+```
+
+### Admin Panel Integration
+
+Admins can manage configuration through the admin panel:
+- View all configurations by environment
+- Create, edit, and delete configuration values
+- Toggle public/private visibility
+- View complete audit trail
+- Clear configuration cache
+
+### Security Features
+
+1. **Access Control**: Only authenticated admin users can modify configuration
+2. **Audit Logging**: All changes are logged with admin details, IP address, and reason
+3. **Environment Isolation**: Separate configurations for different environments
+4. **Cache Management**: Configurable TTL with manual cache clearing
+5. **Secret Protection**: Sensitive values are never exposed to client apps
+
 ## 🔒 Security Implementation
 
 ### API Key Authentication
@@ -184,6 +258,19 @@ fetch('http://localhost:3001/api/user-profile/123', {
   headers: {
     'Content-Type': 'application/json',
     'x-api-key': 'your-secure-client-api-key-here'
+  }
+});
+```
+
+### Runtime Configuration Security
+
+```javascript
+// Client requests include environment and version headers
+fetch('/api/client-runtime-config', {
+  headers: {
+    'x-api-key': 'client-key',
+    'x-env': 'production',
+    'x-app-version': '1.0.0'
   }
 });
 ```
@@ -209,26 +296,48 @@ app.use(cors({
 
 ### Production Deployment
 
-1. **Environment Setup:**
+1. **Database Setup:**
+   ```bash
+   # Run the runtime config migration
+   # This creates the runtime_config and config_audit_log tables
+   ```
+
+2. **Environment Setup:**
    ```bash
    # Set production environment
    export NODE_ENV=production
    export PORT=3001
+   export API_ENCRYPTION_KEY=your-secure-encryption-key
    ```
 
-2. **Security Configuration:**
+3. **Security Configuration:**
    - Generate secure API keys
+   - Configure runtime configuration encryption
    - Use HTTPS in production
    - Configure proper CORS origins
    - Set up proper rate limiting
 
-3. **Process Management:**
+4. **Process Management:**
    ```bash
    # Using PM2
    npm install -g pm2
    pm2 start server.js --name "vidgro-api-proxy"
    pm2 save
    pm2 startup
+   ```
+
+### Runtime Configuration Setup
+
+1. **Initial Configuration:**
+   ```bash
+   # The migration automatically creates default configurations
+   # Customize them through the admin panel
+   ```
+
+2. **Environment-Specific Setup:**
+   ```bash
+   # Create staging environment configs
+   # Create development environment configs
    ```
 
 ## 🧪 Testing
@@ -242,6 +351,9 @@ npm run lint
 
 # Security audit
 npm run security-check
+
+# Test runtime config endpoint
+curl -H "x-api-key: your-key" -H "x-env: production" http://localhost:3001/api/client-runtime-config
 ```
 
 ## 📊 Monitoring
@@ -249,6 +361,7 @@ npm run security-check
 ### Health Check
 ```bash
 curl http://localhost:3001/health
+# Returns: { status: 'OK', cacheSize: 3, uptime: 12345 }
 ```
 
 ### Logs
@@ -260,7 +373,34 @@ pm2 logs vidgro-api-proxy
 pm2 monit
 ```
 
+### Configuration Monitoring
+```bash
+# View configuration audit logs
+curl -H "x-api-key: your-key" http://localhost:3001/api/admin/config-audit-logs
+
+# Clear configuration cache
+curl -X POST -H "x-api-key: your-key" http://localhost:3001/api/admin/clear-config-cache
+```
+
 ## 🔧 Configuration
+
+### Runtime Configuration Management
+
+The system supports dynamic configuration management:
+
+```javascript
+// Add new configuration
+POST /api/admin/runtime-config
+{
+  "key": "FEATURE_NEW_FEATURE_ENABLED",
+  "value": "true",
+  "isPublic": true,
+  "environment": "production",
+  "description": "Enable new feature for users",
+  "category": "features",
+  "reason": "Feature rollout"
+}
+```
 
 ### Rate Limiting
 Adjust rate limiting in `server.js`:
@@ -283,6 +423,15 @@ app.use(cors({
 }));
 ```
 
+### Configuration Categories
+- **supabase**: Database and authentication settings
+- **admob**: Advertisement configuration
+- **firebase**: Push notification settings
+- **features**: Feature flags and toggles
+- **app**: Application behavior settings
+- **security**: Security-related configuration
+- **general**: Miscellaneous settings
+
 ## 🛠️ Development
 
 ### Local Development
@@ -295,6 +444,11 @@ app.use(cors({
 2. **Test endpoints:**
    ```bash
    curl -H "x-api-key: your-key" http://localhost:3001/health
+   ```
+
+3. **Test runtime config:**
+   ```bash
+   curl -H "x-api-key: your-key" -H "x-env: development" http://localhost:3001/api/client-runtime-config
    ```
 
 3. **Monitor logs:**
@@ -310,7 +464,52 @@ Enable debug logging:
 DEBUG=* npm run dev
 ```
 
+### Configuration Testing
+
+Test configuration endpoints:
+
+```bash
+# Get client configuration
+curl -H "x-api-key: your-key" http://localhost:3001/api/client-runtime-config
+
+# Get admin configuration
+curl -H "x-api-key: your-key" http://localhost:3001/api/admin/runtime-config
+
+# View audit logs
+curl -H "x-api-key: your-key" http://localhost:3001/api/admin/config-audit-logs
+```
+
 ## 📝 API Documentation
+
+### Runtime Configuration API
+
+#### Get Client Configuration
+```http
+GET /api/client-runtime-config
+Headers:
+  x-api-key: your-client-api-key
+  x-env: production|staging|development
+  x-app-version: 1.0.0
+```
+
+#### Response Format
+```json
+{
+  "data": {
+    "config": {
+      "SUPABASE_URL": "https://xyz.supabase.co",
+      "FEATURE_ADS_ENABLED": "true"
+    },
+    "categories": {
+      "supabase": { "SUPABASE_URL": "https://xyz.supabase.co" },
+      "features": { "FEATURE_ADS_ENABLED": "true" }
+    },
+    "environment": "production",
+    "timestamp": "2024-01-15T10:30:00Z"
+  },
+  "cached": false
+}
+```
 
 ### Request Format
 
@@ -353,8 +552,15 @@ All API requests must include:
 
 4. **Logging:**
    - Log all API requests
+   - Log all configuration changes
    - Monitor for suspicious activity
    - Implement alerting
+
+5. **Configuration Security:**
+   - Separate public and private configurations
+   - Audit all configuration changes
+   - Use environment-specific settings
+   - Implement configuration encryption for sensitive values
 
 ## 🤝 Contributing
 
@@ -697,4 +903,4 @@ app.use('*', (req, res) => {
 app.listen(PORT, () => {
   console.log(`Secure API Proxy Server running on port ${PORT}`);
   console.log(`Health check: http://localhost:${PORT}/health`);
-}); 
+});
