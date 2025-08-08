@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Shield, Key, AlertTriangle, CheckCircle, Clock, Eye, RefreshCw, Lock, Globe, Database } from 'lucide-react'
+import { Shield, Key, AlertTriangle, CheckCircle, Clock, Eye, RefreshCw, Lock, Globe, Database, Settings } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card'
 import { Button } from '../ui/Button'
 import { Badge } from '../ui/Badge'

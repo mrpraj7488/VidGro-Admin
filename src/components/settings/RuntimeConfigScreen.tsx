@@ -83,6 +83,14 @@ export function RuntimeConfigScreen() {
     overwriteExisting: false,
     targetEnvironment: selectedEnvironment
   })
+
+  // Move isSecretField function definition before its usage
+  const isSecretField = (key: string) => {
+    return key.toLowerCase().includes('key') || 
+           key.toLowerCase().includes('secret') || 
+           key.toLowerCase().includes('password')
+  }
+
   useEffect(() => {
     fetchRuntimeConfig(selectedEnvironment)
     fetchClientConfig(selectedEnvironment)
@@ -286,12 +294,6 @@ export function RuntimeConfigScreen() {
   }
   const toggleSecretVisibility = (key: string) => {
     setShowSecrets(prev => ({ ...prev, [key]: !prev[key] }))
-  }
-
-  const isSecretField = (key: string) => {
-    return key.toLowerCase().includes('key') || 
-           key.toLowerCase().includes('secret') || 
-           key.toLowerCase().includes('password')
   }
 
   const getVisibilityIcon = (isPublic: boolean) => {
