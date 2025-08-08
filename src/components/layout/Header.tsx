@@ -171,7 +171,7 @@ export function Header({ isPopupOpen, onOpenSettings }: HeaderProps) {
                     
                     <button
                       onClick={handleLogout}
-                      className="w-full flex items-center space-x-3 px-3 py-2 text-left hover:bg-red-500/10 rounded-lg transition-colors text-red-600 dark:text-red-400"
+                      className="w-full flex items-center space-x-3 px-3 py-2 text-left hover:bg-red-500/10 rounded-lg transition-colors text-red-600 dark:text-red-400 gaming-interactive"
                     >
                       <LogOut className="w-4 h-4" />
                       <span>Sign Out</span>

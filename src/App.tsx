@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { ErrorBoundary } from './components/common/ErrorBoundary'
 import { AuthProvider, useAuth } from './components/auth/AuthProvider'
-import { AuthModal } from './components/auth/AuthModal'
+import { AuthScreen } from './components/auth/AuthScreen'
 import { AdminSettingsPanel } from './components/admin/AdminSettingsPanel'
 import { Sidebar } from './components/layout/Sidebar'
 import { Header } from './components/layout/Header'
@@ -14,10 +14,9 @@ import { SystemConfigView } from './components/settings/SystemConfigView'
 import { InboxView } from './components/inbox/InboxView'
 
 function AppContent() {
-  const { isAuthenticated, isLoading, login, signup, user } = useAuth()
+  const { isAuthenticated, isLoading, isInitialized, login, signup, user } = useAuth()
   const [activeTab, setActiveTab] = useState('dashboard')
   const [isPopupOpen, setIsPopupOpen] = useState(false)
-  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
   const [isAdminSettingsOpen, setIsAdminSettingsOpen] = useState(false)
 
   // Track popup state for header visibility
@@ -29,15 +28,6 @@ function AppContent() {
     window.addEventListener('popupStateChange', handlePopupChange as EventListener)
     return () => window.removeEventListener('popupStateChange', handlePopupChange as EventListener)
   }, [])
-
-  // Show auth modal if not authenticated
-  React.useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      setIsAuthModalOpen(true)
-    } else {
-      setIsAuthModalOpen(false)
-    }
-  }, [isAuthenticated, isLoading])
 
   const handleOpenAdminSettings = () => {
     setIsAdminSettingsOpen(true)
@@ -72,8 +62,8 @@ function AppContent() {
     }
   }
 
-  // Show loading screen while checking authentication
-  if (isLoading) {
+  // Show loading screen while initializing
+  if (isLoading || !isInitialized) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-violet-500/5 via-transparent to-emerald-500/5 flex items-center justify-center">
         <div className="text-center">
@@ -85,17 +75,16 @@ function AppContent() {
     )
   }
 
-  // Show auth modal if not authenticated
+  // Show auth screen if not authenticated
   if (!isAuthenticated) {
     return (
-      <AuthModal
-        isOpen={true}
-        onClose={() => {}} // Prevent closing when not authenticated
+      <AuthScreen
         onLogin={login}
         onSignup={signup}
       />
     )
   }
+
   return (
     <>
       <ErrorBoundary>

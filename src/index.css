@@ -639,6 +639,104 @@
   background: transparent;
 }
 
+/* Auth Screen Styles */
+.auth-form-card {
+  @apply relative overflow-hidden rounded-2xl;
+  background: linear-gradient(135deg, 
+    rgba(255, 255, 255, 0.95) 0%, 
+    rgba(255, 255, 255, 0.9) 100%);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(139, 92, 246, 0.2);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25),
+              0 0 0 1px rgba(255, 255, 255, 0.05);
+}
+
+.dark .auth-form-card {
+  background: linear-gradient(135deg, 
+    rgba(30, 41, 59, 0.95) 0%, 
+    rgba(51, 65, 85, 0.9) 100%);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5),
+              inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.auth-form-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, #8b5cf6 50%, transparent 100%);
+  opacity: 0.6;
+}
+
+/* Auth Background Animations */
+.auth-background {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.auth-sine-wave {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(45deg, 
+    transparent 30%, 
+    rgba(255, 255, 255, 0.1) 50%, 
+    transparent 70%);
+  animation: auth-wave 8s ease-in-out infinite;
+  transform-origin: center;
+}
+
+.auth-sine-wave-2 {
+  animation-delay: -2s;
+  animation-duration: 12s;
+  background: linear-gradient(-45deg, 
+    transparent 30%, 
+    rgba(255, 255, 255, 0.08) 50%, 
+    transparent 70%);
+}
+
+.auth-sine-wave-3 {
+  animation-delay: -4s;
+  animation-duration: 16s;
+  background: linear-gradient(135deg, 
+    transparent 30%, 
+    rgba(255, 255, 255, 0.06) 50%, 
+    transparent 70%);
+}
+
+@keyframes auth-wave {
+  0%, 100% {
+    transform: translateX(-50%) translateY(-50%) rotate(0deg);
+  }
+  50% {
+    transform: translateX(-50%) translateY(-50%) rotate(180deg);
+  }
+}
+
+/* Responsive improvements for auth screen */
+@media (max-width: 640px) {
+  .auth-form-card {
+    margin: 1rem;
+    border-radius: 1rem;
+  }
+  
+  .auth-form-card .p-8 {
+    @apply p-6;
+  }
+}
+
+@media (max-width: 480px) {
+  .auth-form-card .p-8 {
+    @apply p-4;
+  }
+}
+
 /* Auth spinner animations */
 .auth-spinner {
   width: 16px;

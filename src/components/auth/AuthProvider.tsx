@@ -12,6 +12,7 @@ interface AuthContextType {
   user: User | null
   isAuthenticated: boolean
   isLoading: boolean
+  isInitialized: boolean
   login: (email: string, password: string) => Promise<void>
   signup: (email: string, password: string, username: string) => Promise<void>
   logout: () => void
@@ -22,6 +23,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [isInitialized, setIsInitialized] = useState(false)
 
   useEffect(() => {
     // Check for existing session
@@ -33,8 +35,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       } catch (error) {
         console.error('Auth check failed:', error)
+        localStorage.removeItem('vidgro_admin_user')
       } finally {
         setIsLoading(false)
+        setIsInitialized(true)
       }
     }
 
@@ -65,6 +69,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       setUser(userData)
       localStorage.setItem('vidgro_admin_user', JSON.stringify(userData))
+      
+      // Redirect to dashboard after successful login
+      window.location.href = '/dashboard'
     } catch (error) {
       throw new Error('Login failed')
     } finally {
@@ -87,6 +94,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       setUser(mockUser)
       localStorage.setItem('vidgro_admin_user', JSON.stringify(mockUser))
+      
+      // Redirect to dashboard after successful signup
+      window.location.href = '/dashboard'
     } catch (error) {
       throw new Error('Signup failed')
     } finally {
@@ -97,6 +107,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = () => {
     setUser(null)
     localStorage.removeItem('vidgro_admin_user')
+    
     // Clear any other stored data
     try {
       sessionStorage.clear()
@@ -109,6 +120,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
       console.error('Error clearing storage:', error)
     }
+    
+    // Redirect to auth screen
+    window.location.href = '/auth'
   }
 
   return (
@@ -116,6 +130,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       user,
       isAuthenticated: !!user,
       isLoading,
+      isInitialized,
       login,
       signup,
       logout
