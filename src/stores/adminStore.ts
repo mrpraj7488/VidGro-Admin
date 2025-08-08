@@ -117,6 +117,9 @@ interface AdminStore {
   deleteRuntimeConfigItem: (key: string, environment?: string, reason?: string) => Promise<void>
   clearConfigCache: () => Promise<void>
   setSelectedEnvironment: (environment: string) => void
+  rotateKeys: (keys: string[], reason: string, notifyClients?: boolean) => Promise<void>
+  fetchSecurityEvents: () => Promise<void>
+  importConfiguration: (configData: Record<string, string>, environment: string, overwrite?: boolean) => Promise<void>
   
   // Utility actions
   copyToClipboard: (text: string) => void
@@ -604,7 +607,18 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
 
   clearConfigCache: async () => {
     try {
-      // This would call the backend API to clear cache
+      const response = await fetch('/api/admin/clear-config-cache', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-email': 'admin@vidgro.com'
+        }
+      })
+      
+      if (!response.ok) {
+        throw new Error('Failed to clear cache')
+      }
+      
       logger.info('Config cache cleared', null, 'adminStore')
     } catch (error) {
       logger.error('Failed to clear config cache', error, 'adminStore')
@@ -616,6 +630,89 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
     set({ selectedEnvironment: environment })
   },
 
+  rotateKeys: async (keys, reason, notifyClients = false) => {
+    try {
+      const response = await fetch('/api/admin/rotate-keys', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-email': 'admin@vidgro.com'
+        },
+        body: JSON.stringify({ keys, reason, notifyClients })
+      })
+      
+      if (!response.ok) {
+        throw new Error('Failed to rotate keys')
+      }
+      
+      const result = await response.json()
+      
+      // Refresh runtime config to show updated keys
+      await get().fetchRuntimeConfig(get().selectedEnvironment)
+      
+      logger.info('Keys rotated successfully', result, 'adminStore')
+    } catch (error) {
+      logger.error('Failed to rotate keys', error, 'adminStore')
+      throw error
+    }
+  },
+
+  fetchSecurityEvents: async () => {
+    try {
+      const response = await fetch('/api/admin/security-events', {
+        headers: {
+          'x-admin-email': 'admin@vidgro.com'
+        }
+      })
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch security events')
+      }
+      
+      const result = await response.json()
+      logger.info('Security events fetched', result.metadata, 'adminStore')
+      return result.data
+    } catch (error) {
+      logger.error('Failed to fetch security events', error, 'adminStore')
+      return []
+    }
+  },
+
+  importConfiguration: async (configData, environment, overwrite = false) => {
+    try {
+      const results = []
+      
+      for (const [key, value] of Object.entries(configData)) {
+        if (typeof value === 'string') {
+          try {
+            await get().saveRuntimeConfig(
+              key,
+              value,
+              false, // Default to private for imported configs
+              environment,
+              'Imported configuration',
+              'general',
+              'Bulk import from JSON'
+            )
+            results.push({ key, success: true })
+          } catch (error) {
+            results.push({ key, success: false, error: error.message })
+          }
+        }
+      }
+      
+      logger.info('Configuration import completed', { 
+        total: results.length,
+        successful: results.filter(r => r.success).length,
+        failed: results.filter(r => !r.success).length
+      }, 'adminStore')
+      
+      return results
+    } catch (error) {
+      logger.error('Failed to import configuration', error, 'adminStore')
+      throw error
+    }
+  },
   updateSystemSettings: async (newSettings) => {
     set({ systemSettings: newSettings })
   },

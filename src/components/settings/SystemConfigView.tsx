@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Settings, Database, Mail, Server, Activity, HardDrive, ChevronRight } from 'lucide-react'
+import { Settings, Database, Mail, Server, Activity, HardDrive, ChevronRight, Shield, Code } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card'
 import { Button } from '../ui/Button'
 import { SettingsView } from './SettingsView'
@@ -8,6 +8,8 @@ import { EmailSMTPScreen } from './EmailSMTPScreen'
 import { SystemHealthScreen } from './SystemHealthScreen'
 import { EnvironmentVariablesScreen } from './EnvironmentVariablesScreen'
 import { RuntimeConfigScreen } from './RuntimeConfigScreen'
+import { SecurityDashboard } from './SecurityDashboard'
+import { ApiDocumentation } from './ApiDocumentation'
 
 export function SystemConfigView() {
   const [activeScreen, setActiveScreen] = useState('settings')
@@ -33,6 +35,20 @@ export function SystemConfigView() {
       icon: Server,
       description: 'Dynamic configuration for mobile clients',
       color: 'purple'
+    },
+    { 
+      id: 'security', 
+      label: 'Security Dashboard', 
+      icon: Shield,
+      description: 'Monitor security events and key rotation',
+      color: 'red'
+    },
+    { 
+      id: 'api-docs', 
+      label: 'API Documentation', 
+      icon: Code,
+      description: 'API reference and integration guide',
+      color: 'blue'
     },
     { 
       id: 'backup', 
@@ -116,6 +132,10 @@ export function SystemConfigView() {
         return <EnvironmentVariablesScreen />
       case 'runtime':
         return <RuntimeConfigScreen />
+      case 'security':
+        return <SecurityDashboard />
+      case 'api-docs':
+        return <ApiDocumentation />
       case 'backup':
         return <BackupScreen />
       case 'email':
@@ -140,7 +160,7 @@ export function SystemConfigView() {
       </div>
 
       {/* Navigation Cards - Responsive Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 md:gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-7 gap-3 md:gap-4">
         {screens.map((screen) => {
           const Icon = screen.icon
           const isActive = activeScreen === screen.id
