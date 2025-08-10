@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react'
-import { Database, Download, Upload, Calendar, CheckCircle, AlertTriangle, RefreshCw, HardDrive, Clock, Settings, Play, Pause, Trash2, FileText, Shield, Zap, Server, Archive, DownloadCloud as CloudDownload, Timer, RotateCcw } from 'lucide-react'
+import { Database, Download, Upload, Calendar, CheckCircle, AlertTriangle, RefreshCw, HardDrive, Clock, Settings, Play, Pause, Trash2, FileText, Shield, Zap, Server, Archive, DownloadCloud as CloudDownload, Timer, RotateCcw, Save } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card'
 import { Button } from '../ui/Button'
 import { Input } from '../ui/Input'
 import { Badge } from '../ui/Badge'
 import { format, formatDistanceToNow } from 'date-fns'
+import { backupService, useBackupService } from '../../services/backupService'
 
 interface DatabaseBackup {
   id: string
@@ -35,6 +36,7 @@ interface BackupSettings {
 }
 
 export function DatabaseBackupScreen() {
+  const { createBackup, downloadBackup, isLoading: backupServiceLoading, error: backupError } = useBackupService()
   const [backups, setBackups] = useState<DatabaseBackup[]>([])
   const [isCreatingBackup, setIsCreatingBackup] = useState(false)
   const [isRestoring, setIsRestoring] = useState(false)
@@ -72,7 +74,7 @@ export function DatabaseBackupScreen() {
         date: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
         status: 'completed',
         duration: 1847,
-        tables: ['profiles', 'videos', 'video_deletions', 'admin_profiles', 'admin_logs', 'runtime_config'],
+        tables: ['profiles', 'videos', 'video_deletions', 'admin_logs', 'system_settings'],
         compression: 'gzip',
         encryption: true,
         checksum: 'sha256:abc123def456...'
@@ -85,7 +87,7 @@ export function DatabaseBackupScreen() {
         date: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
         status: 'completed',
         duration: 623,
-        tables: ['profiles', 'admin_profiles'],
+        tables: ['profiles'],
         compression: 'gzip',
         encryption: true
       },
@@ -109,7 +111,7 @@ export function DatabaseBackupScreen() {
         date: new Date(Date.now() - 2 * 60 * 60 * 1000),
         status: 'completed',
         duration: 45,
-        tables: ['runtime_config', 'config_audit_log'],
+        tables: ['system_settings'],
         compression: 'none',
         encryption: true
       },
@@ -121,7 +123,7 @@ export function DatabaseBackupScreen() {
         date: new Date(Date.now() + 6 * 60 * 60 * 1000),
         status: 'scheduled',
         duration: 0,
-        tables: ['profiles', 'videos', 'video_deletions', 'admin_profiles', 'admin_logs', 'runtime_config'],
+        tables: ['profiles', 'videos', 'video_deletions', 'admin_logs', 'system_settings'],
         compression: 'gzip',
         encryption: true
       }
@@ -130,6 +132,8 @@ export function DatabaseBackupScreen() {
   }, [])
 
   const handleCreateBackup = async (type: string, customName?: string) => {
+    if (isCreatingBackup) return
+    
     setIsCreatingBackup(true)
     setSelectedBackupType(type)
     setBackupProgress(0)
@@ -153,57 +157,93 @@ export function DatabaseBackupScreen() {
     
     setBackups(prev => [newBackup, ...prev])
     
-    // Simulate backup progress
-    const progressInterval = setInterval(() => {
-      setBackupProgress(prev => {
-        if (prev >= 100) {
-          clearInterval(progressInterval)
-          // Update backup status to completed
-          setBackups(prevBackups => prevBackups.map(backup => 
-            backup.id === backupId 
-              ? { 
-                  ...backup, 
-                  status: 'completed', 
-                  size: getEstimatedSize(type),
-                  duration: Math.floor(Math.random() * 1800) + 300 // 5-35 minutes
-                }
-              : backup
-          ))
-          setIsCreatingBackup(false)
-          setCurrentBackupId(null)
-          return 100
-        }
-        return prev + Math.random() * 15 + 5
+    try {
+      // Use real backup service
+      const result = await createBackup({
+        type: type as any,
+        compression: backupSettings.compression,
+        encryption: backupSettings.encryption,
+        includeBlobs: backupSettings.includeBlobs,
+        customName
       })
-    }, 500)
+
+      if (result.success) {
+        // Update backup status to completed
+        setBackups(prevBackups => prevBackups.map(backup => 
+          backup.id === backupId 
+            ? { 
+                ...backup, 
+                status: 'completed', 
+                size: formatFileSize(result.size || 0),
+                duration: result.duration || 0,
+                checksum: result.checksum
+              }
+            : backup
+        ))
+        
+        // Add the real backup to the list
+        const realBackup: DatabaseBackup = {
+          id: result.backupId,
+          name: customName || `${type.charAt(0).toUpperCase() + type.slice(1)} Backup - ${format(new Date(), 'MMM dd, HH:mm')}`,
+          type: type as any,
+          size: formatFileSize(result.size || 0),
+          date: new Date(),
+          status: 'completed',
+          duration: result.duration || 0,
+          tables: getTablesForType(type),
+          compression: backupSettings.compression,
+          encryption: backupSettings.encryption,
+          checksum: result.checksum,
+          downloadUrl: result.downloadUrl
+        }
+        
+        setBackups(prev => [realBackup, ...prev.filter(b => b.id !== backupId)])
+      } else {
+        // Update backup status to failed
+        setBackups(prevBackups => prevBackups.map(backup => 
+          backup.id === backupId 
+            ? { ...backup, status: 'failed' }
+            : backup
+        ))
+      }
+    } catch (error) {
+      console.error('Backup failed:', error)
+      // Update backup status to failed
+      setBackups(prevBackups => prevBackups.map(backup => 
+        backup.id === backupId 
+          ? { ...backup, status: 'failed' }
+          : backup
+      ))
+    } finally {
+      setIsCreatingBackup(false)
+      setCurrentBackupId(null)
+      setBackupProgress(100)
+    }
   }
 
   const getTablesForType = (type: string): string[] => {
     switch (type) {
       case 'full':
-        return ['profiles', 'videos', 'video_deletions', 'admin_profiles', 'admin_logs', 'runtime_config', 'config_audit_log']
+        return ['profiles', 'videos', 'admin_logs', 'system_settings', 'transactions']
       case 'users':
-        return ['profiles', 'admin_profiles']
+        return ['profiles']
       case 'videos':
-        return ['videos', 'video_deletions']
+        return ['videos']
       case 'config':
-        return ['runtime_config', 'config_audit_log']
+        return ['system_settings']
       case 'analytics':
-        return ['admin_logs', 'config_audit_log']
+        return ['admin_logs', 'transactions']
       default:
         return []
     }
   }
 
-  const getEstimatedSize = (type: string): string => {
-    const sizes = {
-      full: '2.4 GB',
-      users: '856 MB',
-      videos: '1.2 GB',
-      config: '12 MB',
-      analytics: '245 MB'
-    }
-    return sizes[type] || '100 MB'
+  const formatFileSize = (bytes: number): string => {
+    if (bytes === 0) return '0 B'
+    const k = 1024
+    const sizes = ['B', 'KB', 'MB', 'GB']
+    const i = Math.floor(Math.log(bytes) / Math.log(k))
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i]
   }
 
   const handleRestoreBackup = async (backupId: string) => {
@@ -226,8 +266,19 @@ export function DatabaseBackupScreen() {
   }
 
   const handleDownloadBackup = (backup: DatabaseBackup) => {
-    // Simulate download
-    console.log('Downloading backup:', backup.name)
+    try {
+      if (backup.downloadUrl) {
+        // Use the real download functionality
+        downloadBackup(backup.id, `${backup.name.replace(/[^a-zA-Z0-9]/g, '_')}.sql`)
+      } else {
+        console.log('Downloading backup:', backup.name)
+        // Fallback to mock download
+        alert('Download functionality not available for this backup')
+      }
+    } catch (error) {
+      console.error('Download failed:', error)
+      alert('Download failed: ' + (error instanceof Error ? error.message : 'Unknown error'))
+    }
   }
 
   const handleSaveSettings = async () => {
@@ -284,6 +335,51 @@ export function DatabaseBackupScreen() {
         return <Badge variant="warning" className="text-xs">Scheduled</Badge>
       default:
         return <Badge variant="default" className="text-xs">{status}</Badge>
+    }
+  }
+
+  const testEnvironmentVariables = async () => {
+    try {
+      // Import and test the environment manager
+      const { envManager } = await import('../../lib/envManager')
+      const envVars = envManager.getEnvironmentVariables()
+      
+      const testResult = {
+        VITE_SUPABASE_URL: envVars.VITE_SUPABASE_URL,
+        VITE_SUPABASE_SERVICE_ROLE_KEY: envVars.VITE_SUPABASE_SERVICE_ROLE_KEY ? '***SET***' : '***MISSING***',
+        VITE_SUPABASE_ANON_KEY: envVars.VITE_SUPABASE_ANON_KEY ? '***SET***' : '***MISSING***',
+        serviceKeyLength: envVars.VITE_SUPABASE_SERVICE_ROLE_KEY?.length || 0
+      }
+      
+      console.log('🔍 Environment Variables Test Result:', testResult)
+      
+      // Show results in alert
+      const message = `Environment Variables Test:
+      
+VITE_SUPABASE_URL: ${testResult.VITE_SUPABASE_URL}
+VITE_SUPABASE_SERVICE_ROLE_KEY: ${testResult.VITE_SUPABASE_SERVICE_ROLE_KEY}
+VITE_SUPABASE_ANON_KEY: ${testResult.VITE_SUPABASE_ANON_KEY}
+Service Key Length: ${testResult.serviceKeyLength}
+
+Check browser console for detailed results.`
+      
+      alert(message)
+      
+    } catch (error) {
+      console.error('Environment test failed:', error)
+      alert(`Environment test failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    }
+  }
+
+  const forceReloadEnvironment = async () => {
+    try {
+      const { envManager } = await import('../../lib/envManager')
+      envManager.forceReloadFromEnv()
+      alert('Environment variables reloaded successfully!')
+      console.log('Environment variables reloaded.')
+    } catch (error) {
+      console.error('Failed to reload environment variables:', error)
+      alert(`Failed to reload environment variables: ${error instanceof Error ? error.message : 'Unknown error'}`)
     }
   }
 
