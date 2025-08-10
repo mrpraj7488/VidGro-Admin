@@ -10,6 +10,7 @@ import { EnvironmentVariablesScreen } from './EnvironmentVariablesScreen'
 import { RuntimeConfigScreen } from './RuntimeConfigScreen'
 import { SecurityDashboard } from './SecurityDashboard'
 import { ApiDocumentation } from './ApiDocumentation'
+import { DatabaseBackupScreen } from './DatabaseBackupScreen'
 
 export function SystemConfigView() {
   const [activeScreen, setActiveScreen] = useState('settings')
@@ -51,10 +52,10 @@ export function SystemConfigView() {
       color: 'blue'
     },
     { 
-      id: 'backup', 
+      id: 'database-backup', 
       label: 'Backup & Restore', 
       icon: Database,
-      description: 'System backups and data restoration',
+      description: 'Supabase database backups and restoration',
       color: 'emerald'
     },
     { 
@@ -136,6 +137,8 @@ export function SystemConfigView() {
         return <SecurityDashboard />
       case 'api-docs':
         return <ApiDocumentation />
+      case 'database-backup':
+        return <DatabaseBackupScreen />
       case 'backup':
         return <BackupScreen />
       case 'email':
