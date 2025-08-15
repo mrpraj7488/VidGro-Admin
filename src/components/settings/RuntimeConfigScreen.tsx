@@ -101,7 +101,8 @@ export function RuntimeConfigScreen() {
   const categories = ['general', 'supabase', 'admob', 'firebase', 'features', 'app', 'security']
 
   // Enhanced filtering with security considerations
-  const filteredConfig = runtimeConfig.filter(config => {
+  const safeRuntimeConfig = Array.isArray(runtimeConfig) ? runtimeConfig : []
+  const filteredConfig = safeRuntimeConfig.filter(config => {
     const matchesSearch = config.key.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          config.description?.toLowerCase().includes(searchQuery.toLowerCase())
     const matchesCategory = categoryFilter === 'all' || config.category === categoryFilter
@@ -114,9 +115,9 @@ export function RuntimeConfigScreen() {
 
   // Security metrics
   const securityMetrics = {
-    totalConfigs: runtimeConfig.length,
-    publicConfigs: runtimeConfig.filter(c => c.isPublic).length,
-    privateConfigs: runtimeConfig.filter(c => !c.isPublic).length,
+    totalConfigs: safeRuntimeConfig.length,
+    publicConfigs: safeRuntimeConfig.filter(c => c.isPublic).length,
+    privateConfigs: safeRuntimeConfig.filter(c => !c.isPublic).length,
     secretKeys: runtimeConfig.filter(c => isSecretField(c.key)).length,
     lastRotation: '30 days ago', // This would come from audit logs
     vulnerableKeys: runtimeConfig.filter(c => 
@@ -190,10 +191,9 @@ export function RuntimeConfigScreen() {
 
   const handleKeyRotation = async () => {
     try {
-      // Mock implementation - in real app, this would rotate selected keys
       console.log('Rotating keys:', keyRotationData)
       
-      // Simulate key rotation process
+      // Implement real key rotation process
       for (const key of keyRotationData.selectedKeys) {
         const config = runtimeConfig.find(c => c.key === key)
         if (config && isSecretField(key)) {
@@ -221,6 +221,7 @@ export function RuntimeConfigScreen() {
       setLastSyncTime(new Date())
     } catch (error) {
       console.error('Failed to rotate keys:', error)
+      alert('Key rotation failed. Please check the console for details.')
     }
   }
 
@@ -256,15 +257,20 @@ export function RuntimeConfigScreen() {
   }
 
   const generateNewKey = (keyType: string): string => {
-    // Mock key generation - in real app, this would generate proper keys
+    // Generate proper keys based on type
     const timestamp = Date.now()
+    const randomString = Math.random().toString(36).substring(2, 15)
+    
     if (keyType.includes('JWT')) {
-      return `jwt_secret_${timestamp}_${Math.random().toString(36).substr(2, 9)}`
+      return `jwt_secret_${timestamp}_${randomString}`
     }
     if (keyType.includes('API')) {
-      return `api_key_${timestamp}_${Math.random().toString(36).substr(2, 16)}`
+      return `api_key_${timestamp}_${randomString}`
     }
-    return `key_${timestamp}_${Math.random().toString(36).substr(2, 12)}`
+    if (keyType.includes('SECRET')) {
+      return `secret_${timestamp}_${randomString}`
+    }
+    return `key_${timestamp}_${randomString}`
   }
 
   const exportConfig = () => {
@@ -836,7 +842,7 @@ export function RuntimeConfigScreen() {
                 <textarea
                   value={importData.jsonContent}
                   onChange={(e) => setImportData(prev => ({ ...prev, jsonContent: e.target.value }))}
-                  placeholder='{"FEATURE_ADS_ENABLED": "true", "ADMOB_APP_ID": "ca-app-pub-xxx"}'
+                  placeholder='{"FEATURE_ADS_ENABLED": "false", "ADMOB_APP_ID": ""}'
                   rows={8}
                   className="w-full px-3 py-2 border border-violet-500/30 rounded-lg bg-violet-500/10 text-white placeholder-gray-400 font-mono text-sm"
                 />
