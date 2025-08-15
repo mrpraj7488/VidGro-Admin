@@ -50,11 +50,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       // Check for default admin credentials
       const envVars = envManager.getEnvironmentVariables()
+      console.log('Environment variables loaded:', {
+        VITE_ADMIN_EMAIL: envVars.VITE_ADMIN_EMAIL,
+        VITE_ADMIN_SECRET_KEY: envVars.VITE_ADMIN_SECRET_KEY ? '***' : 'undefined'
+      })
+      console.log('Login attempt:', { email, password: password ? '***' : 'undefined' })
+      
       const isDefaultAdmin = email === envVars.VITE_ADMIN_EMAIL && 
                             password === envVars.VITE_ADMIN_SECRET_KEY
       
       if (!isDefaultAdmin) {
-        throw new Error('Invalid credentials')
+        throw new Error('Invalid credentials. Please check your email and password.')
       }
       
       await new Promise(resolve => setTimeout(resolve, 1000)) // Simulate API call
@@ -70,10 +76,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(userData)
       localStorage.setItem('vidgro_admin_user', JSON.stringify(userData))
       
-      // Redirect to dashboard after successful login
-      window.location.href = '/dashboard'
+      // Don't redirect - let the app handle the state change
+      // The App component will automatically show the dashboard when isAuthenticated becomes true
     } catch (error) {
-      throw new Error('Login failed')
+      console.error('Login error:', error)
+      if (error instanceof Error) {
+        throw error
+      }
+      throw new Error('Login failed. Please try again.')
     } finally {
       setIsLoading(false)
     }
@@ -83,20 +93,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(true)
     try {
       // In real implementation, this would create admin account via Supabase
-      await new Promise(resolve => setTimeout(resolve, 1000)) // Simulate API call
-      
-      const mockUser: User = {
-        id: `admin-${Date.now()}`,
-        email,
-        username,
-        role: 'content_moderator'
-      }
-      
-      setUser(mockUser)
-      localStorage.setItem('vidgro_admin_user', JSON.stringify(mockUser))
-      
-      // Redirect to dashboard after successful signup
-      window.location.href = '/dashboard'
+      // For now, this is a placeholder for future implementation
+      throw new Error('Admin signup not implemented yet. Please contact system administrator.')
     } catch (error) {
       throw new Error('Signup failed')
     } finally {
@@ -121,8 +119,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.error('Error clearing storage:', error)
     }
     
-    // Redirect to auth screen
-    window.location.href = '/auth'
+    // Don't redirect - let the app handle the state change
+    // The App component will automatically show the auth screen when isAuthenticated becomes false
   }
 
   return (
