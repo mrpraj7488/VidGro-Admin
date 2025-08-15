@@ -52,7 +52,7 @@ export function UserProfilePanel({ isOpen, onClose, user }: UserProfilePanelProp
         totalSpentCoins: user.total_spent || 0,
         totalPromotedVideos: videos?.length || 0,
         referralEarnings: 0, // Will be implemented when referral system is ready
-        vipExpireTime: user.is_vip && user.vip_expires_at ? new Date(user.vip_expires_at) : null,
+        vipExpireTime: user.is_vip && user.vip_expires_at && !isNaN(new Date(user.vip_expires_at).getTime()) ? new Date(user.vip_expires_at) : null,
         purchaseHistory: [], // Will be populated from transactions table when available
         videoHistory: videos?.map(video => ({
           id: video.id,
@@ -242,11 +242,11 @@ export function UserProfilePanel({ isOpen, onClose, user }: UserProfilePanelProp
                       )}
                       <div>
                         <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Joined</label>
-                        <p className="font-medium">{format(new Date(user.created_at), 'MMM dd, yyyy')}</p>
+                        <p className="font-medium">{user.created_at && !isNaN(new Date(user.created_at).getTime()) ? format(new Date(user.created_at), 'MMM dd, yyyy') : 'N/A'}</p>
                       </div>
                       <div>
                         <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Last Active</label>
-                        <p className="font-medium">{format(new Date(user.last_active), 'MMM dd, HH:mm')}</p>
+                        <p className="font-medium">{user.last_active && !isNaN(new Date(user.last_active).getTime()) ? format(new Date(user.last_active), 'MMM dd, HH:mm') : 'N/A'}</p>
                       </div>
                     </div>
                   </CardContent>
@@ -272,7 +272,7 @@ export function UserProfilePanel({ isOpen, onClose, user }: UserProfilePanelProp
                               <Coins className="w-4 h-4" />
                               <span>{formatNumber(video.coins)} coins</span>
                             </span>
-                            <span>{format(new Date(video.date), 'MMM dd')}</span>
+                            <span>{video.date && !isNaN(new Date(video.date).getTime()) ? format(new Date(video.date), 'MMM dd') : 'N/A'}</span>
                           </div>
                         </div>
                         <div className="ml-4">
@@ -303,7 +303,7 @@ export function UserProfilePanel({ isOpen, onClose, user }: UserProfilePanelProp
                               {formatNumber(purchase.amount)} coins purchased
                             </p>
                             <p className="text-sm text-gray-500 dark:text-gray-400">
-                              {format(new Date(purchase.date), 'MMM dd, yyyy')}
+                              {purchase.date && !isNaN(new Date(purchase.date).getTime()) ? format(new Date(purchase.date), 'MMM dd, yyyy') : 'N/A'}
                             </p>
                           </div>
                         </div>
