@@ -123,7 +123,6 @@ export function VideoManagement() {
               <option value="active">Active</option>
               <option value="completed">Completed</option>
               <option value="on_hold">On Hold</option>
-              <option value="paused">Paused</option>
               <option value="repromoted">Repromoted</option>
               <option value="deleted">Deleted</option>
             </select>
