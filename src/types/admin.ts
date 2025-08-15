@@ -15,17 +15,13 @@ export interface DashboardStats {
 
 export interface User {
   id: string
-  username: string
   email: string
+  username: string
   coins: number
   is_vip: boolean
   vip_expires_at?: string
   referral_code?: string
   referred_by?: string
-  total_earned: number
-  total_spent: number
-  videos_posted: number
-  last_active: string
   created_at: string
   updated_at: string
 }
@@ -38,26 +34,18 @@ export interface Video {
   title: string
   views_count: number
   target_views: number
-  current_views: number
   duration_seconds: number
   coin_reward: number
   coin_cost: number
-  spent_coins: number
-  status: 'active' | 'paused' | 'completed' | 'on_hold' | 'repromoted' | 'deleted'
+  status: 'pending' | 'active' | 'paused' | 'completed' | 'on_hold' | 'repromoted' | 'deleted' | 'rejected'
   hold_until?: string
   repromoted_at?: string
   total_watch_time: number
   completion_rate: number
-  completed: boolean
-  coins_earned_total: number
   created_at: string
   updated_at: string
-  completed_at?: string
-  thumbnail_url: string
-  video_id: string
-  video_url: string
-  refund_amount?: number
-  refund_percent?: number
+  completed: boolean
+  coins_earned_total: number
 }
 
 export interface BugReport {
