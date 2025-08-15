@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { X, User, Mail, Lock, Camera, Save, Eye, EyeOff, Shield } from 'lucide-react'
 import { Button } from '../ui/Button'
 import { Input } from '../ui/Input'
@@ -14,13 +14,39 @@ export function AdminSettingsPanel({ isOpen, onClose }: AdminSettingsPanelProps)
   const [showCurrentPassword, setShowCurrentPassword] = useState(false)
   const [showNewPassword, setShowNewPassword] = useState(false)
   const [formData, setFormData] = useState({
-    name: 'Admin User',
-    email: 'admin@vidgro.com',
+    name: '',
+    email: '',
     currentPassword: '',
     newPassword: '',
     confirmPassword: '',
     profilePicture: null as File | null
   })
+  const [isLoading, setIsLoading] = useState(false)
+
+  useEffect(() => {
+    if (isOpen) {
+      fetchAdminData()
+    }
+  }, [isOpen])
+
+  const fetchAdminData = async () => {
+    setIsLoading(true)
+    try {
+      // Get admin data from environment or stored data
+      const adminEmail = process.env.VITE_ADMIN_EMAIL || ''
+      const adminName = localStorage.getItem('vidgro_admin_name') || ''
+      
+      setFormData(prev => ({
+        ...prev,
+        name: adminName,
+        email: adminEmail
+      }))
+    } catch (error) {
+      console.error('Failed to fetch admin data:', error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   const tabs = [
     { id: 'profile', label: 'Profile', icon: User },
@@ -40,12 +66,12 @@ export function AdminSettingsPanel({ isOpen, onClose }: AdminSettingsPanelProps)
   }
 
   const handleSave = async () => {
-    // TODO: Implement save functionality
+    // Save functionality will be implemented when backend API is ready
     console.log('Saving admin settings:', formData)
   }
 
   const handleForgotPassword = () => {
-    // TODO: Implement forgot password functionality
+    // Forgot password functionality will be implemented when backend API is ready
     console.log('Forgot password triggered')
   }
 
