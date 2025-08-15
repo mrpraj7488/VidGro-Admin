@@ -285,6 +285,5 @@ export function DashboardView() {
         </Card>
       )}
     </div>
-    </div>
   )
 }
