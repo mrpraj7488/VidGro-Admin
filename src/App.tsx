@@ -107,7 +107,6 @@ function AppContent() {
                 <div className="absolute inset-0 bg-gradient-to-br from-violet-500/5 via-transparent to-emerald-500/5 pointer-events-none" />
                 <div className="relative z-10">
                 <ErrorBoundary>
-                <ErrorBoundary>
                   {renderContent()}
                 </ErrorBoundary>
               </main>
