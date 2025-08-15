@@ -295,17 +295,30 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
   fetchDashboardStats: async () => {
     set({ dashboardLoading: true, dashboardError: null })
     try {
+      console.log('🔍 fetchDashboardStats: Starting...')
       const supabase = getSupabaseAdminClient()
       if (!supabase) {
+        console.error('❌ fetchDashboardStats: Supabase Admin not initialized')
         throw new Error('Supabase not initialized')
       }
+      console.log('✅ fetchDashboardStats: Supabase Admin client created')
       
       // Fetch data from Supabase with safe selectors (avoid schema coupling)
+      console.log('🔍 fetchDashboardStats: Fetching data from tables...')
       const [usersResult, videosResult, transactionsResult] = await Promise.all([
         supabase.from('profiles').select('*'),
         supabase.from('videos').select('*'),
         supabase.from('transactions').select('*')
       ])
+
+      console.log('🔍 fetchDashboardStats: Query results:', {
+        users: usersResult.data?.length || 0,
+        videos: videosResult.data?.length || 0,
+        transactions: transactionsResult.data?.length || 0,
+        usersError: usersResult.error,
+        videosError: videosResult.error,
+        transactionsError: transactionsResult.error
+      })
 
       if (usersResult.error) throw usersResult.error
       if (videosResult.error) throw videosResult.error
@@ -317,6 +330,7 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
 
       const now = new Date()
       const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
+      const dayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate())
       
       const totalUsers = users.length
 
@@ -360,9 +374,9 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
         return !!d && d >= new Date(now.getTime() - 24 * 60 * 60 * 1000)
       }).length
 
-      const coinTransactions = transactions.filter(t => {
+      const dailyTransactions = transactions.filter(t => {
         const created = t.created_at ? new Date(t.created_at) : null
-        return !!created && created >= new Date(now.getTime() - 24 * 60 * 60 * 1000)
+        return !!created && created >= dayStart
       }).length
 
       const totalCoinsDistributed = users.reduce((sum, u) => {
@@ -371,6 +385,19 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
       }, 0)
       
       const pendingVideos = videos.filter(v => resolveStatus(v) === 'pending').length
+      
+      // Calculate video completion rate from actual data
+      const completedVideos = videos.filter(v => resolveStatus(v) === 'completed')
+      const videoCompletionRate = videos.length > 0 
+        ? (completedVideos.length / videos.length) * 100 
+        : 0
+      
+      // Calculate average watch time from video data
+      const totalWatchTime = videos.reduce((sum, v) => {
+        const watchTime = Number(v.total_watch_time ?? v.watch_time ?? 0)
+        return sum + (Number.isFinite(watchTime) ? watchTime : 0)
+      }, 0)
+      const averageWatchTime = videos.length > 0 ? totalWatchTime / videos.length : 0
 
       const stats: DashboardStats = {
         total_users: totalUsers,
@@ -379,14 +406,15 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
         monthly_revenue: monthlyRevenue,
         user_growth_rate: userGrowthRate,
         daily_active_users: dailyActiveUsers,
-        coin_transactions: coinTransactions,
+        coin_transactions: dailyTransactions,
         total_coins_distributed: totalCoinsDistributed,
-        video_completion_rate: 0, // Will be calculated from video analytics when implemented
-        average_watch_time: 0, // Will be calculated from video analytics when implemented
+        video_completion_rate: videoCompletionRate,
+        average_watch_time: averageWatchTime,
         total_transactions: transactions.length,
         pending_videos: pendingVideos
       }
 
+      console.log('✅ fetchDashboardStats: Calculated stats:', stats)
       set({ dashboardStats: stats, dashboardLoading: false })
     } catch (error) {
       console.error('Error fetching dashboard stats:', error)

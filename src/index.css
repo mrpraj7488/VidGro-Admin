@@ -521,6 +521,43 @@
   .animate-stagger-children > *:nth-child(4) { animation-delay: 0.4s; }
   .animate-stagger-children > *:nth-child(5) { animation-delay: 0.5s; }
   
+  /* Mobile-specific responsive improvements */
+  @media (max-width: 640px) {
+    .gaming-stats-grid {
+      @apply grid-cols-2 gap-3;
+    }
+    
+    .gaming-card {
+      @apply mx-1;
+    }
+    
+    .gaming-metric-value {
+      @apply text-xl;
+    }
+    
+    .gaming-metric {
+      @apply p-3;
+    }
+    
+    .gaming-card-enhanced:hover {
+      transform: translateY(-2px) scale(1.01);
+    }
+  }
+  
+  @media (max-width: 480px) {
+    .gaming-card {
+      @apply mx-0;
+    }
+    
+    .gaming-metric-value {
+      @apply text-lg;
+    }
+    
+    .gaming-metric {
+      @apply p-2;
+    }
+  }
+  
   @keyframes fadeIn {
     from {
       opacity: 0;
@@ -566,7 +603,7 @@
     }
   }
   
-  @media (max-width: 640px) {
+  @media (max-width: 768px) {
     .gaming-table {
       @apply text-sm;
     }
@@ -579,10 +616,6 @@
     .gaming-modal {
       max-width: 95vw;
       margin: 1rem;
-    }
-    
-    .gaming-card {
-      @apply mx-2;
     }
   }
 }

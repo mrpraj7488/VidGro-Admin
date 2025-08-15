@@ -103,7 +103,7 @@ function AppContent() {
           <div className="flex">
             <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
             <div className="flex-1">
-              <Header isPopupOpen={isPopupOpen} onOpenSettings={handleOpenAdminSettings} />
+                <main className="p-2 md:p-4 lg:p-6 dark:text-white min-h-screen relative pt-16 sm:pt-20">
               <main className="p-4 md:p-6 dark:text-white min-h-screen relative pt-16 sm:pt-20">
                 <div className="absolute inset-0 bg-gradient-to-br from-violet-500/5 via-transparent to-emerald-500/5 pointer-events-none" />
                 <div className="relative z-10">
