@@ -74,7 +74,11 @@ export function AuthScreen({ onLogin, onSignup }: AuthScreenProps) {
       }
     } catch (error) {
       console.error('Auth error:', error)
-      setErrors({ general: 'Authentication failed. Please try again.' })
+      if (error instanceof Error) {
+        setErrors({ general: error.message })
+      } else {
+        setErrors({ general: 'Authentication failed. Please try again.' })
+      }
     } finally {
       setIsLoading(false)
     }
