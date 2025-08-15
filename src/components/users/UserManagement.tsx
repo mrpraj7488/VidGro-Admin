@@ -14,7 +14,7 @@ import { format } from 'date-fns'
 import { CoinAdjustmentModal } from './CoinAdjustmentModal'
 
 export function UserManagement() {
-  const { users, userFilters, isLoading, fetchUsers, adjustUserCoins, toggleUserVip, setUserFilters } = useAdminStore()
+  const { users, userFilters, usersLoading, fetchUsers, adjustUserCoins, toggleUserVip, setUserFilters } = useAdminStore()
   const [selectedUser, setSelectedUser] = useState<any>(null)
   const [isAdjustModalOpen, setIsAdjustModalOpen] = useState(false)
   const [isProfilePanelOpen, setIsProfilePanelOpen] = useState(false)
@@ -83,17 +83,17 @@ export function UserManagement() {
   }
 
   const handleCreateUser = async (userData: any) => {
-    // TODO: Implement user creation
+    // User creation will be implemented when backend API is ready
     console.log('Creating user:', userData)
     await fetchUsers() // Refresh users list
   }
 
   const handleSendBulkNotification = async (notification: any) => {
     console.log('Sending bulk notification:', notification)
-    // TODO: Implement actual bulk notification sending
+    // Bulk notification sending will be implemented when backend API is ready
   }
 
-  if (isLoading) {
+  if (usersLoading) {
     return (
       <div className="space-y-6">
         <div className="h-16 gaming-skeleton rounded-xl" />
@@ -105,6 +105,11 @@ export function UserManagement() {
   return (
     <div className="space-y-6">
       {/* Summary Stats */}
+      {(useAdminStore.getState().usersError) && (
+        <div className="p-3 rounded-md bg-red-50 text-red-700 border border-red-200">
+          {(useAdminStore.getState().usersError) || 'Failed to load users.'}
+        </div>
+      )}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card>
           <CardContent className="p-6 text-center">
@@ -242,7 +247,7 @@ export function UserManagement() {
                       </button>
                     </td>
                     <td className="py-4 px-6">
-                      <span className="text-gray-900 dark:text-white">{user.videos_posted}</span>
+                      <span className="text-gray-900 dark:text-white">{(user as any).videos_posted ?? 0}</span>
                     </td>
                     <td className="py-4 px-6">
                       <div className="flex items-center space-x-1 text-gray-500 dark:text-gray-400 text-sm">
@@ -252,7 +257,10 @@ export function UserManagement() {
                     </td>
                     <td className="py-4 px-6">
                       <span className="text-sm text-gray-500 dark:text-gray-400">
-                        {format(new Date(user.last_active), 'MMM dd, HH:mm')}
+                        {(() => {
+                          const d = (user as any).last_active || user.updated_at || user.created_at
+                          return d ? format(new Date(d), 'MMM dd, HH:mm') : '—'
+                        })()}
                       </span>
                     </td>
                     <td className="py-4 px-6 text-right">
