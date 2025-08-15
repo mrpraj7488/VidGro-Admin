@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { ErrorBoundary } from './components/common/ErrorBoundary'
 import { AuthProvider, useAuth } from './components/auth/AuthProvider'
 import { AuthScreen } from './components/auth/AuthScreen'
@@ -9,15 +9,26 @@ import { DashboardView } from './components/dashboard/DashboardView'
 import { UserManagement } from './components/users/UserManagement'
 import { VideoManagement } from './components/videos/VideoManagement'
 import { AnalyticsView } from './components/analytics/AnalyticsView'
-import { BugReportsView } from './components/reports/BugReportsView'
+import BugReportsView from './components/reports/BugReportsView'
 import { SystemConfigView } from './components/settings/SystemConfigView'
 import { InboxView } from './components/inbox/InboxView'
+
 
 function AppContent() {
   const { isAuthenticated, isLoading, isInitialized, login, signup, user } = useAuth()
   const [activeTab, setActiveTab] = useState('dashboard')
   const [isPopupOpen, setIsPopupOpen] = useState(false)
   const [isAdminSettingsOpen, setIsAdminSettingsOpen] = useState(false)
+
+  // Debug environment variables in development
+  useEffect(() => {
+    if (import.meta.env.DEV) {
+      console.log('🔧 Development Mode - Environment Variables:');
+      console.log('VITE_ADMIN_EMAIL:', import.meta.env.VITE_ADMIN_EMAIL);
+      console.log('VITE_ADMIN_SECRET_KEY:', import.meta.env.VITE_ADMIN_SECRET_KEY ? '***' : 'undefined');
+      console.log('VITE_SUPABASE_URL:', import.meta.env.VITE_SUPABASE_URL);
+    }
+  }, [])
 
   // Track popup state for header visibility
   React.useEffect(() => {
