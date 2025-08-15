@@ -17,7 +17,7 @@ export function CreateUserModal({ isOpen, onClose, onCreateUser }: CreateUserMod
     username: '',
     email: '',
     password: '',
-    initialCoins: 100,
+    initialCoins: 0,
     isVip: false,
     sendWelcomeEmail: true
   })
@@ -36,7 +36,7 @@ export function CreateUserModal({ isOpen, onClose, onCreateUser }: CreateUserMod
         username: '',
         email: '',
         password: '',
-        initialCoins: 100,
+        initialCoins: 0,
         isVip: false,
         sendWelcomeEmail: true
       })
