@@ -6,7 +6,7 @@ import { formatNumber, formatCurrency } from '../../lib/utils'
 interface StatsCardProps {
   title: string
   value: number
-  change: number
+  change?: number
   icon: LucideIcon
   format?: 'number' | 'currency' | 'percentage'
   color?: 'violet' | 'emerald' | 'orange' | 'blue'
@@ -45,14 +45,16 @@ export function StatsCard({
           <div>
             <p className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-1 gaming-text-shadow">{title}</p>
             <p className="gaming-metric-value">{formatValue(value)}</p>
-            <div className="flex items-center mt-2">
-              <span className={`text-sm font-medium ${
-                change >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'
-              }`}>
-                {change >= 0 ? '+' : ''}{change}%
-              </span>
-              <span className="text-sm text-gray-500 dark:text-gray-400 ml-1">vs last month</span>
-            </div>
+            {change !== undefined && (
+              <div className="flex items-center mt-2">
+                <span className={`text-sm font-medium ${
+                  change >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'
+                }`}>
+                  {change >= 0 ? '+' : ''}{change}%
+                </span>
+                <span className="text-sm text-gray-500 dark:text-gray-400 ml-1">vs last month</span>
+              </div>
+            )}
           </div>
           <div className={`w-12 h-12 bg-gradient-to-br ${colorClasses[color]} rounded-lg flex items-center justify-center shadow-lg gaming-glow gaming-sparkle`}>
             <Icon className="w-6 h-6 text-white gaming-icon-glow" strokeWidth={2} />
