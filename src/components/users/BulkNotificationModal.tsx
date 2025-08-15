@@ -1,9 +1,9 @@
-import React, { useState } from 'react'
-import { X, Send, Users, Crown, Bell, MessageSquare } from 'lucide-react'
+import React, { useState, useEffect } from 'react'
+import { Bell, Users, Crown, MessageSquare, Send, X, AlertTriangle } from 'lucide-react'
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card'
 import { Button } from '../ui/Button'
 import { Input } from '../ui/Input'
-import { Badge } from '../ui/Badge'
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card'
+import { useAdminStore } from '../../stores/adminStore'
 
 interface BulkNotificationModalProps {
   isOpen: boolean
@@ -17,13 +17,20 @@ interface BulkNotificationModalProps {
 }
 
 export function BulkNotificationModal({ isOpen, onClose, onSend }: BulkNotificationModalProps) {
+  const { users, fetchUsers } = useAdminStore()
   const [formData, setFormData] = useState({
     title: '',
     message: '',
     targetUsers: 'all' as 'all' | 'vip' | 'regular',
     type: 'push' as 'push' | 'email' | 'both'
   })
-  const [isLoading, setIsLoading] = useState(false)
+  const [isSending, setIsSending] = useState(false)
+
+  useEffect(() => {
+    if (isOpen) {
+      fetchUsers()
+    }
+  }, [isOpen, fetchUsers])
 
   const handleInputChange = (field: string, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }))
@@ -33,40 +40,61 @@ export function BulkNotificationModal({ isOpen, onClose, onSend }: BulkNotificat
     e.preventDefault()
     if (!formData.title.trim() || !formData.message.trim()) return
 
-    setIsLoading(true)
+    setIsSending(true)
     try {
       await onSend(formData)
-      setFormData({
-        title: '',
-        message: '',
-        targetUsers: 'all',
-        type: 'push'
-      })
+      setFormData({ title: '', message: '', targetUsers: 'all', type: 'push' })
       onClose()
     } catch (error) {
       console.error('Failed to send notification:', error)
     } finally {
-      setIsLoading(false)
+      setIsSending(false)
     }
   }
 
-  // Dispatch popup state events
-  React.useEffect(() => {
-    if (isOpen) {
-      window.dispatchEvent(new CustomEvent('popupStateChange', { detail: { isOpen: true } }))
-    }
-    return () => {
-      if (isOpen) {
-        window.dispatchEvent(new CustomEvent('popupStateChange', { detail: { isOpen: false } }))
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose()
       }
+    }
+
+    if (isOpen) {
+      document.addEventListener('keydown', handleEscape)
+      return () => document.removeEventListener('keydown', handleEscape)
+    }
+  }, [isOpen, onClose])
+
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = 'unset'
+      // Close popup when clicking outside
+      window.dispatchEvent(new CustomEvent('popupStateChange', { detail: { isOpen: false } }))
     }
   }, [isOpen])
   if (!isOpen) return null
 
   const getTargetUserCount = () => {
-    // Mock counts - in real app, get from store
-    const counts = { all: 45732, vip: 3247, regular: 42485 }
-    return counts[formData.targetUsers]
+    if (!users.length) return 0
+    
+    switch (formData.targetUsers) {
+      case 'all':
+        return users.length
+      case 'vip':
+        return users.filter(user => user.is_vip).length
+      case 'regular':
+        return users.filter(user => !user.is_vip).length
+      default:
+        return 0
+    }
+  }
+
+  const userCounts = {
+    all: users.length,
+    vip: users.filter(user => user.is_vip).length,
+    regular: users.filter(user => !user.is_vip).length
   }
 
   return (
@@ -100,9 +128,9 @@ export function BulkNotificationModal({ isOpen, onClose, onSend }: BulkNotificat
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {[
-                  { id: 'all', label: 'All Users', icon: Users, count: 45732, color: 'violet' },
-                  { id: 'vip', label: 'VIP Users', icon: Crown, count: 3247, color: 'yellow' },
-                  { id: 'regular', label: 'Regular Users', icon: Users, count: 42485, color: 'blue' }
+                  { id: 'all', label: 'All Users', icon: Users, count: userCounts.all, color: 'violet' },
+                  { id: 'vip', label: 'VIP Users', icon: Crown, count: userCounts.vip, color: 'yellow' },
+                  { id: 'regular', label: 'Regular Users', icon: Users, count: userCounts.regular, color: 'blue' }
                 ].map((option) => {
                   const Icon = option.icon
                   return (
@@ -219,9 +247,9 @@ export function BulkNotificationModal({ isOpen, onClose, onSend }: BulkNotificat
               </div>
               <div className="mt-3 flex items-center justify-between text-xs text-gray-400">
                 <span>Target: {getTargetUserCount().toLocaleString()} users</span>
-                <Badge variant="default" className="text-xs">
+                <span className="text-xs text-gray-400">
                   {formData.type.toUpperCase()}
-                </Badge>
+                </span>
               </div>
             </CardContent>
           </Card>
@@ -233,10 +261,10 @@ export function BulkNotificationModal({ isOpen, onClose, onSend }: BulkNotificat
             </Button>
             <Button 
               type="submit" 
-              disabled={isLoading || !formData.title.trim() || !formData.message.trim()}
+              disabled={isSending || !formData.title.trim() || !formData.message.trim()}
             >
               <Send className="w-4 h-4 mr-2" />
-              {isLoading ? 'Sending...' : `Send to ${getTargetUserCount().toLocaleString()} Users`}
+              {isSending ? 'Sending...' : `Send to ${getTargetUserCount().toLocaleString()} Users`}
             </Button>
           </div>
         </form>
