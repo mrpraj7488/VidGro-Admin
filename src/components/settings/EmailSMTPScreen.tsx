@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Mail, Server, Lock, Eye, EyeOff, Send, CheckCircle, AlertTriangle, Save } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card'
 import { Button } from '../ui/Button'
@@ -10,15 +10,61 @@ export function EmailSMTPScreen() {
   const [isTestingConnection, setIsTestingConnection] = useState(false)
   const [connectionStatus, setConnectionStatus] = useState<'idle' | 'success' | 'error'>('idle')
   const [smtpConfig, setSmtpConfig] = useState({
-    host: 'smtp.gmail.com',
-    port: 587,
-    username: 'admin@vidgro.com',
+    host: '',
+    port: 0,
+    username: '',
     password: '',
-    encryption: 'tls',
-    fromName: 'VidGro Admin',
-    fromEmail: 'noreply@vidgro.com',
-    replyTo: 'support@vidgro.com'
+    encryption: '',
+    fromName: '',
+    fromEmail: '',
+    replyTo: ''
   })
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    loadSmtpConfig()
+  }, [])
+
+  const loadSmtpConfig = async () => {
+    setIsLoading(true)
+    try {
+      // Load SMTP configuration from database or environment
+      const config = await fetchSmtpConfig()
+      if (config) {
+        setSmtpConfig(config)
+      }
+    } catch (error) {
+      console.error('Failed to load SMTP config:', error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const fetchSmtpConfig = async () => {
+    // SMTP configuration API call will be implemented when backend is ready
+    // This should fetch from your database or configuration service
+    try {
+      // Placeholder for actual implementation
+      const response = await fetch('/api/admin/smtp-config')
+      if (response.ok) {
+        return await response.json()
+      }
+    } catch (error) {
+      console.error('Failed to fetch SMTP config:', error)
+    }
+    
+    // Return empty config if no data available
+    return {
+      host: '',
+      port: 0,
+      username: '',
+      password: '',
+      encryption: '',
+      fromName: '',
+      fromEmail: '',
+      replyTo: ''
+    }
+  }
 
   const handleInputChange = (field: string, value: string | number) => {
     setSmtpConfig(prev => ({ ...prev, [field]: value }))
@@ -28,23 +74,70 @@ export function EmailSMTPScreen() {
     setIsTestingConnection(true)
     setConnectionStatus('idle')
     
-    // Simulate connection test
-    await new Promise(resolve => setTimeout(resolve, 2000))
-    
-    // Random success/failure for demo
-    const success = Math.random() > 0.3
-    setConnectionStatus(success ? 'success' : 'error')
-    setIsTestingConnection(false)
+    try {
+      // SMTP connection test will be implemented when backend is ready
+      // This would typically involve creating a test connection to the SMTP server
+      // and attempting to send a test email
+      
+      // For now, show a placeholder message
+      setConnectionStatus('error')
+      alert('SMTP connection testing not yet implemented. Please configure your SMTP settings manually.')
+    } catch (error) {
+      console.error('SMTP connection test failed:', error)
+      setConnectionStatus('error')
+    } finally {
+      setIsTestingConnection(false)
+    }
   }
 
   const handleSaveConfig = async () => {
-    // TODO: Implement save functionality
-    console.log('Saving SMTP config:', smtpConfig)
+    try {
+      // Save functionality will be implemented when backend is ready
+      // This should save to your database or configuration service
+      const response = await fetch('/api/admin/smtp-config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(smtpConfig)
+      })
+      
+      if (response.ok) {
+        alert('SMTP configuration saved successfully')
+      } else {
+        throw new Error('Failed to save configuration')
+      }
+    } catch (error) {
+      console.error('Failed to save SMTP config:', error)
+      alert('Failed to save SMTP configuration')
+    }
   }
 
   const handleSendTestEmail = async () => {
-    // TODO: Implement test email functionality
-    console.log('Sending test email')
+    try {
+      // Test email functionality will be implemented when backend is ready
+      const response = await fetch('/api/admin/send-test-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(smtpConfig)
+      })
+      
+      if (response.ok) {
+        alert('Test email sent successfully')
+      } else {
+        throw new Error('Failed to send test email')
+      }
+    } catch (error) {
+      console.error('Failed to send test email:', error)
+      alert('Failed to send test email')
+    }
+  }
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="h-8 bg-gray-200 animate-pulse rounded" />
+        <div className="h-64 bg-gray-200 animate-pulse rounded" />
+      </div>
+    )
   }
 
   return (
@@ -133,7 +226,7 @@ export function EmailSMTPScreen() {
               <Input
                 value={smtpConfig.host}
                 onChange={(e) => handleInputChange('host', e.target.value)}
-                placeholder="smtp.gmail.com"
+                placeholder="Enter SMTP host (e.g., smtp.gmail.com)"
                 required
               />
             </div>
@@ -160,7 +253,7 @@ export function EmailSMTPScreen() {
               <Input
                 value={smtpConfig.username}
                 onChange={(e) => handleInputChange('username', e.target.value)}
-                placeholder="your-email@gmail.com"
+                placeholder="Enter your email username"
                 required
               />
             </div>
@@ -223,7 +316,7 @@ export function EmailSMTPScreen() {
               <Input
                 value={smtpConfig.fromName}
                 onChange={(e) => handleInputChange('fromName', e.target.value)}
-                placeholder="VidGro Admin"
+                placeholder="Enter sender name"
               />
             </div>
 
@@ -236,7 +329,7 @@ export function EmailSMTPScreen() {
                 type="email"
                 value={smtpConfig.fromEmail}
                 onChange={(e) => handleInputChange('fromEmail', e.target.value)}
-                placeholder="noreply@vidgro.com"
+                placeholder="Enter sender email address"
               />
             </div>
 
@@ -249,7 +342,7 @@ export function EmailSMTPScreen() {
                 type="email"
                 value={smtpConfig.replyTo}
                 onChange={(e) => handleInputChange('replyTo', e.target.value)}
-                placeholder="support@vidgro.com"
+                placeholder="Enter reply-to email address"
               />
             </div>
           </div>
@@ -262,30 +355,10 @@ export function EmailSMTPScreen() {
           <CardTitle>Email Templates</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {[
-              { name: 'Welcome Email', status: 'active', lastModified: '2 days ago' },
-              { name: 'Password Reset', status: 'active', lastModified: '1 week ago' },
-              { name: 'VIP Upgrade', status: 'active', lastModified: '3 days ago' },
-              { name: 'Coin Purchase', status: 'active', lastModified: '5 days ago' },
-              { name: 'Video Approved', status: 'draft', lastModified: '1 day ago' },
-              { name: 'Account Suspended', status: 'draft', lastModified: '1 week ago' }
-            ].map((template, index) => (
-              <div key={index} className="p-4 gaming-card hover:scale-[1.02] transition-transform duration-300">
-                <div className="flex items-center justify-between mb-2">
-                  <h4 className="font-medium text-gray-900 dark:text-white">{template.name}</h4>
-                  <Badge variant={template.status === 'active' ? 'success' : 'default'}>
-                    {template.status}
-                  </Badge>
-                </div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  Modified {template.lastModified}
-                </p>
-                <Button variant="outline" size="sm" className="w-full mt-3">
-                  Edit Template
-                </Button>
-              </div>
-            ))}
+          <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+            <Mail className="w-12 h-12 mx-auto mb-4 opacity-50" />
+            <p>Email templates will be loaded from your configuration system</p>
+            <p className="text-sm">No templates available yet</p>
           </div>
         </CardContent>
       </Card>
