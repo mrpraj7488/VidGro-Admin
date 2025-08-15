@@ -1,251 +1,393 @@
-import React, { useEffect, useState } from 'react'
-import { Bug, Plus, Search, Filter, CheckCircle, Clock, AlertTriangle, User, Calendar } from 'lucide-react'
-import { useAdminStore } from '../../stores/adminStore'
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card'
-import { Button } from '../ui/Button'
-import { Input } from '../ui/Input'
-import { Badge } from '../ui/Badge'
-import { CreateBugModal } from './CreateBugModal'
-import { formatNumber } from '../../lib/utils'
-import { format } from 'date-fns'
+import React, { useState, useEffect } from 'react';
+import { Card } from '../ui/Card';
+import { Button } from '../ui/Button';
+import { Input } from '../ui/Input';
+import { Badge } from '../ui/Badge';
+import { getSupabaseClient } from '../../lib/supabase';
 
-export function BugReportsView() {
-  const { bugReportData, isLoading, fetchBugReports, updateBugStatus, assignBug } = useAdminStore()
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
+interface BugReport {
+  id: string;
+  bug_id: string;
+  title: string;
+  description: string;
+  status: 'new' | 'in_progress' | 'fixed';
+  priority: 'low' | 'medium' | 'high' | 'critical';
+  category: 'System' | 'Mobile App Technical';
+  reported_by: string;
+  user_id?: string;
+  user_email?: string;
+  assigned_to?: string;
+  device_info?: any;
+  app_version?: string;
+  issue_type: string;
+  source: 'mobile_app' | 'admin_panel';
+  estimated_response_time?: string;
+  admin_notes?: string;
+  resolution_notes?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+interface BugReportStats {
+  total_bugs: number;
+  new_bugs: number;
+  in_progress_bugs: number;
+  fixed_bugs: number;
+  critical_bugs: number;
+  high_priority_bugs: number;
+  mobile_app_bugs: number;
+  system_bugs: number;
+}
+
+const BugReportsView: React.FC = () => {
+  const [bugReports, setBugReports] = useState<BugReport[]>([]);
+  const [stats, setStats] = useState<BugReportStats | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [selectedReport, setSelectedReport] = useState<BugReport | null>(null);
+  const [showModal, setShowModal] = useState(false);
   const [filters, setFilters] = useState({
-    search: '',
-    status: 'all',
-    priority: 'all',
-    category: 'all'
-  })
+    status: '',
+    priority: '',
+    category: '',
+    source: '',
+    search: ''
+  });
+  const [editForm, setEditForm] = useState({
+    status: '',
+    assigned_to: '',
+    admin_notes: '',
+    resolution_notes: ''
+  });
 
   useEffect(() => {
-    fetchBugReports()
-  }, [fetchBugReports])
+    fetchBugReports();
+    fetchStats();
+  }, [filters]);
 
-  if (isLoading || !bugReportData) {
-    return (
-      <div className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="h-32 bg-gradient-to-r from-gray-100 to-gray-200 animate-pulse rounded-xl" />
-          ))}
-        </div>
-        <div className="h-96 bg-gradient-to-r from-gray-100 to-gray-200 animate-pulse rounded-xl" />
-      </div>
-    )
-  }
+  const fetchBugReports = async () => {
+    try {
+      setLoading(true);
+      
+      const supabase = getSupabaseClient();
+      if (!supabase) {
+        throw new Error('Supabase not initialized');
+      }
+      
+      const { data, error } = await supabase.rpc('get_bug_reports_with_filters', {
+        p_status_filter: filters.status || null,
+        p_priority_filter: filters.priority || null,
+        p_category_filter: filters.category || null,
+        p_source_filter: filters.source || null,
+        p_search_term: filters.search || null,
+        p_limit_count: 100,
+        p_offset_count: 0
+      });
 
-  const getPriorityBadge = (priority: string) => {
+      if (error) throw error;
+      setBugReports(data || []);
+    } catch (error) {
+      console.error('Error fetching bug reports:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchStats = async () => {
+    try {
+      const supabase = getSupabaseClient();
+      if (!supabase) {
+        throw new Error('Supabase not initialized');
+      }
+      
+      const { data, error } = await supabase.rpc('get_bug_report_stats');
+      if (error) throw error;
+      setStats(data?.[0] || null);
+    } catch (error) {
+      console.error('Error fetching stats:', error);
+    }
+  };
+
+  const updateBugReport = async (bugId: string, updates: any) => {
+    try {
+      const { data, error } = await supabase.rpc('update_bug_report_status', {
+        p_bug_id: bugId,
+        p_status: updates.status,
+        p_admin_notes: updates.admin_notes,
+        p_resolution_notes: updates.resolution_notes
+      });
+
+      if (error) throw error;
+
+      if (updates.assigned_to) {
+        await supabase.rpc('assign_bug_report', {
+          p_bug_id: bugId,
+          p_assigned_to: updates.assigned_to
+        });
+      }
+
+      // Refresh data
+      fetchBugReports();
+      fetchStats();
+      setShowModal(false);
+      setSelectedReport(null);
+    } catch (error) {
+      console.error('Error updating bug report:', error);
+    }
+  };
+
+  const handleEdit = (report: BugReport) => {
+    setSelectedReport(report);
+    setEditForm({
+      status: report.status,
+      assigned_to: report.assigned_to || '',
+      admin_notes: report.admin_notes || '',
+      resolution_notes: report.resolution_notes || ''
+    });
+    setShowModal(true);
+  };
+
+  const handleSubmit = () => {
+    if (selectedReport) {
+      updateBugReport(selectedReport.bug_id, editForm);
+    }
+  };
+
+  const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'critical':
-        return <Badge variant="danger" className="font-medium">Critical</Badge>
-      case 'high':
-        return <Badge variant="danger" className="font-medium">High</Badge>
-      case 'medium':
-        return <Badge variant="warning" className="font-medium">Medium</Badge>
-      case 'low':
-        return <Badge variant="info" className="font-medium">Low</Badge>
-      default:
-        return <Badge variant="default" className="font-medium">{priority}</Badge>
+      case 'critical': return 'bg-red-500';
+      case 'high': return 'bg-orange-500';
+      case 'medium': return 'bg-yellow-500';
+      case 'low': return 'bg-green-500';
+      default: return 'bg-gray-500';
     }
-  }
+  };
 
-  const getStatusBadge = (status: string) => {
+  const getStatusColor = (status: string) => {
     switch (status) {
-      case 'new':
-        return <Badge variant="warning" className="font-medium">New</Badge>
-      case 'in_progress':
-        return <Badge variant="info" className="font-medium">In Progress</Badge>
-      case 'fixed':
-        return <Badge variant="success" className="font-medium">Fixed</Badge>
-      case 'wont_fix':
-        return <Badge variant="default" className="font-medium">Won't Fix</Badge>
-      default:
-        return <Badge variant="default" className="font-medium">{status}</Badge>
+      case 'new': return 'bg-blue-500';
+      case 'in_progress': return 'bg-yellow-500';
+      case 'fixed': return 'bg-green-500';
+      default: return 'bg-gray-500';
     }
-  }
+  };
 
-  const filteredBugs = bugReportData.bugReports.filter(bug => {
-    const matchesSearch = bug.title.toLowerCase().includes(filters.search.toLowerCase()) ||
-                         bug.description.toLowerCase().includes(filters.search.toLowerCase()) ||
-                         bug.reported_by.toLowerCase().includes(filters.search.toLowerCase())
-    const matchesStatus = filters.status === 'all' || bug.status === filters.status
-    const matchesPriority = filters.priority === 'all' || bug.priority === filters.priority
-    const matchesCategory = filters.category === 'all' || bug.category === filters.category
-    
-    return matchesSearch && matchesStatus && matchesPriority && matchesCategory
-  })
+  const getSourceIcon = (source: string) => {
+    return source === 'mobile_app' ? '📱' : '🖥️';
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-lg">Loading bug reports...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Bug Reports</h1>
-          <p className="text-gray-600">Track and manage application issues and bugs</p>
+        <h1 className="text-2xl font-bold">Bug Reports</h1>
+        <div className="text-sm text-gray-600">
+          Total: {stats?.total_bugs || 0} | New: {stats?.new_bugs || 0} | Critical: {stats?.critical_bugs || 0}
         </div>
-        <Button 
-          onClick={() => setIsCreateModalOpen(true)}
-          className="flex items-center space-x-2"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Report Bug</span>
-        </Button>
       </div>
 
-      {/* Stats Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200 dark:from-orange-900/20 dark:to-orange-800/20 dark:border-orange-700/50">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-orange-700 dark:text-orange-300 mb-1">New Bugs</p>
-                <p className="text-3xl font-bold text-orange-600 dark:text-orange-400">{bugReportData.newBugs}</p>
-              </div>
-              <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg flex items-center justify-center">
-                <Bug className="w-6 h-6 text-white" />
-              </div>
-            </div>
-          </CardContent>
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card className="p-4">
+          <div className="text-center">
+            <div className="text-2xl font-bold text-blue-600">{stats?.new_bugs || 0}</div>
+            <div className="text-sm text-gray-600">New Reports</div>
+          </div>
         </Card>
-
-        <Card className="bg-gradient-to-br from-emerald-50 to-emerald-100 border-emerald-200 dark:from-emerald-900/20 dark:to-emerald-800/20 dark:border-emerald-700/50">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-emerald-700 dark:text-emerald-300 mb-1">Bugs Fixed Today</p>
-                <p className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">{bugReportData.bugsFixedToday}</p>
-              </div>
-              <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-lg flex items-center justify-center">
-                <CheckCircle className="w-6 h-6 text-white" />
-              </div>
-            </div>
-          </CardContent>
+        <Card className="p-4">
+          <div className="text-center">
+            <div className="text-2xl font-bold text-orange-600">{stats?.in_progress_bugs || 0}</div>
+            <div className="text-sm text-gray-600">In Progress</div>
+          </div>
+        </Card>
+        <Card className="p-4">
+          <div className="text-center">
+            <div className="text-2xl font-bold text-green-600">{stats?.fixed_bugs || 0}</div>
+            <div className="text-sm text-gray-600">Fixed</div>
+          </div>
+        </Card>
+        <Card className="p-4">
+          <div className="text-center">
+            <div className="text-2xl font-bold text-red-600">{stats?.critical_bugs || 0}</div>
+            <div className="text-sm text-gray-600">Critical</div>
+          </div>
         </Card>
       </div>
 
       {/* Filters */}
-      <Card>
-        <CardContent className="p-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <Input
-                placeholder="Search bugs..."
-                value={filters.search}
-                onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-                className="pl-10"
-              />
-            </div>
-            
-            <select
-              value={filters.status}
-              onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-              className="px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm dark:bg-slate-800 dark:border-slate-600 dark:text-white"
-            >
-              <option value="all">All Status</option>
-              <option value="new">New</option>
-              <option value="in_progress">In Progress</option>
-              <option value="fixed">Fixed</option>
-              <option value="wont_fix">Won't Fix</option>
-            </select>
-            
-            <select
-              value={filters.priority}
-              onChange={(e) => setFilters({ ...filters, priority: e.target.value })}
-              className="px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm dark:bg-slate-800 dark:border-slate-600 dark:text-white"
-            >
-              <option value="all">All Priority</option>
-              <option value="critical">Critical</option>
-              <option value="high">High</option>
-              <option value="medium">Medium</option>
-              <option value="low">Low</option>
-            </select>
-
-            <select
-              value={filters.category}
-              onChange={(e) => setFilters({ ...filters, category: e.target.value })}
-              className="px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm dark:bg-slate-800 dark:border-slate-600 dark:text-white"
-            >
-              <option value="all">All Categories</option>
-              <option value="UI/UX">UI/UX</option>
-              <option value="Backend">Backend</option>
-              <option value="Mobile App">Mobile App</option>
-              <option value="Payment">Payment</option>
-              <option value="Video Processing">Video Processing</option>
-            </select>
-          </div>
-        </CardContent>
+      <Card className="p-4">
+        <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
+          <Input
+            placeholder="Search..."
+            value={filters.search}
+            onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+          />
+          <select
+            className="border rounded px-3 py-2"
+            value={filters.status}
+            onChange={(e) => setFilters({ ...filters, status: e.target.value })}
+          >
+            <option value="">All Status</option>
+            <option value="new">New</option>
+            <option value="in_progress">In Progress</option>
+            <option value="fixed">Fixed</option>
+          </select>
+          <select
+            className="border rounded px-3 py-2"
+            value={filters.priority}
+            onChange={(e) => setFilters({ ...filters, priority: e.target.value })}
+          >
+            <option value="">All Priority</option>
+            <option value="critical">Critical</option>
+            <option value="high">High</option>
+            <option value="medium">Medium</option>
+            <option value="low">Low</option>
+          </select>
+          <select
+            className="border rounded px-3 py-2"
+            value={filters.category}
+            onChange={(e) => setFilters({ ...filters, category: e.target.value })}
+          >
+            <option value="">All Categories</option>
+            <option value="System">System</option>
+            <option value="Mobile App Technical">Mobile App Technical</option>
+          </select>
+          <select
+            className="border rounded px-3 py-2"
+            value={filters.source}
+            onChange={(e) => setFilters({ ...filters, source: e.target.value })}
+          >
+            <option value="">All Sources</option>
+            <option value="mobile_app">Mobile App</option>
+            <option value="admin_panel">Admin Panel</option>
+          </select>
+          <Button onClick={() => setFilters({ status: '', priority: '', category: '', source: '', search: '' })}>
+            Clear Filters
+          </Button>
+        </div>
       </Card>
 
       {/* Bug Reports List */}
       <div className="space-y-4">
-        {filteredBugs.map((bug) => (
-          <Card key={bug.bug_id} className="hover:shadow-md transition-shadow dark:hover:shadow-slate-900/40">
-            <CardContent className="p-6">
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex-1">
-                  <div className="flex items-center space-x-3 mb-2">
-                    <h3 className="font-semibold text-gray-900 dark:text-white">{bug.title}</h3>
-                    {getStatusBadge(bug.status)}
-                    {getPriorityBadge(bug.priority)}
-                    <Badge variant="default" className="text-xs">{bug.category}</Badge>
-                  </div>
-                  <p className="text-gray-600 dark:text-gray-300 text-sm mb-3 line-clamp-2">{bug.description}</p>
-                  
-                  <div className="flex items-center space-x-6 text-sm text-gray-500 dark:text-gray-400">
-                    <div className="flex items-center space-x-1">
-                      <User className="w-4 h-4" />
-                      <span>Reported by {bug.reported_by}</span>
-                    </div>
-                    <div className="flex items-center space-x-1">
-                      <Calendar className="w-4 h-4" />
-                      <span>{format(new Date(bug.created_at), 'MMM dd, yyyy')}</span>
-                    </div>
-                    {bug.assigned_to && (
-                      <div className="flex items-center space-x-1">
-                        <User className="w-4 h-4" />
-                        <span>Assigned to {bug.assigned_to}</span>
-                      </div>
-                    )}
-                  </div>
+        {bugReports.map((report) => (
+          <Card key={report.id} className="p-4">
+            <div className="flex justify-between items-start">
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-lg">{getSourceIcon(report.source)}</span>
+                  <h3 className="text-lg font-semibold">{report.title}</h3>
+                  <Badge className={getPriorityColor(report.priority)}>
+                    {report.priority}
+                  </Badge>
+                  <Badge className={getStatusColor(report.status)}>
+                    {report.status}
+                  </Badge>
+                  <Badge variant="outline">{report.category}</Badge>
                 </div>
-                
-                <div className="flex items-center space-x-2">
-                  {bug.status === 'new' && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => updateBugStatus(bug.bug_id, 'in_progress')}
-                    >
-                      Start Work
-                    </Button>
+                <p className="text-gray-600 mb-2">{report.description}</p>
+                <div className="flex flex-wrap gap-4 text-sm text-gray-500">
+                  <span>Reported by: {report.reported_by}</span>
+                  {report.user_email && <span>Email: {report.user_email}</span>}
+                  {report.assigned_to && <span>Assigned to: {report.assigned_to}</span>}
+                  {report.estimated_response_time && (
+                    <span>ETA: {report.estimated_response_time}</span>
                   )}
-                  {bug.status === 'in_progress' && (
-                    <Button
-                      size="sm"
-                      variant="success"
-                      onClick={() => updateBugStatus(bug.bug_id, 'fixed')}
-                    >
-                      Mark Fixed
-                    </Button>
+                  <span>Created: {new Date(report.created_at).toLocaleDateString()}</span>
+                  {report.source === 'mobile_app' && report.device_info && (
+                    <span>Device: {report.device_info.platform || 'Unknown'}</span>
                   )}
-                  <Button size="sm" variant="ghost">
-                    View Details
-                  </Button>
+                  {report.app_version && <span>App Version: {report.app_version}</span>}
                 </div>
+                {report.admin_notes && (
+                  <div className="mt-2 p-2 bg-blue-50 rounded">
+                    <strong>Admin Notes:</strong> {report.admin_notes}
+                  </div>
+                )}
+                {report.resolution_notes && (
+                  <div className="mt-2 p-2 bg-green-50 rounded">
+                    <strong>Resolution:</strong> {report.resolution_notes}
+                  </div>
+                )}
               </div>
-            </CardContent>
+              <Button onClick={() => handleEdit(report)} size="sm">
+                Edit
+              </Button>
+            </div>
           </Card>
         ))}
       </div>
 
-      {/* Create Bug Modal */}
-      <CreateBugModal
-        isOpen={isCreateModalOpen}
-        onClose={() => setIsCreateModalOpen(false)}
-      />
+      {/* Edit Modal */}
+      {showModal && selectedReport && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <h2 className="text-xl font-bold mb-4">Edit Bug Report</h2>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Status</label>
+                <select
+                  className="w-full border rounded px-3 py-2"
+                  value={editForm.status}
+                  onChange={(e) => setEditForm({ ...editForm, status: e.target.value as any })}
+                >
+                  <option value="new">New</option>
+                  <option value="in_progress">In Progress</option>
+                  <option value="fixed">Fixed</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Assign To</label>
+                <Input
+                  value={editForm.assigned_to}
+                  onChange={(e) => setEditForm({ ...editForm, assigned_to: e.target.value })}
+                  placeholder="Admin username"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Admin Notes</label>
+                <textarea
+                  className="w-full border rounded px-3 py-2"
+                  rows={3}
+                  value={editForm.admin_notes}
+                  onChange={(e) => setEditForm({ ...editForm, admin_notes: e.target.value })}
+                  placeholder="Add admin notes..."
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Resolution Notes</label>
+                <textarea
+                  className="w-full border rounded px-3 py-2"
+                  rows={3}
+                  value={editForm.resolution_notes}
+                  onChange={(e) => setEditForm({ ...editForm, resolution_notes: e.target.value })}
+                  placeholder="Add resolution notes..."
+                />
+              </div>
+            </div>
+            <div className="flex gap-2 mt-6">
+              <Button onClick={handleSubmit} className="flex-1">
+                Save Changes
+              </Button>
+              <Button 
+                onClick={() => setShowModal(false)} 
+                variant="outline" 
+                className="flex-1"
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
-  )
-}
+  );
+};
+
+export default BugReportsView;
