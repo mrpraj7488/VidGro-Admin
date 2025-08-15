@@ -53,6 +53,12 @@ export function EnvironmentVariablesScreen() {
     setEnvVars(envManager.getEnvironmentVariables())
   }
 
+  const handleForceReload = () => {
+    envManager.forceReloadFromEnv()
+    setEnvVars(envManager.getEnvironmentVariables())
+    setConfigStatus(envManager.getConfigurationStatus())
+  }
+
   const isSecretField = (key: string) => {
     return key.toLowerCase().includes('key') || 
            key.toLowerCase().includes('secret') || 
@@ -85,6 +91,10 @@ export function EnvironmentVariablesScreen() {
           <Button variant="outline" onClick={handleReset}>
             <RefreshCw className="w-4 h-4 mr-2" />
             Reset
+          </Button>
+          <Button variant="outline" onClick={handleForceReload}>
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Force Reload
           </Button>
           <Button variant="outline" onClick={handleDownload}>
             <Download className="w-4 h-4 mr-2" />
