@@ -11,17 +11,20 @@ import { format } from 'date-fns'
 
 export function VideoManagement() {
   const { videos, videoFilters, isLoading, fetchVideos, setVideoFilters, copyToClipboard } = useAdminStore()
-  const [selectedVideo, setSelectedVideo] = useState(null)
+  const [selectedVideo, setSelectedVideo] = useState<any>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
 
   useEffect(() => {
     fetchVideos()
   }, [fetchVideos])
 
+  // Filter out any invalid videos and apply search filters
   const filteredVideos = videos.filter(video => {
-    const matchesSearch = video.title.toLowerCase().includes(videoFilters.search.toLowerCase()) ||
-                         video.username.toLowerCase().includes(videoFilters.search.toLowerCase()) ||
-                         video.video_id.toLowerCase().includes(videoFilters.search.toLowerCase())
+    if (!video || !video.title || !video.username) return false
+    
+    const searchTerm = videoFilters.search.toLowerCase()
+    const matchesSearch = video.title.toLowerCase().includes(searchTerm) ||
+                         video.username.toLowerCase().includes(searchTerm)
     const matchesStatus = videoFilters.status === 'all' || video.status === videoFilters.status
     
     return matchesSearch && matchesStatus
@@ -31,50 +34,44 @@ export function VideoManagement() {
     switch (status) {
       case 'active':
         return <Badge variant="success" className="font-medium">Active</Badge>
+      case 'pending':
+        return <Badge variant="warning" className="font-medium">Pending</Badge>
       case 'completed':
         return <Badge variant="info" className="font-medium">Completed</Badge>
       case 'on_hold':
         return <Badge variant="warning" className="font-medium">On Hold</Badge>
-      case 'paused':
-        return <Badge variant="warning" className="font-medium">Paused</Badge>
-      case 'repromote':
-      case 'repromoted':
-        return <Badge variant="default" className="font-medium">Repromote</Badge>
       case 'deleted':
         return <Badge variant="danger" className="font-medium">Deleted</Badge>
+      case 'rejected':
+        return <Badge variant="danger" className="font-medium">Rejected</Badge>
       default:
         return <Badge variant="default" className="font-medium">{status}</Badge>
     }
   }
 
-  const statusCounts = {
-    active: videos.filter(v => v.status === 'active').length,
-    completed: videos.filter(v => v.status === 'completed').length,
-    on_hold: videos.filter(v => v.status === 'on_hold').length,
-    paused: videos.filter(v => v.status === 'paused').length,
-    repromoted: videos.filter(v => v.status === 'repromoted').length,
-    deleted: videos.filter(v => v.status === 'deleted').length
-  }
-
-  const handleViewVideo = (video) => {
-    setSelectedVideo(video)
-    setIsModalOpen(true)
-    // Dispatch popup state change event
-    window.dispatchEvent(new CustomEvent('popupStateChange', { detail: { isOpen: true } }))
-  }
-
-  const handleCloseModal = () => {
-    setIsModalOpen(false)
-    setSelectedVideo(null)
-    // Dispatch popup state change event
-    window.dispatchEvent(new CustomEvent('popupStateChange', { detail: { isOpen: false } }))
+  const handleVideoAction = async (videoId: string, action: 'approve' | 'reject' | 'delete') => {
+    try {
+      switch (action) {
+        case 'approve':
+          // await approveVideo(videoId)
+          break
+        case 'reject':
+          // await rejectVideo(videoId, 'Rejected by admin')
+          break
+        case 'delete':
+          // await deleteVideo(videoId)
+          break
+      }
+      await fetchVideos()
+    } catch (error) {
+      console.error(`Error ${action}ing video:`, error)
+    }
   }
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
-        <div className="h-16 gaming-skeleton rounded-xl" />
-        <div className="h-96 gaming-skeleton rounded-xl" />
+      <div className="flex items-center justify-center h-64">
+        <div className="text-lg">Loading videos...</div>
       </div>
     )
   }
@@ -84,128 +81,152 @@ export function VideoManagement() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white gaming-text-shadow">Video Management</h1>
-          <p className="text-gray-600 dark:text-gray-300">Manage video promotions and track performance</p>
+          <h2 className="text-2xl font-bold text-gray-900">Video Management</h2>
+          <p className="text-gray-600">Manage and moderate video content</p>
+        </div>
+        <div className="text-sm text-gray-500">
+          Total: {videos.length} | Active: {videos.filter(v => v && v.status === 'active').length}
         </div>
       </div>
 
-      {/* Status Overview */}
-      <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
-        {Object.entries(statusCounts).map(([status, count]) => (
-          <Card key={status} className="text-center p-4 cursor-pointer gaming-interactive"
-                onClick={() => setVideoFilters({ status: status === videoFilters.status ? 'all' : status })}>
-            <div className="gaming-metric-value !text-2xl">{count}</div>
-            <div className="text-sm text-gray-500 dark:text-gray-400 capitalize">{status.replace('_', ' ')}</div>
-          </Card>
-        ))}
+      {/* Filters */}
+      <div className="bg-white p-4 rounded-lg border">
+        <div className="flex gap-4">
+          <div className="flex-1">
+            <Input
+              placeholder="Search videos by title, username, or video ID..."
+              value={videoFilters.search}
+              onChange={(e) => setVideoFilters({ search: e.target.value })}
+            />
+          </div>
+          <select
+            value={videoFilters.status}
+            onChange={(e) => setVideoFilters({ status: e.target.value })}
+            className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="all">All Status</option>
+            <option value="pending">Pending</option>
+            <option value="active">Active</option>
+            <option value="completed">Completed</option>
+            <option value="on_hold">On Hold</option>
+            <option value="deleted">Deleted</option>
+            <option value="rejected">Rejected</option>
+          </select>
+        </div>
       </div>
 
-      {/* Search and Filters */}
-      <Card>
-        <CardContent className="p-6">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <Input
-                placeholder="Search by Video ID, title, or creator..."
-                value={videoFilters.search}
-                onChange={(e) => setVideoFilters({ search: e.target.value })}
-                className="pl-10"
-              />
-            </div>
-            
-            <select
-              value={videoFilters.status}
-              onChange={(e) => setVideoFilters({ status: e.target.value })}
-              className="px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm min-w-[140px] dark:bg-slate-800 dark:border-slate-600 dark:text-white"
-            >
-              <option value="all">All Status</option>
-              <option value="active">Active</option>
-              <option value="completed">Completed</option>
-              <option value="on_hold">On Hold</option>
-              <option value="paused">Paused</option>
-              <option value="repromoted">Repromoted</option>
-              <option value="deleted">Deleted</option>
-            </select>
-          </div>
-        </CardContent>
-      </Card>
-
       {/* Videos Table */}
-      <Card>
-        <CardContent className="p-0 gaming-table">
-          <div className="overflow-x-auto">
-            <table className="w-full gaming-table">
-              <thead>
-                <tr>
-                  <th className="text-left">User</th>
-                  <th className="text-left">Video Status</th>
-                  <th className="text-left">View Criteria</th>
-                  <th className="text-left">Video ID</th>
-                  <th className="text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredVideos.map((video) => (
-                  <tr key={video.id} className="group">
-                    <td className="py-4 px-6">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 bg-gradient-to-br from-violet-400 to-purple-600 rounded-full flex items-center justify-center text-white font-medium text-sm">
-                          {video.username.charAt(0).toUpperCase()}
-                        </div>
-                        <div>
-                          <p className="font-medium text-gray-900 dark:text-white">{video.username}</p>
-                          <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-1">{video.title}</p>
-                        </div>
+      <div className="bg-white rounded-lg border overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Video
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  User
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Status
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Views
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Coins
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {filteredVideos.map((video) => (
+                <tr key={video.id} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center">
+                      <div className="flex-shrink-0 h-12 w-12">
+                        <img
+                          className="h-12 w-12 rounded-lg object-cover"
+                          src="/placeholder-thumbnail.jpg"
+                          alt={video.title}
+                        />
                       </div>
-                    </td>
-                    <td className="py-4 px-6">
-                      {getStatusBadge(video.status)}
-                    </td>
-                    <td className="py-4 px-6">
-                      <div className="flex items-center space-x-2">
-                        <Eye className="w-4 h-4 text-gray-400" />
-                        <span className="font-mono text-sm font-medium">{video.views_count}/{video.target_views}</span>
+                      <div className="ml-4">
+                        <div className="text-sm font-medium text-gray-900">{video.title}</div>
+                        <div className="text-sm text-gray-500">ID: {video.id}</div>
                       </div>
-                    </td>
-                    <td className="py-4 px-6">
-                      <div className="flex items-center space-x-2">
-                        <code className="bg-violet-500/10 border border-violet-500/20 px-2 py-1 rounded text-sm font-mono text-violet-600 dark:text-violet-400">{video.id.slice(0, 8)}</code>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => copyToClipboard(video.id)}
-                          className="opacity-0 group-hover:opacity-100 transition-opacity"
-                        >
-                          <Copy className="w-3 h-3" />
-                        </Button>
-                      </div>
-                    </td>
-                    <td className="py-4 px-6 text-right">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleViewVideo(video)}
-                        className="flex items-center space-x-1"
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-gray-900">{video.username}</div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    {getStatusBadge(video.status)}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {video.views_count || 0} / {video.target_views || 1000}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {video.coin_reward || 0}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={() => setSelectedVideo(video)}
+                        className="text-blue-600 hover:text-blue-900"
                       >
-                        <Eye className="w-4 h-4" />
-                        <span>View</span>
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                        View
+                      </button>
+                      {video.status === 'pending' && (
+                        <>
+                          <button
+                            onClick={() => handleVideoAction(video.id, 'approve')}
+                            className="text-green-600 hover:text-green-900"
+                          >
+                            Approve
+                          </button>
+                          <button
+                            onClick={() => handleVideoAction(video.id, 'reject')}
+                            className="text-red-600 hover:text-red-900"
+                          >
+                            Reject
+                          </button>
+                        </>
+                      )}
+                      <button
+                        onClick={() => handleVideoAction(video.id, 'delete')}
+                        className="text-red-600 hover:text-red-900"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        
+        {filteredVideos.length === 0 && (
+          <div className="text-center py-12">
+            <div className="text-gray-500">No videos found</div>
           </div>
-        </CardContent>
-      </Card>
+        )}
+      </div>
 
-      {/* Video View Modal */}
-      <VideoEditModal
-        video={selectedVideo}
-        isOpen={isModalOpen}
-        onClose={handleCloseModal}
-      />
+      {/* Video Details Modal */}
+      {selectedVideo && (
+        <VideoEditModal
+          video={selectedVideo}
+          isOpen={isModalOpen}
+          onClose={() => {
+            setIsModalOpen(false)
+            setSelectedVideo(null)
+          }}
+        />
+      )}
     </div>
   )
 }
