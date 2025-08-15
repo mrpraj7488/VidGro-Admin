@@ -7,7 +7,8 @@ import {
   Home,
   Bug,
   Play,
-  Mail
+  Mail,
+  Database
 } from 'lucide-react'
 import { cn } from '../../lib/utils'
 
