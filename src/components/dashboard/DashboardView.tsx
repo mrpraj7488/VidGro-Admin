@@ -9,7 +9,7 @@ export function DashboardView() {
   const { 
     dashboardStats, 
     chartData, 
-    isLoading, 
+    dashboardLoading, 
     fetchDashboardStats
   } = useAdminStore()
 
@@ -17,7 +17,7 @@ export function DashboardView() {
     fetchDashboardStats()
   }, [fetchDashboardStats])
 
-  if (isLoading || !dashboardStats) {
+  if (dashboardLoading || !dashboardStats) {
     return (
       <div className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -33,6 +33,9 @@ export function DashboardView() {
     )
   }
 
+  // Only show charts if we have real data
+  const hasChartData = chartData && chartData.length > 0
+
   return (
     <div className="space-y-6 mt-4">
       {/* Header */}
@@ -46,144 +49,156 @@ export function DashboardView() {
         <StatsCard
           title="Total Users"
           value={dashboardStats.total_users}
-          change={12.5}
           icon={Users}
           color="violet"
         />
         <StatsCard
           title="Active Videos"
           value={dashboardStats.active_videos}
-          change={15.2}
           icon={Video}
           color="orange"
         />
         <StatsCard
           title="VIP Users"
           value={dashboardStats.vip_users}
-          change={8.3}
           icon={Crown}
           color="emerald"
         />
         <StatsCard
           title="Monthly Revenue"
           value={dashboardStats.monthly_revenue}
-          change={15.2}
           icon={DollarSign}
           format="currency"
           color="blue"
         />
       </div>
 
-      {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* Charts - Only show if we have real data */}
+      {hasChartData && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2 gaming-text-shadow">
+                <TrendingUp className="w-5 h-5 text-violet-600 dark:text-violet-400 gaming-glow" />
+                <span>User Growth Trend</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={300}>
+                <AreaChart data={chartData}>
+                  <defs>
+                    <linearGradient id="colorUsers" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                  <XAxis dataKey="date" stroke="#64748b" fontSize={12} />
+                  <YAxis stroke="#64748b" fontSize={12} />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: 'white', 
+                      border: '1px solid #e2e8f0',
+                      borderRadius: '8px',
+                      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                    }}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="users"
+                    stroke="#6366f1"
+                    strokeWidth={2}
+                    fillOpacity={1}
+                    fill="url(#colorUsers)"
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2 gaming-text-shadow">
+                <Activity className="w-5 h-5 text-emerald-600 dark:text-emerald-400 gaming-glow" />
+                <span>Platform Activity</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={chartData.slice(-7)}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                  <XAxis dataKey="date" stroke="#64748b" fontSize={12} />
+                  <YAxis stroke="#64748b" fontSize={12} />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: 'white', 
+                      border: '1px solid #e2e8f0',
+                      borderRadius: '8px',
+                      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                    }}
+                  />
+                  <Bar dataKey="videos" fill="#10b981" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="coins" fill="#f59e0b" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* No Data Message - Show when no chart data is available */}
+      {!hasChartData && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center space-x-2 gaming-text-shadow">
-              <TrendingUp className="w-5 h-5 text-violet-600 dark:text-violet-400 gaming-glow" />
-              <span>User Growth Trend</span>
+              <Activity className="w-5 h-5 text-gray-600 dark:text-gray-400 gaming-glow" />
+              <span>Data Availability</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <AreaChart data={chartData}>
-                <defs>
-                  <linearGradient id="colorUsers" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                <XAxis dataKey="date" stroke="#64748b" fontSize={12} />
-                <YAxis stroke="#64748b" fontSize={12} />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: 'white', 
-                    border: '1px solid #e2e8f0',
-                    borderRadius: '8px',
-                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-                  }}
-                />
-                <Area
-                  type="monotone"
-                  dataKey="users"
-                  stroke="#6366f1"
-                  strokeWidth={2}
-                  fillOpacity={1}
-                  fill="url(#colorUsers)"
-                />
-              </AreaChart>
-            </ResponsiveContainer>
+            <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+              <Activity className="w-12 h-12 mx-auto mb-4 opacity-50" />
+              <p>Chart data will be displayed here when available</p>
+              <p className="text-sm mt-2">Data is automatically populated from your database</p>
+            </div>
           </CardContent>
         </Card>
+      )}
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2 gaming-text-shadow">
-              <Activity className="w-5 h-5 text-emerald-600 dark:text-emerald-400 gaming-glow" />
-              <span>Platform Activity</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={chartData.slice(-7)}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                <XAxis dataKey="date" stroke="#64748b" fontSize={12} />
-                <YAxis stroke="#64748b" fontSize={12} />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: 'white', 
-                    border: '1px solid #e2e8f0',
-                    borderRadius: '8px',
-                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-                  }}
-                />
-                <Bar dataKey="videos" fill="#10b981" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="coins" fill="#f59e0b" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Recent Activity */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2 gaming-text-shadow">
-            <Activity className="w-5 h-5 text-gray-600 dark:text-gray-400 gaming-glow" />
-            <span>Recent Platform Activity</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            {[
-              { action: 'New VIP user upgraded', user: 'user123', time: '2 minutes ago', type: 'vip', amount: '$9.99' },
-              { action: 'Video promotion started', user: 'creator456', time: '5 minutes ago', type: 'video', amount: '500 coins' },
-              { action: 'Bulk coin purchase', user: 'user789', time: '8 minutes ago', type: 'coin', amount: '$49.99' },
-              { action: 'Video completed promotion', user: 'creator101', time: '12 minutes ago', type: 'promotion', amount: '1.2K views' },
-              { action: 'New user registered', user: 'user202', time: '15 minutes ago', type: 'user', amount: '50 bonus coins' }
-            ].map((activity, index) => (
-              <div key={index} className="flex items-center space-x-4 p-3 rounded-lg hover:bg-violet-50/50 dark:hover:bg-violet-900/20 transition-all duration-300 gaming-interactive">
-                <div className={`w-3 h-3 rounded-full gaming-pulse ${
-                  activity.type === 'user' ? 'bg-violet-500' :
-                  activity.type === 'vip' ? 'bg-yellow-500' :
-                  activity.type === 'video' ? 'bg-emerald-500' :
-                  activity.type === 'coin' ? 'bg-orange-500' : 'bg-blue-500'
-                }`} />
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-gray-900 dark:text-white gaming-text-shadow">
-                    {activity.action}
-                  </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">by {activity.user}</p>
-                </div>
-                <div className="text-right">
-                  <span className="text-sm font-medium text-gray-900 dark:text-white gaming-text-shadow">{activity.amount}</span>
-                  <p className="text-xs text-gray-400 dark:text-gray-500">{activity.time}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+      {/* Additional Stats - Only show if we have meaningful data */}
+      {(dashboardStats.pending_videos > 0 || dashboardStats.daily_active_users > 0) && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {dashboardStats.pending_videos > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <Video className="w-5 h-5 text-orange-600" />
+                  <span>Pending Videos</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-orange-600">{dashboardStats.pending_videos}</div>
+                <p className="text-sm text-gray-500">Videos awaiting approval</p>
+              </CardContent>
+            </Card>
+          )}
+          
+          {dashboardStats.daily_active_users > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <Users className="w-5 h-5 text-violet-600" />
+                  <span>Daily Active Users</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-violet-600">{dashboardStats.daily_active_users}</div>
+                <p className="text-sm text-gray-500">Users active in last 24 hours</p>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      )}
     </div>
   )
 }
