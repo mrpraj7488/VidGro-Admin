@@ -1,40 +1,56 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Download, Upload, Database, Calendar, CheckCircle, AlertTriangle, RefreshCw, HardDrive } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card'
 import { Button } from '../ui/Button'
 import { Badge } from '../ui/Badge'
 import { format } from 'date-fns'
+import { getSupabaseClient } from '../../lib/supabase'
 
 export function BackupScreen() {
   const [isCreatingBackup, setIsCreatingBackup] = useState(false)
   const [isRestoring, setIsRestoring] = useState(false)
+  const [backups, setBackups] = useState<any[]>([])
+  const [isLoading, setIsLoading] = useState(false)
 
-  const mockBackups = [
-    {
-      id: 1,
-      name: 'Full System Backup',
-      type: 'full',
-      size: '2.4 GB',
-      date: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
-      status: 'completed'
-    },
-    {
-      id: 2,
-      name: 'User Data Backup',
-      type: 'users',
-      size: '856 MB',
-      date: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
-      status: 'completed'
-    },
-    {
-      id: 3,
-      name: 'Video Data Backup',
-      type: 'videos',
-      size: '1.2 GB',
-      date: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
-      status: 'completed'
+  useEffect(() => {
+    fetchBackups()
+  }, [])
+
+  const fetchBackups = async () => {
+    setIsLoading(true)
+    try {
+      const supabase = getSupabaseClient()
+      if (!supabase) {
+        throw new Error('Supabase not initialized')
+      }
+
+      // Get backup records from database
+      const { data: backupData, error } = await supabase
+        .from('backups')
+        .select('*')
+        .order('created_at', { ascending: false })
+
+      if (error) throw error
+
+      // Transform backup data
+      const transformedBackups = backupData?.map(backup => ({
+        id: backup.id,
+        name: backup.name,
+        type: backup.type,
+        size: backup.size,
+        date: new Date(backup.created_at),
+        status: backup.status
+      })) || []
+
+      setBackups(transformedBackups)
+    } catch (error) {
+      console.error('Failed to fetch backups:', error)
+      // Set empty array on error
+      setBackups([])
+    } finally {
+      setIsLoading(false)
     }
-  ]
+  }
 
   const handleCreateBackup = async (type: string) => {
     setIsCreatingBackup(true)
@@ -164,52 +180,58 @@ export function BackupScreen() {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {mockBackups.map((backup) => (
-              <div key={backup.id} className="flex items-center justify-between p-4 gaming-card hover:scale-[1.02] transition-transform duration-300">
-                <div className="flex items-center space-x-4">
-                  <div className="w-12 h-12 bg-violet-100 dark:bg-violet-900/30 rounded-lg flex items-center justify-center">
-                    {getBackupTypeIcon(backup.type)}
+            {isLoading ? (
+              <p className="text-center py-8">Loading backups...</p>
+            ) : backups.length === 0 ? (
+              <p className="text-center py-8">No backups found. Create one to see history.</p>
+            ) : (
+              backups.map((backup) => (
+                <div key={backup.id} className="flex items-center justify-between p-4 gaming-card hover:scale-[1.02] transition-transform duration-300">
+                  <div className="flex items-center space-x-4">
+                    <div className="w-12 h-12 bg-violet-100 dark:bg-violet-900/30 rounded-lg flex items-center justify-center">
+                      {getBackupTypeIcon(backup.type)}
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-gray-900 dark:text-white">{backup.name}</h4>
+                      <div className="flex items-center space-x-3 mt-1">
+                        {getBackupTypeBadge(backup.type)}
+                        <span className="text-sm text-gray-500 dark:text-gray-400">{backup.size}</span>
+                        <span className="text-sm text-gray-500 dark:text-gray-400 flex items-center">
+                          <Calendar className="w-3 h-3 mr-1" />
+                          {format(backup.date, 'MMM dd, yyyy HH:mm')}
+                        </span>
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <h4 className="font-medium text-gray-900 dark:text-white">{backup.name}</h4>
-                    <div className="flex items-center space-x-3 mt-1">
-                      {getBackupTypeBadge(backup.type)}
-                      <span className="text-sm text-gray-500 dark:text-gray-400">{backup.size}</span>
-                      <span className="text-sm text-gray-500 dark:text-gray-400 flex items-center">
-                        <Calendar className="w-3 h-3 mr-1" />
-                        {format(backup.date, 'MMM dd, yyyy HH:mm')}
-                      </span>
+                  <div className="flex items-center space-x-2">
+                    <div className="flex items-center space-x-1">
+                      <CheckCircle className="w-4 h-4 text-emerald-500" />
+                      <span className="text-sm text-emerald-600 dark:text-emerald-400">Completed</span>
+                    </div>
+                    <div className="flex space-x-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleRestoreBackup(backup.id)}
+                        disabled={isRestoring}
+                      >
+                        {isRestoring ? (
+                          <RefreshCw className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Upload className="w-4 h-4" />
+                        )}
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                      >
+                        <Download className="w-4 h-4" />
+                      </Button>
                     </div>
                   </div>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <div className="flex items-center space-x-1">
-                    <CheckCircle className="w-4 h-4 text-emerald-500" />
-                    <span className="text-sm text-emerald-600 dark:text-emerald-400">Completed</span>
-                  </div>
-                  <div className="flex space-x-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleRestoreBackup(backup.id)}
-                      disabled={isRestoring}
-                    >
-                      {isRestoring ? (
-                        <RefreshCw className="w-4 h-4 animate-spin" />
-                      ) : (
-                        <Upload className="w-4 h-4" />
-                      )}
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                    >
-                      <Download className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </CardContent>
       </Card>
