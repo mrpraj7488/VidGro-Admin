@@ -5,6 +5,7 @@ import { Button } from '../ui/Button'
 import { Badge } from '../ui/Badge'
 import { useAdminStore } from '../../stores/adminStore'
 import { format, formatDistanceToNow } from 'date-fns'
+import { getSupabaseClient } from '../../lib/supabase'
 
 interface SecurityEvent {
   id: string
@@ -29,39 +30,42 @@ export function SecurityDashboard() {
 
   const fetchSecurityEvents = async () => {
     setIsLoading(true)
-    // Mock security events - in real app, this would come from security monitoring
-    const mockEvents: SecurityEvent[] = [
-      {
-        id: '1',
-        type: 'key_rotation',
-        severity: 'medium',
-        description: 'JWT secret key rotated successfully',
-        timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-        adminEmail: 'admin@vidgro.com',
-        resolved: true
-      },
-      {
-        id: '2',
-        type: 'access_attempt',
-        severity: 'high',
-        description: 'Multiple failed API key validation attempts detected',
-        timestamp: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(),
-        ipAddress: '192.168.1.100',
-        resolved: false
-      },
-      {
-        id: '3',
-        type: 'config_change',
-        severity: 'low',
-        description: 'Feature flag FEATURE_ADS_ENABLED updated',
-        timestamp: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString(),
-        adminEmail: 'admin@vidgro.com',
-        resolved: true
+    try {
+      // Fetch real security events from database
+      const supabase = getSupabaseClient()
+      if (!supabase) {
+        throw new Error('Supabase not initialized')
       }
-    ]
-    
-    setSecurityEvents(mockEvents)
-    setIsLoading(false)
+
+      // Get security events from database
+      const { data: events, error } = await supabase
+        .from('security_events')
+        .select('*')
+        .order('timestamp', { ascending: false })
+        .limit(50)
+
+      if (error) throw error
+
+      // Transform database events to SecurityEvent format
+      const securityEvents: SecurityEvent[] = events?.map(event => ({
+        id: event.id,
+        type: event.type,
+        severity: event.severity,
+        description: event.description,
+        timestamp: event.timestamp,
+        adminEmail: event.admin_email,
+        ipAddress: event.ip_address,
+        resolved: event.resolved || false
+      })) || []
+
+      setSecurityEvents(securityEvents)
+    } catch (error) {
+      console.error('Failed to fetch security events:', error)
+      // Set empty array on error
+      setSecurityEvents([])
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const getSecurityMetrics = () => {
