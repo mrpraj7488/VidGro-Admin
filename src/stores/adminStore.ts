@@ -1083,9 +1083,15 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
           username,
           coins,
           is_vip,
+          is_banned,
+          ban_reason,
+          ban_date,
           vip_expires_at,
           referral_code,
           referred_by,
+          total_spent,
+          total_earned,
+          last_active,
           created_at,
           updated_at
         `)
