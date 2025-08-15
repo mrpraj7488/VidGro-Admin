@@ -264,7 +264,6 @@ export function DashboardView() {
         </Card>
       </div>
 
-      </div>
 
       {/* Data Status Alert */}
       {!hasRealChartData && (
@@ -285,6 +284,7 @@ export function DashboardView() {
           </CardContent>
         </Card>
       )}
+    </div>
     </div>
   )
 }
