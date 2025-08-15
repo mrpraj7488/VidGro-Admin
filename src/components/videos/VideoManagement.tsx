@@ -49,7 +49,6 @@ export function VideoManagement() {
     active: videos.filter(v => v.status === 'active').length,
     completed: videos.filter(v => v.status === 'completed').length,
     on_hold: videos.filter(v => v.status === 'on_hold').length,
-    paused: videos.filter(v => v.status === 'paused').length,
     repromoted: videos.filter(v => v.status === 'repromoted').length,
     deleted: videos.filter(v => v.status === 'deleted').length
   }
