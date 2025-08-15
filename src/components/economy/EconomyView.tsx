@@ -13,10 +13,10 @@ export function EconomyView() {
   const { economyData, isLoading, fetchEconomyData, updateCoinSettings } = useAdminStore()
   const [editingSettings, setEditingSettings] = useState(false)
   const [settings, setSettings] = useState({
-    coinPrice: 0.01,
-    videoReward: 10,
-    referralBonus: 50,
-    vipMultiplier: 2.0
+    coinPrice: 0,
+    videoReward: 0,
+    referralBonus: 0,
+    vipMultiplier: 0
   })
 
   useEffect(() => {
@@ -73,14 +73,12 @@ export function EconomyView() {
         <StatsCard
           title="Total Coins in Circulation"
           value={economyData.totalCoinsCirculation}
-          change={8.5}
           icon={Coins}
           color="orange"
         />
         <StatsCard
           title="Monthly Revenue"
           value={economyData.monthlyRevenue}
-          change={12.3}
           icon={DollarSign}
           format="currency"
           color="emerald"
@@ -88,7 +86,6 @@ export function EconomyView() {
         <StatsCard
           title="Coin Velocity"
           value={economyData.coinVelocity}
-          change={-3.2}
           icon={TrendingUp}
           format="number"
           color="violet"
@@ -96,7 +93,6 @@ export function EconomyView() {
         <StatsCard
           title="Active Spenders"
           value={economyData.activeSpenders}
-          change={15.7}
           icon={Users}
           color="blue"
         />
