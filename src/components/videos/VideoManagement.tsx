@@ -35,9 +35,7 @@ export function VideoManagement() {
         return <Badge variant="info" className="font-medium">Completed</Badge>
       case 'on_hold':
         return <Badge variant="warning" className="font-medium">On Hold</Badge>
-      case 'paused':
-        return <Badge variant="warning" className="font-medium">Paused</Badge>
-      case 'repromote':
+          case 'repromote':
       case 'repromoted':
         return <Badge variant="default" className="font-medium">Repromote</Badge>
       case 'deleted':
