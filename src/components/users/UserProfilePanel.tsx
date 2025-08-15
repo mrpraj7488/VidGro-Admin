@@ -1,10 +1,11 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { X, User, Mail, Coins, Crown, Video, Calendar, Ban, Trash2, Shield, AlertTriangle, CheckCircle, Clock, DollarSign } from 'lucide-react'
 import { Button } from '../ui/Button'
 import { Badge } from '../ui/Badge'
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card'
 import { formatNumber, formatCurrency } from '../../lib/utils'
 import { format } from 'date-fns'
+import { getSupabaseClient } from '../../lib/supabase'
 
 interface UserProfilePanelProps {
   isOpen: boolean
@@ -16,6 +17,76 @@ export function UserProfilePanel({ isOpen, onClose, user }: UserProfilePanelProp
   const [activeTab, setActiveTab] = useState('overview')
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [showBanConfirm, setShowBanConfirm] = useState(false)
+  const [userDetails, setUserDetails] = useState<any>(null)
+  const [isLoading, setIsLoading] = useState(false)
+
+  useEffect(() => {
+    if (isOpen && user) {
+      fetchUserDetails()
+    }
+  }, [isOpen, user])
+
+  const fetchUserDetails = async () => {
+    if (!user) return
+    
+    setIsLoading(true)
+    try {
+      const supabase = getSupabaseClient()
+      if (!supabase) {
+        throw new Error('Supabase not initialized')
+      }
+
+      // Get user's video history
+      const { data: videos, error: videosError } = await supabase
+        .from('videos')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+
+      if (videosError) throw videosError
+
+      // Get user's transaction history (if transactions table exists)
+      // For now, using the user's existing data
+      const userDetails = {
+        ...user,
+        totalSpentCoins: user.total_spent || 0,
+        totalPromotedVideos: videos?.length || 0,
+        referralEarnings: 0, // Will be implemented when referral system is ready
+        vipExpireTime: user.is_vip && user.vip_expires_at ? new Date(user.vip_expires_at) : null,
+        purchaseHistory: [], // Will be populated from transactions table when available
+        videoHistory: videos?.map(video => ({
+          id: video.id,
+          title: video.title,
+          status: video.status,
+          views: video.views_count,
+          coins: video.coin_cost,
+          date: video.created_at
+        })) || [],
+        isBanned: user.is_banned || false,
+        banReason: user.ban_reason || null,
+        banDate: user.ban_date || null
+      }
+
+      setUserDetails(userDetails)
+    } catch (error) {
+      console.error('Failed to fetch user details:', error)
+      // Use basic user data on error
+      setUserDetails({
+        ...user,
+        totalSpentCoins: user.total_spent || 0,
+        totalPromotedVideos: 0,
+        referralEarnings: 0,
+        vipExpireTime: null,
+        purchaseHistory: [],
+        videoHistory: [],
+        isBanned: false,
+        banReason: null,
+        banDate: null
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   if (!isOpen || !user) return null
 
@@ -26,22 +97,15 @@ export function UserProfilePanel({ isOpen, onClose, user }: UserProfilePanelProp
     { id: 'activity', label: 'Activity' }
   ]
 
-  const mockUserDetails = {
+  // Use fetched user details or fallback to basic user data
+  const displayUser = userDetails || {
     ...user,
-    totalSpentCoins: 15420,
-    totalPromotedVideos: 23,
-    referralEarnings: 2340,
-    vipExpireTime: user.is_vip ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) : null,
-    purchaseHistory: [
-      { id: 1, amount: 1000, price: 10.00, date: '2024-01-15', status: 'completed' },
-      { id: 2, amount: 500, price: 5.00, date: '2024-01-10', status: 'completed' },
-      { id: 3, amount: 2000, price: 20.00, date: '2024-01-05', status: 'completed' }
-    ],
-    videoHistory: [
-      { id: 1, title: 'Amazing Content 1', status: 'completed', views: 1250, coins: 500, date: '2024-01-14' },
-      { id: 2, title: 'Great Video 2', status: 'active', views: 850, coins: 300, date: '2024-01-12' },
-      { id: 3, title: 'Deleted Video', status: 'deleted', views: 0, coins: 0, date: '2024-01-10' }
-    ],
+    totalSpentCoins: user.total_spent || 0,
+    totalPromotedVideos: 0,
+    referralEarnings: 0,
+    vipExpireTime: null,
+    purchaseHistory: [],
+    videoHistory: [],
     isBanned: false,
     banReason: null,
     banDate: null
@@ -82,7 +146,7 @@ export function UserProfilePanel({ isOpen, onClose, user }: UserProfilePanelProp
                   <h2 className="text-xl font-bold text-gray-900 dark:text-white gaming-text-shadow flex items-center space-x-2">
                     <span>{user.username}</span>
                     {user.is_vip && <Crown className="w-5 h-5 text-yellow-500" />}
-                    {mockUserDetails.isBanned && <Ban className="w-5 h-5 text-red-500" />}
+                    {displayUser.isBanned && <Ban className="w-5 h-5 text-red-500" />}
                   </h2>
                   <p className="text-sm text-gray-500 dark:text-gray-400">{user.email}</p>
                   <div className="flex items-center space-x-2 mt-1">
@@ -91,7 +155,7 @@ export function UserProfilePanel({ isOpen, onClose, user }: UserProfilePanelProp
                     ) : (
                       <Badge variant="default">Regular User</Badge>
                     )}
-                    {mockUserDetails.isBanned && (
+                    {displayUser.isBanned && (
                       <Badge variant="danger">Banned</Badge>
                     )}
                   </div>
@@ -109,11 +173,11 @@ export function UserProfilePanel({ isOpen, onClose, user }: UserProfilePanelProp
                 <div className="text-xs text-gray-500 dark:text-gray-400">Current Coins</div>
               </div>
               <div className="text-center p-3 gaming-card">
-                <div className="text-lg font-bold text-violet-600 dark:text-violet-400">{mockUserDetails.totalPromotedVideos}</div>
+                <div className="text-lg font-bold text-violet-600 dark:text-violet-400">{displayUser.totalPromotedVideos}</div>
                 <div className="text-xs text-gray-500 dark:text-gray-400">Videos</div>
               </div>
               <div className="text-center p-3 gaming-card">
-                <div className="text-lg font-bold text-emerald-600 dark:text-emerald-400">{formatNumber(mockUserDetails.referralEarnings)}</div>
+                <div className="text-lg font-bold text-emerald-600 dark:text-emerald-400">{formatNumber(displayUser.referralEarnings)}</div>
                 <div className="text-xs text-gray-500 dark:text-gray-400">Referrals</div>
               </div>
             </div>
@@ -160,20 +224,20 @@ export function UserProfilePanel({ isOpen, onClose, user }: UserProfilePanelProp
                       </div>
                       <div>
                         <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Spent</label>
-                        <p className="font-medium">{formatNumber(mockUserDetails.totalSpentCoins)} coins</p>
+                        <p className="font-medium">{formatNumber(displayUser.totalSpentCoins)} coins</p>
                       </div>
                       <div>
                         <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Referral Earnings</label>
-                        <p className="font-medium text-emerald-600 dark:text-emerald-400">{formatNumber(mockUserDetails.referralEarnings)} coins</p>
+                        <p className="font-medium text-emerald-600 dark:text-emerald-400">{formatNumber(displayUser.referralEarnings)} coins</p>
                       </div>
                       <div>
                         <label className="text-sm font-medium text-gray-500 dark:text-gray-400">VIP Status</label>
                         <p className="font-medium">{user.is_vip ? 'Active' : 'Inactive'}</p>
                       </div>
-                      {user.is_vip && mockUserDetails.vipExpireTime && (
+                      {user.is_vip && displayUser.vipExpireTime && (
                         <div>
                           <label className="text-sm font-medium text-gray-500 dark:text-gray-400">VIP Expires</label>
-                          <p className="font-medium">{format(mockUserDetails.vipExpireTime, 'MMM dd, yyyy')}</p>
+                          <p className="font-medium">{format(displayUser.vipExpireTime, 'MMM dd, yyyy')}</p>
                         </div>
                       )}
                       <div>
@@ -193,7 +257,7 @@ export function UserProfilePanel({ isOpen, onClose, user }: UserProfilePanelProp
             {/* Videos Tab */}
             {activeTab === 'videos' && (
               <div className="space-y-4">
-                {mockUserDetails.videoHistory.map((video) => (
+                {displayUser.videoHistory.map((video) => (
                   <Card key={video.id}>
                     <CardContent className="p-4">
                       <div className="flex items-center justify-between">
@@ -226,7 +290,7 @@ export function UserProfilePanel({ isOpen, onClose, user }: UserProfilePanelProp
             {/* Transactions Tab */}
             {activeTab === 'transactions' && (
               <div className="space-y-4">
-                {mockUserDetails.purchaseHistory.map((purchase) => (
+                {displayUser.purchaseHistory.map((purchase) => (
                   <Card key={purchase.id}>
                     <CardContent className="p-4">
                       <div className="flex items-center justify-between">
@@ -290,7 +354,7 @@ export function UserProfilePanel({ isOpen, onClose, user }: UserProfilePanelProp
           {/* Footer Actions */}
           <div className="p-6 border-t border-violet-500/20">
             <div className="flex space-x-3">
-              {!mockUserDetails.isBanned ? (
+              {!displayUser.isBanned ? (
                 <Button 
                   variant="danger" 
                   onClick={() => setShowBanConfirm(true)}
