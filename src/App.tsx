@@ -109,6 +109,7 @@ function AppContent() {
                 <ErrorBoundary>
                   {renderContent()}
                 </ErrorBoundary>
+                </div>
               </main>
             </div>
           </div>
@@ -126,8 +127,6 @@ function AppContent() {
 }
 
 function App() {
-      }
-  )
   return (
     <AuthProvider>
       <AppContent />
@@ -136,8 +135,3 @@ function App() {
 }
 
 export default App
-
-  )
-}
-  )
-}
