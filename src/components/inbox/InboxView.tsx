@@ -21,19 +21,19 @@ import { Input } from '../ui/Input'
 import { Badge } from '../ui/Badge'
 import { BulkNotificationModal } from '../users/BulkNotificationModal'
 import { format, formatDistanceToNow } from 'date-fns'
+import { getSupabaseClient } from '../../lib/supabase'
 
 interface SupportTicket {
   id: string
-  userId: string
-  username: string
-  email: string
-  subject: string
-  message: string
+  title: string
+  description: string
   status: 'new' | 'in_progress' | 'resolved' | 'closed'
   priority: 'low' | 'medium' | 'high' | 'urgent'
-  category: 'technical' | 'billing' | 'feature_request' | 'bug_report' | 'general'
-  createdAt: string
-  updatedAt: string
+  category: string
+  reported_by: string
+  assigned_to?: string
+  created_at: string
+  updated_at: string
   adminReplies: AdminReply[]
 }
 
@@ -46,75 +46,10 @@ interface AdminReply {
   isInternal: boolean
 }
 
-const mockTickets: SupportTicket[] = Array.from({ length: 12 }, (_, i) => ({
-  id: `ticket-${i + 1}`,
-  userId: `user-${i + 1}`,
-  username: `user${i + 1}`,
-  email: `user${i + 1}@example.com`,
-  subject: [
-    'Unable to upload video',
-    'Coin transaction failed',
-    'VIP upgrade not working',
-    'App crashes on startup',
-    'Video promotion not showing',
-    'Payment processing error',
-    'Account verification issue',
-    'Feature request: Dark mode',
-    'Bug: Video thumbnail missing',
-    'Help with coin withdrawal',
-    'Profile picture upload fails',
-    'Notification settings broken'
-  ][i],
-  message: `Detailed description of the issue for ticket ${i + 1}. This is a comprehensive explanation of what the user is experiencing and what they need help with.`,
-  status: ['new', 'in_progress', 'resolved', 'closed'][Math.floor(Math.random() * 4)] as any,
-  priority: ['low', 'medium', 'high', 'urgent'][Math.floor(Math.random() * 4)] as any,
-  category: ['technical', 'billing', 'feature_request', 'bug_report', 'general'][Math.floor(Math.random() * 5)] as any,
-  createdAt: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString(),
-  updatedAt: new Date(Date.now() - Math.random() * 24 * 60 * 60 * 1000).toISOString(),
-  adminReplies: Math.random() > 0.5 ? [
-    {
-      id: `reply-${i + 1}-1`,
-      adminId: 'admin-1',
-      adminName: 'Admin Support',
-      message: 'Thank you for contacting us. We are looking into this issue and will get back to you shortly.',
-      timestamp: new Date(Date.now() - Math.random() * 12 * 60 * 60 * 1000).toISOString(),
-      isInternal: false
-    }
-  ] : []
-}))
-
-const getPriorityIcon = (priority: string) => {
-  switch (priority) {
-    case 'urgent': return <AlertTriangle className="h-3 w-3 text-red-500" />
-    case 'high': return <ArrowUp className="h-3 w-3 text-orange-500" />
-    case 'medium': return <Minus className="h-3 w-3 text-yellow-500" />
-    case 'low': return <ArrowDown className="h-3 w-3 text-green-500" />
-    default: return <Minus className="h-3 w-3 text-gray-500" />
-  }
-}
-
-const getStatusVariant = (status: string) => {
-  switch (status) {
-    case 'new': return 'danger'
-    case 'in_progress': return 'warning'
-    case 'resolved': return 'success'
-    case 'closed': return 'default'
-    default: return 'default'
-  }
-}
-
-const getPriorityVariant = (priority: string) => {
-  switch (priority) {
-    case 'urgent': return 'danger'
-    case 'high': return 'warning'
-    case 'medium': return 'default'
-    case 'low': return 'success'
-    default: return 'default'
-  }
-}
-
 export function InboxView() {
-  const [tickets, setTickets] = useState<SupportTicket[]>(mockTickets)
+  const [activeTab, setActiveTab] = useState('all')
+  const [tickets, setTickets] = useState<SupportTicket[]>([])
+  const [isLoading, setIsLoading] = useState(false)
   const [selectedTicket, setSelectedTicket] = useState<SupportTicket | null>(null)
   const [replyMessage, setReplyMessage] = useState('')
   const [filterStatus, setFilterStatus] = useState<string>('all')
@@ -124,20 +59,64 @@ export function InboxView() {
   const [isComposeEmailOpen, setIsComposeEmailOpen] = useState(false)
   const [selectedUserForEmail, setSelectedUserForEmail] = useState<string | null>(null)
 
+  useEffect(() => {
+    fetchTickets()
+  }, [])
+
+  const fetchTickets = async () => {
+    setIsLoading(true)
+    try {
+      const supabase = getSupabaseClient()
+      if (!supabase) {
+        throw new Error('Supabase not initialized')
+      }
+
+      // Get support tickets from database
+      const { data: ticketData, error } = await supabase
+        .from('support_tickets')
+        .select('*')
+        .order('created_at', { ascending: false })
+
+      if (error) throw error
+
+      // Transform ticket data to match interface
+      const transformedTickets: SupportTicket[] = (ticketData || []).map(ticket => ({
+        id: ticket.id,
+        title: ticket.title || ticket.subject || 'No Title',
+        description: ticket.description || ticket.message || 'No description provided',
+        status: ticket.status || 'new',
+        priority: ticket.priority || 'medium',
+        category: ticket.category || 'general',
+        reported_by: ticket.reported_by || ticket.user_id || 'Unknown User',
+        assigned_to: ticket.assigned_to,
+        created_at: ticket.created_at,
+        updated_at: ticket.updated_at,
+        adminReplies: ticket.admin_replies || []
+      }))
+
+      setTickets(transformedTickets)
+    } catch (error) {
+      console.error('Failed to fetch tickets:', error)
+      setTickets([])
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   const filteredTickets = tickets.filter(ticket => {
     const matchesStatus = filterStatus === 'all' || ticket.status === filterStatus
-    const matchesSearch = ticket.subject.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         ticket.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         ticket.email.toLowerCase().includes(searchQuery.toLowerCase())
+    const matchesSearch = ticket.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         ticket.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         ticket.reported_by.toLowerCase().includes(searchQuery.toLowerCase())
     return matchesStatus && matchesSearch
   })
 
   const updateTicketStatus = (ticketId: string, status: string) => {
     setTickets(prev => prev.map(ticket => 
-      ticket.id === ticketId ? { ...ticket, status: status as any, updatedAt: new Date().toISOString() } : ticket
+      ticket.id === ticketId ? { ...ticket, status: status as any, updated_at: new Date().toISOString() } : ticket
     ))
     if (selectedTicket?.id === ticketId) {
-      setSelectedTicket(prev => prev ? { ...prev, status: status as any, updatedAt: new Date().toISOString() } : null)
+      setSelectedTicket(prev => prev ? { ...prev, status: status as any, updated_at: new Date().toISOString() } : null)
     }
   }
 
@@ -159,7 +138,7 @@ export function InboxView() {
             ...ticket, 
             adminReplies: [...ticket.adminReplies, newReply],
             status: ticket.status === 'new' ? 'in_progress' : ticket.status,
-            updatedAt: new Date().toISOString()
+            updated_at: new Date().toISOString()
           } 
         : ticket
     ))
@@ -169,7 +148,7 @@ export function InboxView() {
         ...prev,
         adminReplies: [...prev.adminReplies, newReply],
         status: prev.status === 'new' ? 'in_progress' : prev.status,
-        updatedAt: new Date().toISOString()
+        updated_at: new Date().toISOString()
       } : null)
     }
 
@@ -179,7 +158,7 @@ export function InboxView() {
 
   const handleSendBulkNotification = async (notification: any) => {
     console.log('Sending bulk notification:', notification)
-    // TODO: Implement actual bulk notification sending
+    // Bulk notification sending will be implemented when backend API is ready
   }
 
   const handleComposeEmail = (userId?: string) => {
@@ -260,7 +239,18 @@ export function InboxView() {
         
         {/* Ticket List */}
           <div className="flex-1 overflow-y-auto gaming-scrollbar">
-          {filteredTickets.map((ticket) => (
+          {isLoading ? (
+            <div className="p-4 text-center text-gray-500">
+              Loading tickets...
+            </div>
+          ) : tickets.length === 0 ? (
+            <div className="p-4 text-center text-gray-500">
+              <Mail className="h-8 w-8 mx-auto mb-2 opacity-50" />
+              <p>No support tickets found</p>
+              <p className="text-sm">Tickets will appear here when submitted</p>
+            </div>
+          ) : (
+            filteredTickets.map((ticket) => (
             <div
               key={ticket.id}
               onClick={() => setSelectedTicket(ticket)}
@@ -278,26 +268,26 @@ export function InboxView() {
                   </div>
                 </div>
                 <span className="text-xs text-muted-foreground dark:text-gray-400">
-                  {formatDistanceToNow(new Date(ticket.createdAt))} ago
+                  {formatDistanceToNow(new Date(ticket.created_at))} ago
                 </span>
               </div>
               
               <h3 className="font-medium text-sm mb-1 line-clamp-1">
-                {ticket.subject}
+                {ticket.title}
               </h3>
               
               <div className="flex items-center gap-2 text-xs text-muted-foreground dark:text-gray-400">
                 <User className="h-3 w-3" />
-                <span>{ticket.username}</span>
+                <span>{ticket.reported_by}</span>
                 <span>•</span>
                 <span className="capitalize">{ticket.category.replace('_', ' ')}</span>
               </div>
               
               <p className="text-xs text-muted-foreground dark:text-gray-400 mt-1 line-clamp-2">
-                {ticket.message}
+                {ticket.description}
               </p>
             </div>
-          ))}
+          )))}
         </div>
       </div>
       
@@ -309,19 +299,15 @@ export function InboxView() {
               <div className="p-6 border-b border-violet-500/20 bg-gradient-to-r from-violet-50 to-purple-50 dark:from-violet-900/20 dark:to-purple-900/20">
               <div className="flex items-start justify-between mb-4">
                 <div>
-                  <h1 className="text-xl font-semibold mb-2 dark:text-white">{selectedTicket.subject}</h1>
+                  <h1 className="text-xl font-semibold mb-2 dark:text-white">{selectedTicket.title}</h1>
                   <div className="flex items-center gap-4 text-sm text-muted-foreground dark:text-gray-400">
                     <div className="flex items-center gap-1">
                       <User className="h-4 w-4" />
-                      <span>{selectedTicket.username}</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Mail className="h-4 w-4" />
-                      <span>{selectedTicket.email}</span>
+                      <span>{selectedTicket.reported_by}</span>
                     </div>
                     <div className="flex items-center gap-1">
                       <Clock className="h-4 w-4" />
-                      <span>{format(new Date(selectedTicket.createdAt), 'MMM dd, yyyy HH:mm')}</span>
+                      <span>{format(new Date(selectedTicket.created_at), 'MMM dd, yyyy HH:mm')}</span>
                     </div>
                   </div>
                 </div>
@@ -355,18 +341,18 @@ export function InboxView() {
                   <div className="flex items-center gap-2 mb-2">
                       <div className="w-8 h-8 bg-violet-100 dark:bg-violet-900/50 rounded-full flex items-center justify-center">
                         <span className="text-violet-600 dark:text-violet-400 font-medium text-sm">
-                        {selectedTicket.username.charAt(0).toUpperCase()}
+                        {selectedTicket.reported_by.charAt(0).toUpperCase()}
                       </span>
                     </div>
                     <div>
-                      <p className="font-medium text-sm dark:text-white">{selectedTicket.username}</p>
+                      <p className="font-medium text-sm dark:text-white">{selectedTicket.reported_by}</p>
                       <p className="text-xs text-muted-foreground dark:text-gray-400">
-                        {format(new Date(selectedTicket.createdAt), 'MMM dd, yyyy HH:mm')}
+                        {format(new Date(selectedTicket.created_at), 'MMM dd, yyyy HH:mm')}
                       </p>
                     </div>
                   </div>
                   <div className="prose prose-sm max-w-none dark:text-gray-300">
-                    <p>{selectedTicket.message}</p>
+                    <p>{selectedTicket.description}</p>
                   </div>
                 </div>
                 
@@ -417,7 +403,7 @@ export function InboxView() {
               <div className="p-6 border-t border-violet-500/20 bg-violet-500/5 dark:bg-slate-800/30">
               <div className="space-y-4">
                 <div className="flex items-center gap-4">
-                  <h3 className="font-medium dark:text-white">Reply to {selectedTicket.username}</h3>
+                  <h3 className="font-medium dark:text-white">Reply to {selectedTicket.reported_by}</h3>
                   <div className="flex items-center gap-2">
                     <input
                       type="checkbox"
@@ -452,7 +438,7 @@ export function InboxView() {
                       Cancel
                     </Button>
                     <Button onClick={() => sendReply(selectedTicket.id, replyMessage)}>
-                      <Send className="h-4 w-4 mr-1" />
+                      <Send className="h-4 h-4 mr-1" />
                       Send Reply
                     </Button>
                   </div>
@@ -480,4 +466,34 @@ export function InboxView() {
       />
     </>
   )
+}
+
+const getPriorityIcon = (priority: string) => {
+  switch (priority) {
+    case 'urgent': return <AlertTriangle className="h-3 w-3 text-red-500" />
+    case 'high': return <ArrowUp className="h-3 w-3 text-orange-500" />
+    case 'medium': return <Minus className="h-3 w-3 text-yellow-500" />
+    case 'low': return <ArrowDown className="h-3 w-3 text-green-500" />
+    default: return <Minus className="h-3 w-3 text-gray-500" />
+  }
+}
+
+const getStatusVariant = (status: string) => {
+  switch (status) {
+    case 'new': return 'danger'
+    case 'in_progress': return 'warning'
+    case 'resolved': return 'success'
+    case 'closed': return 'default'
+    default: return 'default'
+  }
+}
+
+const getPriorityVariant = (priority: string) => {
+  switch (priority) {
+    case 'urgent': return 'danger'
+    case 'high': return 'warning'
+    case 'medium': return 'default'
+    case 'low': return 'success'
+    default: return 'default'
+  }
 }
