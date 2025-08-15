@@ -877,3 +877,45 @@
     animation: none;
   }
 }
+
+/* Hide scrollbar for mobile tabs */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Mobile-specific improvements */
+@media (max-width: 640px) {
+  .gaming-modal {
+    max-width: 95vw;
+    margin: 0.5rem;
+    max-height: 95vh;
+  }
+  
+  .gaming-card {
+    margin: 0;
+  }
+  
+  .gaming-table th,
+  .gaming-table td {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+  }
+}
+
+/* Smooth transitions for all interactive elements */
+.gaming-interactive {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.gaming-interactive:hover {
+  transform: translateY(-1px);
+}
+
+.gaming-interactive:active {
+  transform: translateY(0);
+}
