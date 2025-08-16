@@ -4,7 +4,7 @@ import { Button } from '../ui/Button'
 import { Badge } from '../ui/Badge'
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card'
 import { formatNumber, formatCurrency } from '../../lib/utils'
-import { format } from 'date-fns'
+import { format, formatDistanceToNow } from 'date-fns'
 import { getSupabaseClient } from '../../lib/supabase'
 
 interface UserProfilePanelProps {
