@@ -54,10 +54,10 @@ export function VideoDeleteModal({ video, isOpen, onClose, onConfirm, userEmail 
     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
       <div className="gaming-modal max-w-md w-full">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-violet-500/20">
+        <div className="flex items-center justify-between p-4 sm:p-6 border-b border-violet-500/20">
           <div className="flex items-center space-x-3">
-            <div className="w-12 h-12 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center">
-              <AlertTriangle className="w-6 h-6 text-red-600 dark:text-red-400" />
+            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center">
+              <AlertTriangle className="w-5 h-5 sm:w-6 sm:h-6 text-red-600 dark:text-red-400" />
             </div>
             <div>
               <h3 className="text-lg font-semibold text-white">Delete Video</h3>
@@ -69,12 +69,12 @@ export function VideoDeleteModal({ video, isOpen, onClose, onConfirm, userEmail 
           </Button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
+        <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4 sm:space-y-6">
           {/* Video Info */}
           <Card className="gaming-card">
             <CardContent className="p-4">
               <div className="space-y-2">
-                <h4 className="font-medium text-white line-clamp-2">{video.title}</h4>
+                <h4 className="font-medium text-white line-clamp-2 text-sm sm:text-base">{video.title}</h4>
                 <div className="text-sm text-gray-400 space-y-1">
                   <p>User: {userEmail || 'Unknown User'}</p>
                   <p>Views: {video.views_count} / {video.target_views}</p>
@@ -84,17 +84,6 @@ export function VideoDeleteModal({ video, isOpen, onClose, onConfirm, userEmail 
               </div>
             </CardContent>
           </Card>
-
-          {/* Warning */}
-          <div className="bg-red-900/20 border border-red-500/30 rounded-lg p-4">
-            <div className="flex items-start space-x-3">
-              <AlertTriangle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
-              <div className="text-sm text-red-300">
-                <p className="font-medium mb-1">Warning: Permanent Deletion</p>
-                <p>This will permanently delete the video promotion. The user may receive a refund based on your platform's refund policy.</p>
-              </div>
-            </div>
-          </div>
 
           {/* Delete Reason */}
           <div>
@@ -115,12 +104,13 @@ export function VideoDeleteModal({ video, isOpen, onClose, onConfirm, userEmail 
           </div>
 
           {/* Footer */}
-          <div className="flex items-center justify-end space-x-3 pt-4 border-t border-violet-500/20">
+          <div className="flex flex-col sm:flex-row items-center justify-end gap-3 pt-4 border-t border-violet-500/20">
             <Button 
               type="button" 
               variant="outline" 
               onClick={handleClose}
               disabled={isDeleting}
+              className="w-full sm:w-auto"
             >
               Cancel
             </Button>
@@ -128,7 +118,7 @@ export function VideoDeleteModal({ video, isOpen, onClose, onConfirm, userEmail 
               type="submit" 
               variant="danger"
               disabled={isDeleting || !deleteReason.trim()}
-              className="flex items-center space-x-2"
+              className="flex items-center justify-center space-x-2 w-full sm:w-auto"
             >
               {isDeleting ? (
                 <>
