@@ -21,7 +21,7 @@ import { Input } from '../ui/Input'
 import { Badge } from '../ui/Badge'
 import { BulkNotificationModal } from '../users/BulkNotificationModal'
 import { format, formatDistanceToNow } from 'date-fns'
-import { getSupabaseClient } from '../../lib/supabase'
+import { getSupabaseClient, getSupabaseAdminClient } from '../../lib/supabase'
 
 interface SupportTicket {
   id: string
