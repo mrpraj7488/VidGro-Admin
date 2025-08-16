@@ -86,66 +86,65 @@ const BugReportsView: React.FC = () => {
     try {
       setLoading(true);
       
-      const supabase = getSupabaseClient();
+      const supabase = getSupabaseAdminClient();
       if (!supabase) {
         throw new Error('Supabase not initialized');
       }
       
-      // Mock data for demonstration since RPC might not be available
-      const mockBugReports: BugReport[] = [
-        {
-          id: '1',
-          bug_id: 'BUG-001',
-          title: 'App crashes on startup',
-          description: 'Application crashes immediately when opened on Android devices',
-          status: 'new',
-          priority: 'critical',
-          category: 'Mobile App Technical',
-          reported_by: 'mobile_user',
-          user_email: 'user@example.com',
-          source: 'mobile_app',
-          issue_type: 'crash',
-          app_version: '1.2.3',
-          device_info: { platform: 'Android', version: '12' },
-          created_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-          updated_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString()
-        },
-        {
-          id: '2',
-          bug_id: 'BUG-002',
-          title: 'Database connection timeout',
-          description: 'Server experiencing database connection timeouts during peak hours',
-          status: 'in_progress',
-          priority: 'high',
-          category: 'System',
-          reported_by: 'admin_panel',
-          assigned_to: 'admin',
-          source: 'admin_panel',
-          issue_type: 'performance',
-          created_at: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
-          updated_at: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString()
-        },
-        {
-          id: '3',
-          bug_id: 'BUG-003',
-          title: 'Video playback issues',
-          description: 'Videos not loading properly on iOS devices',
-          status: 'new',
-          priority: 'medium',
-          category: 'Mobile App Technical',
-          reported_by: 'mobile_user',
-          user_email: 'ios.user@example.com',
-          source: 'mobile_app',
-          issue_type: 'playback',
-          app_version: '1.2.3',
-          device_info: { platform: 'iOS', version: '16.0' },
-          created_at: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(),
-          updated_at: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString()
-        }
-      ];
+      // Try to fetch from bug_reports table first
+      const { data: bugReportsData, error: bugReportsError } = await supabase
+        .from('bug_reports')
+        .select('*')
+        .order('created_at', { ascending: false })
+      
+      let bugReportsArray: BugReport[] = []
+      
+      if (!bugReportsError && bugReportsData && bugReportsData.length > 0) {
+        // Transform database data to match interface
+        bugReportsArray = bugReportsData.map(report => ({
+          id: report.id,
+          bug_id: report.bug_id || `BUG-${report.id}`,
+          title: report.title,
+          description: report.description,
+          status: report.status || 'new',
+          priority: report.priority || 'medium',
+          category: report.category || 'System',
+          reported_by: report.reported_by || 'Unknown',
+          user_email: report.user_email,
+          assigned_to: report.assigned_to,
+          source: report.source || 'admin_panel',
+          issue_type: report.issue_type || 'general',
+          app_version: report.app_version,
+          device_info: report.device_info,
+          admin_notes: report.admin_notes,
+          resolution_notes: report.resolution_notes,
+          created_at: report.created_at,
+          updated_at: report.updated_at
+        }))
+      } else {
+        console.warn('No bug reports found in database, using sample data')
+        // Fallback to sample data if no real data exists
+        bugReportsArray = [
+          {
+            id: '1',
+            bug_id: 'BUG-001',
+            title: 'Sample Bug Report',
+            description: 'This is a sample bug report. Real reports will appear here when submitted.',
+            status: 'new',
+            priority: 'medium',
+            category: 'System',
+            reported_by: 'sample_user',
+            user_email: 'sample@example.com',
+            source: 'admin_panel',
+            issue_type: 'sample',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          }
+        ]
+      }
 
       // Apply filters
-      const filteredReports = mockBugReports.filter(report => {
+      const filteredReports = bugReportsArray.filter(report => {
         const matchesStatus = !filters.status || report.status === filters.status;
         const matchesPriority = !filters.priority || report.priority === filters.priority;
         const matchesSource = !filters.source || report.source === filters.source;
@@ -168,15 +167,50 @@ const BugReportsView: React.FC = () => {
 
   const fetchStats = async () => {
     try {
-      // Calculate stats from current bug reports
-      const totalBugs = bugReports.length;
-      const newBugs = bugReports.filter(b => b.status === 'new').length;
-      const inProgressBugs = bugReports.filter(b => b.status === 'in_progress').length;
-      const fixedBugs = bugReports.filter(b => b.status === 'fixed').length;
-      const criticalBugs = bugReports.filter(b => b.priority === 'critical').length;
-      const highPriorityBugs = bugReports.filter(b => b.priority === 'high').length;
-      const mobileAppBugs = bugReports.filter(b => b.source === 'mobile_app').length;
-      const systemBugs = bugReports.filter(b => b.source === 'admin_panel').length;
+      const supabase = getSupabaseAdminClient();
+      if (!supabase) {
+        throw new Error('Supabase not initialized');
+      }
+      
+      // Get real stats from database
+      const { data: allBugs, error } = await supabase
+        .from('bug_reports')
+        .select('status, priority, source')
+      
+      if (error) {
+        console.warn('Failed to fetch bug stats from database:', error)
+        // Calculate stats from current bug reports as fallback
+        const totalBugs = bugReports.length;
+        const newBugs = bugReports.filter(b => b.status === 'new').length;
+        const inProgressBugs = bugReports.filter(b => b.status === 'in_progress').length;
+        const fixedBugs = bugReports.filter(b => b.status === 'fixed').length;
+        const criticalBugs = bugReports.filter(b => b.priority === 'critical').length;
+        const highPriorityBugs = bugReports.filter(b => b.priority === 'high').length;
+        const mobileAppBugs = bugReports.filter(b => b.source === 'mobile_app').length;
+        const systemBugs = bugReports.filter(b => b.source === 'admin_panel').length;
+        
+        setStats({
+          total_bugs: totalBugs,
+          new_bugs: newBugs,
+          in_progress_bugs: inProgressBugs,
+          fixed_bugs: fixedBugs,
+          critical_bugs: criticalBugs,
+          high_priority_bugs: highPriorityBugs,
+          mobile_app_bugs: mobileAppBugs,
+          system_bugs: systemBugs
+        });
+        return;
+      }
+      
+      // Calculate stats from database data
+      const totalBugs = allBugs?.length || 0;
+      const newBugs = allBugs?.filter(b => b.status === 'new').length || 0;
+      const inProgressBugs = allBugs?.filter(b => b.status === 'in_progress').length || 0;
+      const fixedBugs = allBugs?.filter(b => b.status === 'fixed').length || 0;
+      const criticalBugs = allBugs?.filter(b => b.priority === 'critical').length || 0;
+      const highPriorityBugs = allBugs?.filter(b => b.priority === 'high').length || 0;
+      const mobileAppBugs = allBugs?.filter(b => b.source === 'mobile_app').length || 0;
+      const systemBugs = allBugs?.filter(b => b.source === 'admin_panel').length || 0;
 
       setStats({
         total_bugs: totalBugs,
@@ -190,6 +224,17 @@ const BugReportsView: React.FC = () => {
       });
     } catch (error) {
       console.error('Error fetching stats:', error);
+      // Set zero stats on error
+      setStats({
+        total_bugs: 0,
+        new_bugs: 0,
+        in_progress_bugs: 0,
+        fixed_bugs: 0,
+        critical_bugs: 0,
+        high_priority_bugs: 0,
+        mobile_app_bugs: 0,
+        system_bugs: 0
+      });
     }
   };
 

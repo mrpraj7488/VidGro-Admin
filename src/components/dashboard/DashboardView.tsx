@@ -22,10 +22,16 @@ export function DashboardView() {
 
   useEffect(() => {
     const loadData = async () => {
-      await Promise.all([
-        fetchDashboardStats(),
-        fetchAnalytics([subDays(new Date(), 30), new Date()])
-      ])
+      try {
+        console.log('Loading dashboard data...')
+        await Promise.all([
+          fetchDashboardStats(),
+          fetchAnalytics([subDays(new Date(), 30), new Date()])
+        ])
+        console.log('Dashboard data loaded successfully')
+      } catch (error) {
+        console.error('Failed to load dashboard data:', error)
+      }
       setLastRefresh(new Date())
     }
     
@@ -35,10 +41,12 @@ export function DashboardView() {
   const handleRefresh = async () => {
     setRefreshing(true)
     try {
+      console.log('Refreshing dashboard data...')
       await Promise.all([
         fetchDashboardStats(),
         fetchAnalytics([subDays(new Date(), 30), new Date()])
       ])
+      console.log('Dashboard data refreshed successfully')
       setLastRefresh(new Date())
     } catch (error) {
       console.error('Failed to refresh dashboard:', error)

@@ -127,7 +127,8 @@ export const useAdminStore = create<AdminState>((set, get) => ({
   fetchDashboardStats: async () => {
     set({ dashboardLoading: true })
     try {
-      const supabase = getSupabaseClient()
+      console.log('Fetching dashboard stats...')
+      const supabase = getSupabaseAdminClient()
       if (!supabase) {
         throw new Error('Supabase not initialized')
       }
@@ -137,21 +138,46 @@ export const useAdminStore = create<AdminState>((set, get) => ({
         .from('profiles')
         .select('id, is_vip, coins, created_at')
 
-      if (usersError) throw usersError
+      if (usersError) {
+        console.error('Error fetching users for dashboard:', usersError)
+        throw usersError
+      }
 
       // Get active videos
       const { data: videosData, error: videosError } = await supabase
         .from('videos')
         .select('id, status, coin_cost, created_at')
-        .eq('status', 'active')
 
-      if (videosError) throw videosError
+      if (videosError) {
+        console.error('Error fetching videos for dashboard:', videosError)
+        throw videosError
+      }
+
+      // Get transactions for revenue calculation
+      const { data: transactionsData, error: transactionsError } = await supabase
+        .from('transactions')
+        .select('amount, transaction_type, created_at')
+        .eq('transaction_type', 'coin_purchase')
+        .gte('created_at', new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString())
+
+      if (transactionsError) {
+        console.error('Error fetching transactions for dashboard:', transactionsError)
+      }
 
       // Calculate stats
       const totalUsers = usersData?.length || 0
       const vipUsers = usersData?.filter(u => u.is_vip).length || 0
-      const activeVideos = videosData?.length || 0
-      const monthlyRevenue = videosData?.reduce((sum, v) => sum + (v.coin_cost * 0.01), 0) || 0
+      const activeVideos = videosData?.filter(v => v.status === 'active').length || 0
+      const monthlyRevenue = transactionsData?.reduce((sum, t) => sum + (t.amount * 0.01), 0) || 0
+      const totalCoinsDistributed = usersData?.reduce((sum, u) => sum + (u.coins || 0), 0) || 0
+      
+      console.log('Dashboard stats calculated:', {
+        totalUsers,
+        vipUsers,
+        activeVideos,
+        monthlyRevenue,
+        totalCoinsDistributed
+      })
 
       const stats: DashboardStats = {
         total_users: totalUsers,
@@ -160,12 +186,12 @@ export const useAdminStore = create<AdminState>((set, get) => ({
         monthly_revenue: monthlyRevenue,
         user_growth_rate: 12.5,
         daily_active_users: Math.floor(totalUsers * 0.3),
-        coin_transactions: 0,
-        total_coins_distributed: usersData?.reduce((sum, u) => sum + u.coins, 0) || 0,
+        coin_transactions: transactionsData?.length || 0,
+        total_coins_distributed: totalCoinsDistributed,
         video_completion_rate: 85.2,
         average_watch_time: 45,
-        total_transactions: 0,
-        pending_videos: 0
+        total_transactions: transactionsData?.length || 0,
+        pending_videos: videosData?.filter(v => v.status === 'pending').length || 0
       }
 
       set({ dashboardStats: stats })
@@ -197,7 +223,7 @@ export const useAdminStore = create<AdminState>((set, get) => ({
   fetchUsers: async () => {
     set({ usersLoading: true, usersError: null })
     try {
-      const supabase = getSupabaseClient()
+      const supabase = getSupabaseAdminClient()
       if (!supabase) {
         throw new Error('Supabase not initialized')
       }
@@ -207,9 +233,14 @@ export const useAdminStore = create<AdminState>((set, get) => ({
         .select('*')
         .order('created_at', { ascending: false })
 
-      if (error) throw error
+      if (error) {
+        console.error('Database error fetching users:', error)
+        throw error
+      }
 
-      set({ users: data || [] })
+      const users = data || []
+      console.log('Users fetched from database:', users.length)
+      set({ users })
     } catch (error) {
       console.error('Failed to fetch users:', error)
       set({ 
@@ -314,7 +345,7 @@ export const useAdminStore = create<AdminState>((set, get) => ({
   fetchVideos: async () => {
     set({ videosLoading: true })
     try {
-      const supabase = getSupabaseClient()
+      const supabase = getSupabaseAdminClient()
       if (!supabase) {
         throw new Error('Supabase not initialized')
       }
@@ -324,9 +355,14 @@ export const useAdminStore = create<AdminState>((set, get) => ({
         .select('*')
         .order('created_at', { ascending: false })
 
-      if (error) throw error
+      if (error) {
+        console.error('Database error fetching videos:', error)
+        throw error
+      }
 
-      set({ videos: data || [] })
+      const videos = data || []
+      console.log('Videos fetched from database:', videos.length)
+      set({ videos })
     } catch (error) {
       console.error('Failed to fetch videos:', error)
       set({ videos: [] })
@@ -394,13 +430,16 @@ export const useAdminStore = create<AdminState>((set, get) => ({
   fetchAnalytics: async (dateRange: [Date | null, Date | null]) => {
     set({ analyticsLoading: true })
     try {
-      const supabase = getSupabaseClient()
+      console.log('Fetching analytics data...')
+      const supabase = getSupabaseAdminClient()
       if (!supabase) {
         throw new Error('Supabase not initialized')
       }
 
       const startDate = dateRange[0] || subDays(new Date(), 30)
       const endDate = dateRange[1] || new Date()
+      
+      console.log('Analytics date range:', { startDate, endDate })
 
       // Fetch users active in the date range
       const { data: activeUsersData, error: activeUsersError } = await supabase
@@ -409,7 +448,11 @@ export const useAdminStore = create<AdminState>((set, get) => ({
         .gte('updated_at', startDate.toISOString())
         .lte('updated_at', endDate.toISOString())
 
-      if (activeUsersError) console.warn('Failed to fetch active users:', activeUsersError)
+      if (activeUsersError) {
+        console.warn('Failed to fetch active users:', activeUsersError)
+      } else {
+        console.log('Active users data:', activeUsersData?.length || 0)
+      }
 
       // Fetch transactions in the date range
       const { data: transactionsData, error: transactionsError } = await supabase
@@ -418,7 +461,11 @@ export const useAdminStore = create<AdminState>((set, get) => ({
         .gte('created_at', startDate.toISOString())
         .lte('created_at', endDate.toISOString())
 
-      if (transactionsError) console.warn('Failed to fetch transactions:', transactionsError)
+      if (transactionsError) {
+        console.warn('Failed to fetch transactions:', transactionsError)
+      } else {
+        console.log('Transactions data:', transactionsData?.length || 0)
+      }
 
       // Fetch videos promoted in the date range
       const { data: videosData, error: videosError } = await supabase
@@ -427,7 +474,11 @@ export const useAdminStore = create<AdminState>((set, get) => ({
         .gte('created_at', startDate.toISOString())
         .lte('created_at', endDate.toISOString())
 
-      if (videosError) console.warn('Failed to fetch videos:', videosError)
+      if (videosError) {
+        console.warn('Failed to fetch videos:', videosError)
+      } else {
+        console.log('Videos data:', videosData?.length || 0)
+      }
 
       // Fetch video deletions
       const { data: deletionsData, error: deletionsError } = await supabase
@@ -436,7 +487,11 @@ export const useAdminStore = create<AdminState>((set, get) => ({
         .gte('deleted_at', startDate.toISOString())
         .lte('deleted_at', endDate.toISOString())
 
-      if (deletionsError) console.warn('Failed to fetch deletions:', deletionsError)
+      if (deletionsError) {
+        console.warn('Failed to fetch deletions:', deletionsError)
+      } else {
+        console.log('Deletions data:', deletionsData?.length || 0)
+      }
 
       // Generate user growth data
       const userGrowthData = []
@@ -467,6 +522,7 @@ export const useAdminStore = create<AdminState>((set, get) => ({
         recentActivity: []
       }
 
+      console.log('Analytics data compiled:', analyticsData)
       set({ analyticsData })
     } catch (error) {
       console.error('Failed to fetch analytics:', error)

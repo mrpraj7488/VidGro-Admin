@@ -29,13 +29,25 @@ export function initializeSupabaseAdmin(): SupabaseClient | null {
   const supabaseUrl = envManager.getEnvVar('VITE_SUPABASE_URL')
   const supabaseServiceKey = envManager.getEnvVar('VITE_SUPABASE_SERVICE_ROLE_KEY')
 
+  console.log('Initializing Supabase Admin with:', {
+    url: supabaseUrl,
+    serviceKeyLength: supabaseServiceKey?.length || 0,
+    serviceKeyPrefix: supabaseServiceKey?.substring(0, 20) || 'none'
+  })
+
   if (!supabaseUrl || !supabaseServiceKey || supabaseUrl.includes('your-project')) {
     console.warn('Supabase Admin not configured. Please set VITE_SUPABASE_URL and VITE_SUPABASE_SERVICE_ROLE_KEY')
     return null
   }
 
   try {
-    supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey)
+    supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    })
+    console.log('✅ Supabase Admin initialized successfully')
     return supabaseAdmin
   } catch (error) {
     console.error('Failed to initialize Supabase Admin:', error)

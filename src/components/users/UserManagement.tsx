@@ -27,8 +27,13 @@ export function UserManagement() {
   const [actionLoading, setActionLoading] = useState<Record<string, boolean>>({})
 
   useEffect(() => {
-    fetchUsers()
-    fetchUserVideoCounts()
+    const loadData = async () => {
+      console.log('Loading user management data...')
+      await fetchUsers()
+      await fetchUserVideoCounts()
+      console.log('User management data loaded')
+    }
+    loadData()
   }, [fetchUsers])
 
   const fetchUserVideoCounts = async () => {
@@ -37,6 +42,7 @@ export function UserManagement() {
       const supabase = getSupabaseAdminClient()
       if (!supabase) {
         console.warn('Cannot fetch video counts - Supabase not initialized')
+        setUserVideoCounts({})
         return
       }
 
@@ -48,6 +54,7 @@ export function UserManagement() {
 
       if (error) {
         console.error('Failed to fetch video counts:', error)
+        setUserVideoCounts({})
         return
       }
 
@@ -60,8 +67,10 @@ export function UserManagement() {
       })
 
       setUserVideoCounts(counts)
+      console.log('Video counts fetched:', counts)
     } catch (error) {
       console.error('Error fetching video counts:', error)
+      setUserVideoCounts({})
     } finally {
       setIsLoadingVideoCounts(false)
     }

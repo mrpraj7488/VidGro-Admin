@@ -51,7 +51,7 @@ export function AnalyticsView() {
   const fetchRealAnalytics = async () => {
     setAnalyticsLoading(true)
     try {
-      const supabase = getSupabaseClient()
+      const supabase = getSupabaseAdminClient()
       if (!supabase) {
         throw new Error('Supabase not initialized')
       }
@@ -66,9 +66,12 @@ export function AnalyticsView() {
         .select('id, updated_at')
         .gte('updated_at', sevenDaysAgo.toISOString())
 
-      if (activeUsersError) console.warn('Failed to fetch active users:', activeUsersError)
+      if (activeUsersError) {
+        console.warn('Failed to fetch active users:', activeUsersError)
+      }
 
       const dailyActiveUsers = activeUsersData?.length || 0
+      console.log('Daily active users found:', dailyActiveUsers)
 
       // Fetch total videos promoted in date range
       const { data: promotedVideos, error: promotedError } = await supabase
@@ -77,9 +80,12 @@ export function AnalyticsView() {
         .gte('created_at', startDate.toISOString())
         .lte('created_at', endDate.toISOString())
 
-      if (promotedError) console.warn('Failed to fetch promoted videos:', promotedError)
+      if (promotedError) {
+        console.warn('Failed to fetch promoted videos:', promotedError)
+      }
 
       const totalPromoted = promotedVideos?.length || 0
+      console.log('Total promoted videos found:', totalPromoted)
 
       // Fetch videos deleted in date range
       const { data: deletedVideos, error: deletedError } = await supabase
@@ -88,9 +94,12 @@ export function AnalyticsView() {
         .gte('deleted_at', startDate.toISOString())
         .lte('deleted_at', endDate.toISOString())
 
-      if (deletedError) console.warn('Failed to fetch deleted videos:', deletedError)
+      if (deletedError) {
+        console.warn('Failed to fetch deleted videos:', deletedError)
+      }
 
       const videosDeleted = deletedVideos?.length || 0
+      console.log('Videos deleted found:', videosDeleted)
 
       // Fetch coin transactions count
       const { data: transactions, error: transactionsError } = await supabase
@@ -99,9 +108,12 @@ export function AnalyticsView() {
         .gte('created_at', startDate.toISOString())
         .lte('created_at', endDate.toISOString())
 
-      if (transactionsError) console.warn('Failed to fetch transactions:', transactionsError)
+      if (transactionsError) {
+        console.warn('Failed to fetch transactions:', transactionsError)
+      }
 
       const coinTransactions = transactions?.length || 0
+      console.log('Coin transactions found:', coinTransactions)
 
       // Generate user growth data (daily breakdown)
       const userGrowthData = []

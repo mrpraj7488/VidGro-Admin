@@ -51,7 +51,7 @@ export function CoinTransactionsView() {
   const fetchTransactions = async () => {
     setIsLoading(true)
     try {
-      const supabase = getSupabaseClient()
+      const supabase = getSupabaseAdminClient()
       if (!supabase) {
         throw new Error('Supabase not initialized')
       }
@@ -62,18 +62,7 @@ export function CoinTransactionsView() {
       // Build query
       let query = supabase
         .from('transactions')
-        .select(`
-          id,
-          transaction_id,
-          user_id,
-          transaction_type,
-          amount,
-          description,
-          admin_id,
-          created_at,
-          updated_at,
-          profiles!inner(email)
-        `)
+        .select('*')
         .gte('created_at', startDate.toISOString())
         .lte('created_at', endDate.toISOString())
         .order(sortField, { ascending: sortDirection === 'asc' })
@@ -87,12 +76,30 @@ export function CoinTransactionsView() {
 
       if (error) throw error
 
+      // Get user emails separately to avoid join issues
+      const userIds = [...new Set(transactionData?.map(tx => tx.user_id).filter(Boolean))]
+      let userEmails: Record<string, string> = {}
+      
+      if (userIds.length > 0) {
+        const { data: usersData, error: usersError } = await supabase
+          .from('profiles')
+          .select('id, email')
+          .in('id', userIds)
+        
+        if (!usersError && usersData) {
+          userEmails = usersData.reduce((acc, user) => {
+            acc[user.id] = user.email
+            return acc
+          }, {} as Record<string, string>)
+        }
+      }
+
       // Transform data to include user email
       const transformedTransactions: CoinTransaction[] = transactionData?.map(tx => ({
         id: tx.id,
         transaction_id: tx.transaction_id || tx.id,
         user_id: tx.user_id,
-        user_email: tx.profiles?.email || 'Unknown',
+        user_email: userEmails[tx.user_id] || 'Unknown',
         transaction_type: tx.transaction_type,
         amount: tx.amount,
         description: tx.description,

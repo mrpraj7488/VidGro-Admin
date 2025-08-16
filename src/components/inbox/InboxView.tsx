@@ -66,7 +66,7 @@ export function InboxView() {
   const fetchTickets = async () => {
     setIsLoading(true)
     try {
-      const supabase = getSupabaseClient()
+      const supabase = getSupabaseAdminClient()
       if (!supabase) {
         throw new Error('Supabase not initialized')
       }
@@ -77,7 +77,11 @@ export function InboxView() {
         .select('*')
         .order('created_at', { ascending: false })
 
-      if (error) throw error
+      if (error) {
+        console.error('Failed to fetch support tickets:', error)
+        setTickets([])
+        return
+      }
 
       // Transform ticket data to match interface
       const transformedTickets: SupportTicket[] = (ticketData || []).map(ticket => ({
@@ -95,6 +99,7 @@ export function InboxView() {
       }))
 
       setTickets(transformedTickets)
+      console.log('Support tickets fetched:', transformedTickets.length)
     } catch (error) {
       console.error('Failed to fetch tickets:', error)
       setTickets([])

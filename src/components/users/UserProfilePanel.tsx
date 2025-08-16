@@ -47,7 +47,7 @@ export function UserProfilePanel({ isOpen, onClose, user, onDeleteUser, onBanUse
     
     setIsLoading(true)
     try {
-      const supabase = getSupabaseClient()
+      const supabase = getSupabaseAdminClient()
       if (!supabase) {
         throw new Error('Supabase not initialized')
       }
@@ -59,33 +59,35 @@ export function UserProfilePanel({ isOpen, onClose, user, onDeleteUser, onBanUse
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
 
-      if (videosError) throw videosError
+      if (videosError) {
+        console.error('Failed to fetch user videos:', videosError)
+      }
 
-      // Get user's transaction history (if transactions table exists)
-      // For now, using the user's existing data
+      // Get user's transaction history
+      const { data: userTransactions, error: transactionsError } = await supabase
+        .from('transactions')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(10)
+
+      if (transactionsError) {
+        console.error('Failed to fetch user transactions:', transactionsError)
+      }
+
       const userDetails = {
         ...user,
-        totalSpentCoins: user.total_spent || 0,
+        totalSpentCoins: userTransactions?.filter(t => t.amount < 0).reduce((sum, t) => sum + Math.abs(t.amount), 0) || user.total_spent || 0,
         totalPromotedVideos: videos?.length || 0,
-        referralEarnings: 0, // Will be implemented when referral system is ready
+        referralEarnings: userTransactions?.filter(t => t.transaction_type === 'referral_reward').reduce((sum, t) => sum + t.amount, 0) || 0,
         vipExpireTime: user.is_vip && user.vip_expires_at && !isNaN(new Date(user.vip_expires_at).getTime()) ? new Date(user.vip_expires_at) : null,
-        purchaseHistory: [
-          // Mock data for demonstration
-          {
-            id: 'tx-1',
-            amount: 1000,
-            price: 9.99,
-            status: 'completed',
-            date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString()
-          },
-          {
-            id: 'tx-2',
-            amount: 500,
-            price: 4.99,
-            status: 'completed',
-            date: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
-          }
-        ],
+        purchaseHistory: userTransactions?.filter(t => t.transaction_type === 'coin_purchase').map(tx => ({
+          id: tx.id,
+          amount: tx.amount,
+          price: tx.amount * 0.01, // Assuming 1 cent per coin
+          status: 'completed',
+          date: tx.created_at
+        })) || [],
         videoHistory: videos?.map(video => ({
           id: video.id,
           title: video.title,
@@ -100,6 +102,13 @@ export function UserProfilePanel({ isOpen, onClose, user, onDeleteUser, onBanUse
       }
 
       setUserDetails(userDetails)
+      console.log('User details fetched:', {
+        userId: user.id,
+        videosCount: videos?.length || 0,
+        transactionsCount: userTransactions?.length || 0,
+        totalSpent: userDetails.totalSpentCoins,
+        referralEarnings: userDetails.referralEarnings
+      })
     } catch (error) {
       console.error('Failed to fetch user details:', error)
       // Use basic user data on error
