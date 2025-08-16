@@ -63,7 +63,15 @@ export function CoinTransactionsView() {
       let query = supabase
         .from('transactions')
         .select(`
-          *,
+          id,
+          transaction_id,
+          user_id,
+          transaction_type,
+          amount,
+          description,
+          admin_id,
+          created_at,
+          updated_at,
           profiles!inner(email)
         `)
         .gte('created_at', startDate.toISOString())
