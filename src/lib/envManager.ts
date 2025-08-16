@@ -41,7 +41,7 @@ export const defaultEnvironmentVariables: EnvironmentVariables = {
   VITE_ADMIN_EMAIL: 'admin@vidgro.com',
   VITE_ADMIN_SECRET_KEY: 'vidgro_admin_secret_2024',
   VITE_APP_NAME: 'VidGro Admin Panel',
-  VITE_API_BASE_URL: 'http://localhost:5173',
+  VITE_API_BASE_URL: 'https://admin-vidgro.netlify.app',
   VITE_FIREBASE_PROJECT_ID: 'your_firebase_project_id',
   VITE_FIREBASE_CLIENT_EMAIL: 'your_firebase_client_email',
   VITE_FIREBASE_PRIVATE_KEY: 'your_firebase_private_key',
