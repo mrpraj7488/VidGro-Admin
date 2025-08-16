@@ -354,6 +354,18 @@ export function VideoManagement() {
                         <Button
                           variant="ghost"
                           size="sm"
+                          onClick={() => handleCopyUrl(video.youtube_url)}
+                          className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
+                        >
+                          {copiedUrl === video.youtube_url ? (
+                            <CheckCircle className="w-4 h-4 text-emerald-500" />
+                          ) : (
+                            <Copy className="w-4 h-4" />
+                          )}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
                           onClick={() => window.open(video.youtube_url, '_blank')}
                           className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
                         >
