@@ -1,0 +1,52 @@
+[build]
+  # Build command for the React app
+  command = "npm run build:netlify"
+  # Publish directory (Vite build output)
+  publish = "dist"
+  # Functions directory for serverless API
+  functions = "netlify/functions"
+
+[build.environment]
+  # Set Node.js version
+  NODE_VERSION = "18"
+
+# Redirect rules for SPA routing
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# API redirects to serverless functions
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/api/:splat"
+  status = 200
+
+# Health check redirect
+[[redirects]]
+  from = "/health"
+  to = "/.netlify/functions/api/health"
+  status = 200
+
+# Test environment redirect
+[[redirects]]
+  from = "/test-env"
+  to = "/.netlify/functions/api/test-env"
+  status = 200
+
+# Headers for security
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-XSS-Protection = "1; mode=block"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+
+# Headers for API routes
+[[headers]]
+  for = "/api/*"
+  [headers.values]
+    Access-Control-Allow-Origin = "*"
+    Access-Control-Allow-Methods = "GET, POST, PUT, DELETE, OPTIONS"
+    Access-Control-Allow-Headers = "Content-Type, Authorization, x-api-key, x-app-version, x-env, x-admin-email"
