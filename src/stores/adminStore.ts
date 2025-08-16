@@ -125,6 +125,9 @@ export const useAdminStore = create<AdminState>((set, get) => ({
       }
 
       // Get total users
+      const { data: usersData, error: usersError } = await supabase
+        .from('profiles')
+        .select('id, is_vip, coins, created_at')
 
       if (usersError) {
         console.error('Error fetching users for dashboard:', usersError)

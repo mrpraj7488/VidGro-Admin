@@ -56,6 +56,7 @@ export function AnalyticsView() {
       }
 
       const startDate = dateRange[0] || subDays(new Date(), 30)
+      const endDate = dateRange[1] || new Date()
 
       // Fetch Daily Active Users (users active in last 7 days)
       const sevenDaysAgo = subDays(new Date(), 7)
