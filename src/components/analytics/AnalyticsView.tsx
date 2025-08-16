@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card'
 import { Button } from '../ui/Button'
 import { DateRangePicker } from '../ui/DateRangePicker'
 import { StatsCard } from '../dashboard/StatsCard'
-import { getSupabaseClient } from '../../lib/supabase'
+import { getSupabaseClient, getSupabaseAdminClient } from '../../lib/supabase'
 import { format, subDays, startOfDay, endOfDay } from 'date-fns'
 
 interface AnalyticsData {
