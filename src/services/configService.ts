@@ -7,7 +7,17 @@ import { ClientRuntimeConfig } from '../types/admin'
 class ConfigService {
   private cache: Map<string, { data: ClientRuntimeConfig; timestamp: number }> = new Map()
   private readonly CACHE_TTL = 5 * 60 * 1000 // 5 minutes
-  private readonly API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001'
+  
+  // For Netlify deployment, use relative URLs or environment-based URLs
+  private getApiBaseUrl(): string {
+    // In development, use localhost
+    if (import.meta.env.DEV) {
+      return import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001'
+    }
+    
+    // In production (Netlify), use relative URLs
+    return ''
+  }
 
   async getClientConfig(environment = 'production', forceRefresh = false): Promise<ClientRuntimeConfig | null> {
     const cacheKey = `client-config-${environment}`
@@ -22,7 +32,11 @@ class ConfigService {
     }
 
     try {
-      const response = await fetch(`${this.API_BASE_URL}/api/client-runtime-config?env=${environment}`, {
+      const apiBaseUrl = this.getApiBaseUrl()
+      const configUrl = `${apiBaseUrl}/api/client-runtime-config`
+
+      const response = await fetch(configUrl, {
+        method: 'GET',
         headers: {
           'Content-Type': 'application/json',
           'x-api-key': import.meta.env.VITE_CLIENT_API_KEY || 'demo-key',
@@ -62,50 +76,173 @@ class ConfigService {
 
   async clearCache(): Promise<void> {
     this.cache.clear()
-    
+    logger.info('Config cache cleared', {}, 'configService')
+  }
+
+  async syncEnvironmentVariables(envVars: Record<string, string>): Promise<boolean> {
     try {
-      // Also clear server-side cache
-      await fetch(`${this.API_BASE_URL}/api/admin/clear-config-cache`, {
+      const apiBaseUrl = this.getApiBaseUrl()
+      const syncUrl = `${apiBaseUrl}/api/admin/env-sync`
+
+      const response = await fetch(syncUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-api-key': import.meta.env.VITE_CLIENT_API_KEY || 'demo-key'
+          'x-admin-email': import.meta.env.VITE_ADMIN_EMAIL || 'admin@vidgro.com'
+        },
+        body: JSON.stringify(envVars)
+      })
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+      }
+
+      const result = await response.json()
+      
+      if (result.success) {
+        // Clear cache to force refresh
+        await this.clearCache()
+        logger.info('Environment variables synced successfully', { envVars: Object.keys(envVars) }, 'configService')
+        return true
+      } else {
+        logger.error('Environment sync failed', { error: result.message }, 'configService')
+        return false
+      }
+    } catch (error) {
+      logger.error('Failed to sync environment variables', error, 'configService')
+      return false
+    }
+  }
+
+  async getAdminConfig(environment = 'production'): Promise<any> {
+    try {
+      const apiBaseUrl = this.getApiBaseUrl()
+      const configUrl = `${apiBaseUrl}/api/admin/runtime-config?env=${environment}`
+
+      const response = await fetch(configUrl, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-email': import.meta.env.VITE_ADMIN_EMAIL || 'admin@vidgro.com'
         }
       })
-      
-      logger.info('Configuration cache cleared', null, 'configService')
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+      }
+
+      const result = await response.json()
+      logger.info('Admin config fetched successfully', { environment }, 'configService')
+      return result
     } catch (error) {
-      logger.error('Failed to clear server cache', error, 'configService')
+      logger.error('Failed to fetch admin config', error, 'configService')
+      return null
     }
   }
 
-  getCacheStats(): { size: number; keys: string[] } {
-    return {
-      size: this.cache.size,
-      keys: Array.from(this.cache.keys())
+  async updateRuntimeConfig(config: any): Promise<boolean> {
+    try {
+      const apiBaseUrl = this.getApiBaseUrl()
+      const configUrl = `${apiBaseUrl}/api/admin/runtime-config`
+
+      const response = await fetch(configUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-email': import.meta.env.VITE_ADMIN_EMAIL || 'admin@vidgro.com'
+        },
+        body: JSON.stringify(config)
+      })
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+      }
+
+      const result = await response.json()
+      
+      if (result.success !== false) {
+        // Clear cache to force refresh
+        await this.clearCache()
+        logger.info('Runtime config updated successfully', { config: config.key }, 'configService')
+        return true
+      } else {
+        logger.error('Runtime config update failed', { error: result.message }, 'configService')
+        return false
+      }
+    } catch (error) {
+      logger.error('Failed to update runtime config', error, 'configService')
+      return false
     }
   }
 
-  // Helper method to get a specific config value
-  async getConfigValue(key: string, environment = 'production'): Promise<string | null> {
-    const config = await this.getClientConfig(environment)
-    return config?.config[key] || null
+  async deleteRuntimeConfig(key: string, environment = 'production'): Promise<boolean> {
+    try {
+      const apiBaseUrl = this.getApiBaseUrl()
+      const configUrl = `${apiBaseUrl}/api/admin/runtime-config/${key}?env=${environment}`
+
+      const response = await fetch(configUrl, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-email': import.meta.env.VITE_ADMIN_EMAIL || 'admin@vidgro.com'
+        }
+      })
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+      }
+
+      const result = await response.json()
+      
+      if (result.success !== false) {
+        // Clear cache to force refresh
+        await this.clearCache()
+        logger.info('Runtime config deleted successfully', { key }, 'configService')
+        return true
+      } else {
+        logger.error('Runtime config deletion failed', { error: result.message }, 'configService')
+        return false
+      }
+    } catch (error) {
+      logger.error('Failed to delete runtime config', error, 'configService')
+      return false
+    }
   }
 
-  // Helper method to check if a feature is enabled
-  async isFeatureEnabled(featureName: string, environment = 'production'): Promise<boolean> {
-    const value = await this.getConfigValue(`FEATURE_${featureName.toUpperCase()}_ENABLED`, environment)
-    return value === 'true'
-  }
+  async getAuditLogs(params: { key?: string; env?: string; days?: number; limit?: number } = {}): Promise<any> {
+    try {
+      const apiBaseUrl = this.getApiBaseUrl()
+      const queryParams = new URLSearchParams()
+      
+      if (params.key) queryParams.append('key', params.key)
+      if (params.env) queryParams.append('env', params.env)
+      if (params.days) queryParams.append('days', params.days.toString())
+      if (params.limit) queryParams.append('limit', params.limit.toString())
+      
+      const configUrl = `${apiBaseUrl}/api/admin/config-audit-logs?${queryParams.toString()}`
 
-  // Helper method to get all configs for a category
-  async getCategoryConfig(category: string, environment = 'production'): Promise<Record<string, string> | null> {
-    const config = await this.getClientConfig(environment)
-    return config?.categories[category] || null
+      const response = await fetch(configUrl, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-email': import.meta.env.VITE_ADMIN_EMAIL || 'admin@vidgro.com'
+        }
+      })
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+      }
+
+      const result = await response.json()
+      logger.info('Audit logs fetched successfully', { params }, 'configService')
+      return result
+    } catch (error) {
+      logger.error('Failed to fetch audit logs', error, 'configService')
+      return null
+    }
   }
 }
 
-// Export singleton instance
 export const configService = new ConfigService()
 
 // React hook for using config service
