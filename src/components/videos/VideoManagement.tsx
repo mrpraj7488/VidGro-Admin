@@ -39,7 +39,7 @@ export function VideoManagement() {
   const filteredVideos = videos.filter(video => {
     const matchesSearch = video.title.toLowerCase().includes(videoFilters.search.toLowerCase()) ||
                          (userEmails[video.user_id] || '').toLowerCase().includes(videoFilters.search.toLowerCase()) ||
-                         video.video_id.toLowerCase().includes(videoFilters.search.toLowerCase())
+                         (video.video_id || '').toLowerCase().includes(videoFilters.search.toLowerCase())
     const matchesStatus = videoFilters.status === 'all' || video.status === videoFilters.status
     
     return matchesSearch && matchesStatus
