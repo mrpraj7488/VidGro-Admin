@@ -15,8 +15,8 @@ class ConfigService {
       return import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001'
     }
     
-    // In production (Netlify), use relative URLs
-    return ''
+    // In production (Netlify), use the Netlify URL
+    return import.meta.env.VITE_API_BASE_URL || 'https://admin-vidgro.netlify.app'
   }
 
   async getClientConfig(environment = 'production', forceRefresh = false): Promise<ClientRuntimeConfig | null> {
