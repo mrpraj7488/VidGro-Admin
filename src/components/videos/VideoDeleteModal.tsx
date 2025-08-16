@@ -9,9 +9,10 @@ interface VideoDeleteModalProps {
   onClose: () => void
   onConfirm: (reason: string) => Promise<void>
   userEmail?: string
+  userName?: string
 }
 
-export function VideoDeleteModal({ video, isOpen, onClose, onConfirm, userEmail }: VideoDeleteModalProps) {
+export function VideoDeleteModal({ video, isOpen, onClose, onConfirm, userEmail, userName }: VideoDeleteModalProps) {
   const [deleteReason, setDeleteReason] = useState('')
   const [isDeleting, setIsDeleting] = useState(false)
 
@@ -76,7 +77,7 @@ export function VideoDeleteModal({ video, isOpen, onClose, onConfirm, userEmail 
               <div className="space-y-2">
                 <h4 className="font-medium text-white line-clamp-2 text-sm sm:text-base">{video.title}</h4>
                 <div className="text-sm text-gray-400 space-y-1">
-                  <p>User: {userEmail || 'Unknown User'}</p>
+                  <p>User: {userName || 'Unknown User'} ({userEmail || 'No email'})</p>
                   <p>Views: {video.views_count} / {video.target_views}</p>
                   <p>Coins Spent: {video.coin_cost}</p>
                   <p>Status: {video.status}</p>
