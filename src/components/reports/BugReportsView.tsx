@@ -24,12 +24,6 @@ import { Badge } from '../ui/Badge';
 import { getSupabaseClient } from '../../lib/supabase';
 import { format, formatDistanceToNow } from 'date-fns';
 
-// Helper function to get admin client
-function getSupabaseAdminClient() {
-  const { getSupabaseAdminClient } = require('../../lib/supabase')
-  return getSupabaseAdminClient()
-}
-
 interface BugReport {
   id: string;
   bug_id: string;
@@ -91,7 +85,6 @@ const BugReportsView: React.FC = () => {
   const fetchBugReports = async () => {
     try {
       setLoading(true);
-      console.log('Fetching bug reports...')
       
       const supabase = getSupabaseAdminClient();
       if (!supabase) {
@@ -104,15 +97,9 @@ const BugReportsView: React.FC = () => {
         .select('*')
         .order('created_at', { ascending: false })
       
-      console.log('Bug reports query result:', {
-        data: bugReportsData?.length || 0,
-        error: bugReportsError
-      })
-      
       let bugReportsArray: BugReport[] = []
       
       if (!bugReportsError && bugReportsData && bugReportsData.length > 0) {
-        console.log('Using real bug reports data:', bugReportsData.length)
         // Transform database data to match interface
         bugReportsArray = bugReportsData.map(report => ({
           id: report.id,
@@ -135,9 +122,25 @@ const BugReportsView: React.FC = () => {
           updated_at: report.updated_at
         }))
       } else {
-        console.log('No bug reports found in database')
-        // Set empty array if no data exists
-        bugReportsArray = []
+        console.warn('No bug reports found in database, using sample data')
+        // Fallback to sample data if no real data exists
+        bugReportsArray = [
+          {
+            id: '1',
+            bug_id: 'BUG-001',
+            title: 'Sample Bug Report',
+            description: 'This is a sample bug report. Real reports will appear here when submitted.',
+            status: 'new',
+            priority: 'medium',
+            category: 'System',
+            reported_by: 'sample_user',
+            user_email: 'sample@example.com',
+            source: 'admin_panel',
+            issue_type: 'sample',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          }
+        ]
       }
 
       // Apply filters
@@ -153,7 +156,6 @@ const BugReportsView: React.FC = () => {
         return matchesStatus && matchesPriority && matchesSource && matchesSearch;
       });
 
-      console.log('Filtered bug reports:', filteredReports.length)
       setBugReports(filteredReports);
     } catch (error) {
       console.error('Error fetching bug reports:', error);
@@ -165,7 +167,6 @@ const BugReportsView: React.FC = () => {
 
   const fetchStats = async () => {
     try {
-      console.log('Fetching bug report stats...')
       const supabase = getSupabaseAdminClient();
       if (!supabase) {
         throw new Error('Supabase not initialized');
@@ -175,11 +176,6 @@ const BugReportsView: React.FC = () => {
       const { data: allBugs, error } = await supabase
         .from('bug_reports')
         .select('status, priority, source')
-      
-      console.log('Bug stats query result:', {
-        data: allBugs?.length || 0,
-        error: error
-      })
       
       if (error) {
         console.warn('Failed to fetch bug stats from database:', error)
@@ -193,7 +189,6 @@ const BugReportsView: React.FC = () => {
         const mobileAppBugs = bugReports.filter(b => b.source === 'mobile_app').length;
         const systemBugs = bugReports.filter(b => b.source === 'admin_panel').length;
         
-        console.log('Using fallback stats from current reports')
         setStats({
           total_bugs: totalBugs,
           new_bugs: newBugs,
@@ -216,17 +211,6 @@ const BugReportsView: React.FC = () => {
       const highPriorityBugs = allBugs?.filter(b => b.priority === 'high').length || 0;
       const mobileAppBugs = allBugs?.filter(b => b.source === 'mobile_app').length || 0;
       const systemBugs = allBugs?.filter(b => b.source === 'admin_panel').length || 0;
-
-      console.log('Stats calculated from database:', {
-        totalBugs,
-        newBugs,
-        inProgressBugs,
-        fixedBugs,
-        criticalBugs,
-        highPriorityBugs,
-        mobileAppBugs,
-        systemBugs
-      })
 
       setStats({
         total_bugs: totalBugs,
