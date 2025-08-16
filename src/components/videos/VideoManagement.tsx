@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { Search, Eye, TrendingUp, Calendar, MoreHorizontal, Copy, Filter, RefreshCw, Video as VideoIcon, Users, Coins, Play } from 'lucide-react'
+import { Search, Eye, TrendingUp, Calendar, MoreHorizontal, Copy } from 'lucide-react'
 import { useAdminStore } from '../../stores/adminStore'
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card'
 import { Button } from '../ui/Button'
@@ -8,448 +8,199 @@ import { Badge } from '../ui/Badge'
 import { VideoEditModal } from './VideoEditModal'
 import { formatNumber } from '../../lib/utils'
 import { format } from 'date-fns'
-import { getSupabaseAdminClient } from '../../lib/supabase'
-
-interface VideoWithUser {
-  id: string
-  user_id: string
-  username: string
-  user_email: string
-  youtube_url: string
-  title: string
-  views_count: number
-  target_views: number
-  duration_seconds: number
-  coin_reward: number
-  coin_cost: number
-  status: 'pending' | 'active' | 'paused' | 'completed' | 'on_hold' | 'repromoted' | 'deleted' | 'rejected'
-  hold_until?: string
-  repromoted_at?: string
-  total_watch_time: number
-  completion_rate: number
-  created_at: string
-  updated_at: string
-  completed: boolean
-  coins_earned_total: number
-}
 
 export function VideoManagement() {
-  const { videoFilters, setVideoFilters, copyToClipboard } = useAdminStore()
-  const [videos, setVideos] = useState<VideoWithUser[]>([])
-  const [isLoading, setIsLoading] = useState(false)
-  const [selectedVideo, setSelectedVideo] = useState<VideoWithUser | null>(null)
+  const { videos, videoFilters, isLoading, fetchVideos, setVideoFilters, copyToClipboard } = useAdminStore()
+  const [selectedVideo, setSelectedVideo] = useState(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [showFilters, setShowFilters] = useState(false)
-  const [sortBy, setSortBy] = useState<'created_at' | 'views_count' | 'coin_cost' | 'completion_rate'>('created_at')
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
 
   useEffect(() => {
-    fetchVideosWithUsers()
-  }, [])
+    fetchVideos()
+  }, [fetchVideos])
 
-  const fetchVideosWithUsers = async () => {
-    setIsLoading(true)
-    try {
-      const supabase = getSupabaseAdminClient()
-      if (!supabase) {
-        throw new Error('Supabase Admin not initialized')
-      }
-
-      // Fetch videos with user information using a join
-      const { data: videosData, error } = await supabase
-        .from('videos')
-        .select(`
-          id,
-          user_id,
-          youtube_url,
-          title,
-          views_count,
-          target_views,
-          duration_seconds,
-          coin_reward,
-          coin_cost,
-          status,
-          hold_until,
-          repromoted_at,
-          total_watch_time,
-          completion_rate,
-          created_at,
-          updated_at,
-          completed,
-          coins_earned_total,
-          profiles!inner(username, email)
-        `)
-        .order('created_at', { ascending: false })
-
-      if (error) throw error
-
-      // Transform the data to include user information
-      const transformedVideos: VideoWithUser[] = (videosData || []).map((video: any) => ({
-        id: video.id,
-        user_id: video.user_id,
-        username: video.profiles?.username || 'Unknown User',
-        user_email: video.profiles?.email || 'No email',
-        youtube_url: video.youtube_url,
-        title: video.title,
-        views_count: video.views_count || 0,
-        target_views: video.target_views || 0,
-        duration_seconds: video.duration_seconds || 0,
-        coin_reward: video.coin_reward || 0,
-        coin_cost: video.coin_cost || 0,
-        status: video.status,
-        hold_until: video.hold_until,
-        repromoted_at: video.repromoted_at,
-        total_watch_time: video.total_watch_time || 0,
-        completion_rate: video.completion_rate || 0,
-        created_at: video.created_at,
-        updated_at: video.updated_at,
-        completed: video.completed || false,
-        coins_earned_total: video.coins_earned_total || 0
-      }))
-
-      setVideos(transformedVideos)
-    } catch (error) {
-      console.error('Error fetching videos with users:', error)
-      setVideos([])
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  const filteredAndSortedVideos = videos
-    .filter(video => {
-      const matchesSearch = video.title.toLowerCase().includes(videoFilters.search.toLowerCase()) ||
-                           video.username.toLowerCase().includes(videoFilters.search.toLowerCase()) ||
-                           video.user_email.toLowerCase().includes(videoFilters.search.toLowerCase()) ||
-                           video.youtube_url.toLowerCase().includes(videoFilters.search.toLowerCase())
-      const matchesStatus = videoFilters.status === 'all' || video.status === videoFilters.status
-      
-      return matchesSearch && matchesStatus
-    })
-    .sort((a, b) => {
-      const aValue = a[sortBy]
-      const bValue = b[sortBy]
-      
-      if (sortOrder === 'asc') {
-        return aValue > bValue ? 1 : -1
-      } else {
-        return aValue < bValue ? 1 : -1
-      }
-    })
+  const filteredVideos = videos.filter(video => {
+    const matchesSearch = video.title.toLowerCase().includes(videoFilters.search.toLowerCase()) ||
+                         video.username.toLowerCase().includes(videoFilters.search.toLowerCase()) ||
+                         video.video_id.toLowerCase().includes(videoFilters.search.toLowerCase())
+    const matchesStatus = videoFilters.status === 'all' || video.status === videoFilters.status
+    
+    return matchesSearch && matchesStatus
+  })
 
   const getStatusBadge = (status: string) => {
-    const statusConfig = {
-      active: { variant: 'success' as const, label: 'Active', icon: '🟢' },
-      completed: { variant: 'info' as const, label: 'Completed', icon: '✅' },
-      on_hold: { variant: 'warning' as const, label: 'On Hold', icon: '⏸️' },
-      paused: { variant: 'warning' as const, label: 'Paused', icon: '⏸️' },
-      pending: { variant: 'default' as const, label: 'Pending', icon: '⏳' },
-      repromoted: { variant: 'info' as const, label: 'Repromoted', icon: '🔄' },
-      deleted: { variant: 'danger' as const, label: 'Deleted', icon: '🗑️' },
-      rejected: { variant: 'danger' as const, label: 'Rejected', icon: '❌' }
+    switch (status) {
+      case 'active':
+        return <Badge variant="success" className="font-medium">Active</Badge>
+      case 'completed':
+        return <Badge variant="info" className="font-medium">Completed</Badge>
+      case 'on_hold':
+        return <Badge variant="warning" className="font-medium">On Hold</Badge>
+          case 'repromote':
+      case 'repromoted':
+        return <Badge variant="default" className="font-medium">Repromote</Badge>
+      case 'deleted':
+        return <Badge variant="danger" className="font-medium">Deleted</Badge>
+      default:
+        return <Badge variant="default" className="font-medium">{status}</Badge>
     }
-
-    const config = statusConfig[status] || { variant: 'default' as const, label: status, icon: '❓' }
-    
-    return (
-      <Badge variant={config.variant} className="text-xs font-medium flex items-center gap-1">
-        <span>{config.icon}</span>
-        <span>{config.label}</span>
-      </Badge>
-    )
   }
 
   const statusCounts = {
-    all: videos.length,
     active: videos.filter(v => v.status === 'active').length,
     completed: videos.filter(v => v.status === 'completed').length,
-    pending: videos.filter(v => v.status === 'pending').length,
     on_hold: videos.filter(v => v.status === 'on_hold').length,
-    paused: videos.filter(v => v.status === 'paused').length,
     repromoted: videos.filter(v => v.status === 'repromoted').length,
-    deleted: videos.filter(v => v.status === 'deleted').length,
-    rejected: videos.filter(v => v.status === 'rejected').length
+    deleted: videos.filter(v => v.status === 'deleted').length
   }
 
-  const handleViewVideo = (video: VideoWithUser) => {
+  const handleViewVideo = (video) => {
     setSelectedVideo(video)
     setIsModalOpen(true)
+    // Dispatch popup state change event
     window.dispatchEvent(new CustomEvent('popupStateChange', { detail: { isOpen: true } }))
   }
 
   const handleCloseModal = () => {
     setIsModalOpen(false)
     setSelectedVideo(null)
+    // Dispatch popup state change event
     window.dispatchEvent(new CustomEvent('popupStateChange', { detail: { isOpen: false } }))
-  }
-
-  const handleVideoUpdate = () => {
-    // Refresh videos list after any updates
-    fetchVideosWithUsers()
-  }
-
-  const getProgressPercentage = (current: number, target: number) => {
-    if (target === 0) return 0
-    return Math.min((current / target) * 100, 100)
   }
 
   if (isLoading) {
     return (
-      <div className="space-y-4">
-        <div className="h-12 gaming-skeleton rounded-xl" />
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-          {[1, 2, 3, 4, 5].map((i) => (
-            <div key={i} className="h-20 gaming-skeleton rounded-xl" />
-          ))}
-        </div>
+      <div className="space-y-6">
+        <div className="h-16 gaming-skeleton rounded-xl" />
         <div className="h-96 gaming-skeleton rounded-xl" />
       </div>
     )
   }
 
   return (
-    <div className="space-y-4">
-      {/* Header - Mobile Optimized */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white gaming-text-shadow">
-            Video Management
-          </h1>
-          <p className="text-sm text-gray-600 dark:text-gray-300">
-            {filteredAndSortedVideos.length} of {videos.length} videos
-          </p>
-        </div>
-        <div className="flex items-center space-x-2 w-full sm:w-auto">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowFilters(!showFilters)}
-            className="flex items-center space-x-1 sm:hidden"
-          >
-            <Filter className="w-4 h-4" />
-            <span>Filters</span>
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={fetchVideosWithUsers}
-            disabled={isLoading}
-            className="flex items-center space-x-1"
-          >
-            <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
-            <span className="hidden sm:inline">Refresh</span>
-          </Button>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white gaming-text-shadow">Video Management</h1>
+          <p className="text-gray-600 dark:text-gray-300">Manage video promotions and track performance</p>
         </div>
       </div>
 
-      {/* Status Overview - Responsive Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-3">
+      {/* Status Overview */}
+      <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
         {Object.entries(statusCounts).map(([status, count]) => (
-          <Card 
-            key={status} 
-            className={`cursor-pointer gaming-interactive transition-all duration-300 hover:scale-105 ${
-              videoFilters.status === status ? 'ring-2 ring-violet-500 bg-violet-50 dark:bg-violet-900/30' : ''
-            }`}
-            onClick={() => setVideoFilters({ status: status === videoFilters.status ? 'all' : status })}
-          >
-            <CardContent className="p-3 text-center">
-              <div className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white">
-                {count}
-              </div>
-              <div className="text-xs text-gray-500 dark:text-gray-400 capitalize">
-                {status.replace('_', ' ')}
-              </div>
-            </CardContent>
+          <Card key={status} className="text-center p-4 cursor-pointer gaming-interactive"
+                onClick={() => setVideoFilters({ status: status === videoFilters.status ? 'all' : status })}>
+            <div className="gaming-metric-value !text-2xl">{count}</div>
+            <div className="text-sm text-gray-500 dark:text-gray-400 capitalize">{status.replace('_', ' ')}</div>
           </Card>
         ))}
       </div>
 
-      {/* Search and Filters - Collapsible on Mobile */}
-      <Card className="gaming-card-enhanced">
-        <CardContent className="p-4">
-          <div className="space-y-4">
-            {/* Search Bar */}
-            <div className="relative">
+      {/* Search and Filters */}
+      <Card>
+        <CardContent className="p-6">
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
               <Input
-                placeholder="Search by title, creator, email, or YouTube URL..."
+                placeholder="Search by Video ID, title, or creator..."
                 value={videoFilters.search}
                 onChange={(e) => setVideoFilters({ search: e.target.value })}
-                className="pl-10 text-sm"
+                className="pl-10"
               />
             </div>
             
-            {/* Filters Row - Hidden on mobile unless toggled */}
-            <div className={`grid grid-cols-1 sm:grid-cols-3 gap-3 ${showFilters ? 'block' : 'hidden sm:grid'}`}>
-              <select
-                value={videoFilters.status}
-                onChange={(e) => setVideoFilters({ status: e.target.value })}
-                className="px-3 py-2 border border-violet-500/30 rounded-lg bg-violet-500/10 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-violet-500 gaming-input"
-              >
-                <option value="all">All Status</option>
-                <option value="active">Active</option>
-                <option value="completed">Completed</option>
-                <option value="pending">Pending</option>
-                <option value="on_hold">On Hold</option>
-                <option value="paused">Paused</option>
-                <option value="repromoted">Repromoted</option>
-                <option value="deleted">Deleted</option>
-                <option value="rejected">Rejected</option>
-              </select>
-              
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as any)}
-                className="px-3 py-2 border border-violet-500/30 rounded-lg bg-violet-500/10 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-violet-500 gaming-input"
-              >
-                <option value="created_at">Sort by Date</option>
-                <option value="views_count">Sort by Views</option>
-                <option value="coin_cost">Sort by Coins</option>
-                <option value="completion_rate">Sort by Completion</option>
-              </select>
-              
-              <select
-                value={sortOrder}
-                onChange={(e) => setSortOrder(e.target.value as any)}
-                className="px-3 py-2 border border-violet-500/30 rounded-lg bg-violet-500/10 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-violet-500 gaming-input"
-              >
-                <option value="desc">Descending</option>
-                <option value="asc">Ascending</option>
-              </select>
-            </div>
+            <select
+              value={videoFilters.status}
+              onChange={(e) => setVideoFilters({ status: e.target.value })}
+              className="px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm min-w-[140px] dark:bg-slate-800 dark:border-slate-600 dark:text-white"
+            >
+              <option value="all">All Status</option>
+              <option value="active">Active</option>
+              <option value="completed">Completed</option>
+              <option value="on_hold">On Hold</option>
+              <option value="repromoted">Repromoted</option>
+              <option value="deleted">Deleted</option>
+            </select>
           </div>
         </CardContent>
       </Card>
 
-      {/* Videos List - Mobile-First Design */}
-      <div className="space-y-3">
-        {filteredAndSortedVideos.length === 0 ? (
-          <Card className="gaming-card-enhanced">
-            <CardContent className="p-8 text-center">
-              <VideoIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No Videos Found</h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                {videoFilters.search || videoFilters.status !== 'all' 
-                  ? 'Try adjusting your search or filters' 
-                  : 'Videos will appear here when users upload them'
-                }
-              </p>
-            </CardContent>
-          </Card>
-        ) : (
-          filteredAndSortedVideos.map((video) => (
-            <Card key={video.id} className="gaming-card-enhanced hover:scale-[1.01] transition-all duration-300">
-              <CardContent className="p-4">
-                {/* Mobile Layout */}
-                <div className="space-y-3">
-                  {/* Header Row */}
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-medium text-gray-900 dark:text-white text-sm sm:text-base line-clamp-2 mb-1">
-                        {video.title}
-                      </h3>
-                      <div className="flex items-center space-x-2 text-xs text-gray-500 dark:text-gray-400">
-                        <div className="w-6 h-6 bg-gradient-to-br from-violet-400 to-purple-600 rounded-full flex items-center justify-center text-white font-medium text-xs">
+      {/* Videos Table */}
+      <Card>
+        <CardContent className="p-0 gaming-table">
+          <div className="overflow-x-auto">
+            <table className="w-full gaming-table">
+              <thead>
+                <tr>
+                  <th className="text-left">User</th>
+                  <th className="text-left">Video Status</th>
+                  <th className="text-left">View Criteria</th>
+                  <th className="text-left">Video ID</th>
+                  <th className="text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredVideos.map((video) => (
+                  <tr key={video.id} className="group">
+                    <td className="py-4 px-6">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 bg-gradient-to-br from-violet-400 to-purple-600 rounded-full flex items-center justify-center text-white font-medium text-sm">
                           {video.username.charAt(0).toUpperCase()}
                         </div>
-                        <div className="flex flex-col">
-                          <span className="font-medium">{video.username}</span>
-                          <span className="text-xs">{video.user_email}</span>
+                        <div>
+                          <p className="font-medium text-gray-900 dark:text-white">{video.username}</p>
+                          <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-1">{video.title}</p>
                         </div>
                       </div>
-                    </div>
-                    <div className="flex items-center space-x-2 ml-3">
+                    </td>
+                    <td className="py-4 px-6">
                       {getStatusBadge(video.status)}
+                    </td>
+                    <td className="py-4 px-6">
+                      <div className="flex items-center space-x-2">
+                        <Eye className="w-4 h-4 text-gray-400" />
+                        <span className="font-mono text-sm font-medium">{video.views_count}/{video.target_views}</span>
+                      </div>
+                    </td>
+                    <td className="py-4 px-6">
+                      <div className="flex items-center space-x-2">
+                        <code className="bg-violet-500/10 border border-violet-500/20 px-2 py-1 rounded text-sm font-mono text-violet-600 dark:text-violet-400">{video.id.slice(0, 8)}</code>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => copyToClipboard(video.id)}
+                          className="opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <Copy className="w-3 h-3" />
+                        </Button>
+                      </div>
+                    </td>
+                    <td className="py-4 px-6 text-right">
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => handleViewVideo(video)}
-                        className="p-1"
+                        className="flex items-center space-x-1"
                       >
-                        <MoreHorizontal className="w-4 h-4" />
+                        <Eye className="w-4 h-4" />
+                        <span>View</span>
                       </Button>
-                    </div>
-                  </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
 
-                  {/* Progress Bar */}
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-gray-500 dark:text-gray-400">Progress</span>
-                      <span className="font-medium text-gray-900 dark:text-white">
-                        {formatNumber(video.views_count)} / {formatNumber(video.target_views)} views
-                      </span>
-                    </div>
-                    <div className="w-full bg-gray-200 dark:bg-slate-700 rounded-full h-2">
-                      <div 
-                        className="bg-gradient-to-r from-violet-500 to-purple-600 h-2 rounded-full transition-all duration-300"
-                        style={{ width: `${getProgressPercentage(video.views_count, video.target_views)}%` }}
-                      />
-                    </div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400">
-                      {getProgressPercentage(video.views_count, video.target_views).toFixed(1)}% complete
-                    </div>
-                  </div>
-
-                  {/* Stats Grid */}
-                  <div className="grid grid-cols-3 gap-3 pt-2 border-t border-gray-200 dark:border-slate-700">
-                    <div className="text-center">
-                      <div className="text-sm font-bold text-orange-600 dark:text-orange-400">
-                        {formatNumber(video.coin_cost)}
-                      </div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400">Coins</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-sm font-bold text-emerald-600 dark:text-emerald-400">
-                        {video.completion_rate}%
-                      </div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400">Completion</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-sm font-bold text-blue-600 dark:text-blue-400">
-                        {Math.floor(video.total_watch_time / 60)}m
-                      </div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400">Watch Time</div>
-                    </div>
-                  </div>
-
-                  {/* Footer Info */}
-                  <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 pt-2 border-t border-gray-200 dark:border-slate-700">
-                    <div className="flex items-center space-x-1">
-                      <Calendar className="w-3 h-3" />
-                      <span>{format(new Date(video.created_at), 'MMM dd, yyyy')}</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => copyToClipboard(video.youtube_url)}
-                        className="p-1 text-xs"
-                      >
-                        <Copy className="w-3 h-3" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => window.open(video.youtube_url, '_blank')}
-                        className="p-1 text-xs"
-                      >
-                        <Eye className="w-3 h-3" />
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))
-        )}
-      </div>
-
-      {/* Video Detail Modal */}
+      {/* Video View Modal */}
       <VideoEditModal
         video={selectedVideo}
         isOpen={isModalOpen}
         onClose={handleCloseModal}
-        onVideoUpdate={handleVideoUpdate}
       />
     </div>
   )

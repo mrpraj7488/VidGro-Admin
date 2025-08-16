@@ -1124,39 +1124,18 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
         throw new Error('Supabase Admin not initialized')
       }
       console.log('✅ fetchVideos: Supabase Admin client created')
-      // Fetch videos with user information using a join
+      // Fetch videos without join to avoid relation issues
       const { data, error } = await supabase
         .from('videos')
-        .select(`
-          id,
-          user_id,
-          youtube_url,
-          title,
-          views_count,
-          target_views,
-          duration_seconds,
-          coin_reward,
-          coin_cost,
-          status,
-          hold_until,
-          repromoted_at,
-          total_watch_time,
-          completion_rate,
-          created_at,
-          updated_at,
-          completed,
-          coins_earned_total,
-          profiles!inner(username, email)
-        `)
+        .select('id, user_id, youtube_url, title, views_count, target_views, duration_seconds, coin_reward, coin_cost, status, hold_until, repromoted_at, total_watch_time, completion_rate, created_at, updated_at, completed, coins_earned_total')
         .order('created_at', { ascending: false })
 
       if (error) throw error
 
-      // Transform the data to include user information
+      // Transform the data to match our interface and add username fallback
       const transformedVideos = (data || []).map((video: any) => ({
         ...video,
-        username: video.profiles?.username || 'Unknown User',
-        user_email: video.profiles?.email || 'No email'
+        username: video.username || 'Unknown User'
       }))
 
       // Filter out any null or undefined entries and ensure required fields exist
