@@ -9,6 +9,12 @@ import { getSupabaseClient } from '../../lib/supabase'
 import { format, subDays } from 'date-fns'
 import { formatNumber, formatCurrency } from '../../lib/utils'
 
+// Helper function to get admin client
+function getSupabaseAdminClient() {
+  const { getSupabaseAdminClient } = require('../../lib/supabase')
+  return getSupabaseAdminClient()
+}
+
 interface CoinTransaction {
   id: string
   transaction_id: string
@@ -51,6 +57,7 @@ export function CoinTransactionsView() {
   const fetchTransactions = async () => {
     setIsLoading(true)
     try {
+      console.log('Fetching coin transactions...')
       const supabase = getSupabaseAdminClient()
       if (!supabase) {
         throw new Error('Supabase not initialized')
@@ -58,6 +65,8 @@ export function CoinTransactionsView() {
 
       const startDate = dateRange[0] || subDays(new Date(), 30)
       const endDate = dateRange[1] || new Date()
+      
+      console.log('Date range for transactions:', { startDate, endDate })
 
       // Build query
       let query = supabase
@@ -74,13 +83,19 @@ export function CoinTransactionsView() {
 
       const { data: transactionData, error } = await query.limit(1000)
 
-      if (error) throw error
+      if (error) {
+        console.error('Error fetching transactions:', error)
+        throw error
+      }
+      
+      console.log('Raw transaction data:', transactionData?.length || 0, 'transactions')
 
       // Get user emails separately to avoid join issues
       const userIds = [...new Set(transactionData?.map(tx => tx.user_id).filter(Boolean))]
       let userEmails: Record<string, string> = {}
       
       if (userIds.length > 0) {
+        console.log('Fetching user emails for', userIds.length, 'users')
         const { data: usersData, error: usersError } = await supabase
           .from('profiles')
           .select('id, email')
@@ -91,6 +106,7 @@ export function CoinTransactionsView() {
             acc[user.id] = user.email
             return acc
           }, {} as Record<string, string>)
+          console.log('User emails fetched:', Object.keys(userEmails).length)
         }
       }
 
@@ -108,6 +124,7 @@ export function CoinTransactionsView() {
         updated_at: tx.updated_at
       })) || []
 
+      console.log('Transformed transactions:', transformedTransactions.length)
       setTransactions(transformedTransactions)
 
       // Calculate stats
@@ -117,6 +134,15 @@ export function CoinTransactionsView() {
       const purchases = transformedTransactions.filter(tx => tx.transaction_type === 'coin_purchase').length
       const promotions = transformedTransactions.filter(tx => tx.transaction_type === 'video_promotion').length
       const bonuses = transformedTransactions.filter(tx => tx.transaction_type === 'bonus').length
+
+      console.log('Transaction stats calculated:', {
+        totalTransactions,
+        totalVolume,
+        refunds,
+        purchases,
+        promotions,
+        bonuses
+      })
 
       setStats({
         totalTransactions,

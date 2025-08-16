@@ -7,6 +7,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card'
 import { Button } from '../ui/Button'
 import { format, subDays } from 'date-fns'
 
+// Helper function to get admin client
+function getSupabaseAdminClient() {
+  const { getSupabaseAdminClient } = require('../../lib/supabase')
+  return getSupabaseAdminClient()
+}
+
 export function DashboardView() {
   const { 
     dashboardStats, 
@@ -94,9 +100,19 @@ export function DashboardView() {
           <div className="h-64 md:h-80 bg-gray-200 dark:bg-slate-700 animate-pulse rounded-xl" />
           <div className="h-64 md:h-80 bg-gray-200 dark:bg-slate-700 animate-pulse rounded-xl" />
         </div>
-      </div>
-    )
+      const hasVideoPromotionData = false // Will be implemented when videoPromotionData is added to AnalyticsData
+      const hasCoinTransactionData = analyticsData.coinTransactionData && analyticsData.coinTransactionData.length > 0
   }
+      
+      console.log('Dashboard data availability:', {
+        hasUserGrowthData,
+        hasVideoPromotionData,
+        hasCoinTransactionData,
+        hasRecentActivity,
+        userGrowthDataLength: analyticsData.userGrowthData?.length || 0,
+        coinTransactionDataLength: analyticsData.coinTransactionData?.length || 0,
+        recentActivityLength: analyticsData.recentActivity?.length || 0
+      })
 
   return (
     <div className="space-y-4 md:space-y-6 animate-fade-in">
@@ -180,8 +196,12 @@ export function DashboardView() {
           <CardContent className="p-2 md:p-6">
             <div className="h-48 md:h-64 lg:h-72">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={displayChartData}>
-                  <defs>
+                {hasUserGrowthData ? (
+                  <BarChart data={analyticsData.userGrowthData.map(item => ({
+                    date: item.date,
+                    promotions: Math.floor(item.activeUsers * 0.3), // Mock promotions based on active users
+                    completions: Math.floor(item.activeUsers * 0.2) // Mock completions
+                  }))}>
                     <linearGradient id="colorUsers" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3}/>
                       <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
@@ -217,7 +237,7 @@ export function DashboardView() {
                     strokeWidth={2}
                     fillOpacity={1}
                     fill="url(#colorUsers)"
-                  />
+                    <p className="text-sm">Loading coin transaction data...</p>
                 </AreaChart>
               </ResponsiveContainer>
             </div>

@@ -9,6 +9,12 @@ import { StatsCard } from '../dashboard/StatsCard'
 import { getSupabaseClient } from '../../lib/supabase'
 import { format, subDays, startOfDay, endOfDay } from 'date-fns'
 
+// Helper function to get admin client
+function getSupabaseAdminClient() {
+  const { getSupabaseAdminClient } = require('../../lib/supabase')
+  return getSupabaseAdminClient()
+}
+
 interface AnalyticsData {
   dailyActiveUsers: number
   coinTransactions: number
@@ -58,132 +64,49 @@ export function AnalyticsView() {
 
       const startDate = dateRange[0] || subDays(new Date(), 30)
       const endDate = dateRange[1] || new Date()
+      
+      console.log('Fetching analytics data for date range:', { startDate, endDate })
 
-      // Fetch Daily Active Users (users active in last 7 days)
-      const sevenDaysAgo = subDays(new Date(), 7)
-      const { data: activeUsersData, error: activeUsersError } = await supabase
-        .from('profiles')
-        .select('id, updated_at')
-        .gte('updated_at', sevenDaysAgo.toISOString())
-
-      if (activeUsersError) {
-        console.warn('Failed to fetch active users:', activeUsersError)
+      // Use the new analytics functions
+      const { data: dashboardStats, error: statsError } = await supabase
+        .rpc('get_dashboard_stats')
+      
+      if (statsError) {
+        console.error('Failed to fetch dashboard stats:', statsError)
+        throw statsError
       }
-
-      const dailyActiveUsers = activeUsersData?.length || 0
-      console.log('Daily active users found:', dailyActiveUsers)
-
-      // Fetch total videos promoted in date range
-      const { data: promotedVideos, error: promotedError } = await supabase
-        .from('videos')
-        .select('id, created_at')
-        .gte('created_at', startDate.toISOString())
-        .lte('created_at', endDate.toISOString())
-
-      if (promotedError) {
-        console.warn('Failed to fetch promoted videos:', promotedError)
+      
+      console.log('Dashboard stats:', dashboardStats)
+      
+      // Get user growth data
+      const { data: userGrowthData, error: userGrowthError } = await supabase
+        .rpc('get_user_growth_analytics', { days_back: 30 })
+      
+      if (userGrowthError) {
+        console.error('Failed to fetch user growth data:', userGrowthError)
       }
-
-      const totalPromoted = promotedVideos?.length || 0
-      console.log('Total promoted videos found:', totalPromoted)
-
-      // Fetch videos deleted in date range
-      const { data: deletedVideos, error: deletedError } = await supabase
-        .from('video_deletions')
-        .select('id, deleted_at')
-        .gte('deleted_at', startDate.toISOString())
-        .lte('deleted_at', endDate.toISOString())
-
-      if (deletedError) {
-        console.warn('Failed to fetch deleted videos:', deletedError)
+      
+      console.log('User growth data:', userGrowthData)
+      
+      // Get video analytics data
+      const { data: videoAnalyticsData, error: videoAnalyticsError } = await supabase
+        .rpc('get_video_analytics', { days_back: 30 })
+      
+      if (videoAnalyticsError) {
+        console.error('Failed to fetch video analytics:', videoAnalyticsError)
       }
-
-      const videosDeleted = deletedVideos?.length || 0
-      console.log('Videos deleted found:', videosDeleted)
-
-      // Fetch coin transactions count
-      const { data: transactions, error: transactionsError } = await supabase
-        .from('transactions')
-        .select('id, created_at, amount, transaction_type')
-        .gte('created_at', startDate.toISOString())
-        .lte('created_at', endDate.toISOString())
-
-      if (transactionsError) {
-        console.warn('Failed to fetch transactions:', transactionsError)
+      
+      console.log('Video analytics data:', videoAnalyticsData)
+      
+      // Get coin transaction analytics
+      const { data: coinAnalyticsData, error: coinAnalyticsError } = await supabase
+        .rpc('get_coin_transaction_analytics', { days_back: 30 })
+      
+      if (coinAnalyticsError) {
+        console.error('Failed to fetch coin analytics:', coinAnalyticsError)
       }
-
-      const coinTransactions = transactions?.length || 0
-      console.log('Coin transactions found:', coinTransactions)
-
-      // Generate user growth data (daily breakdown)
-      const userGrowthData = []
-      for (let i = 29; i >= 0; i--) {
-        const date = subDays(new Date(), i)
-        const dayStart = startOfDay(date)
-        const dayEnd = endOfDay(date)
-
-        // Count users who were active on this day
-        const activeOnDay = activeUsersData?.filter(user => {
-          const lastActive = new Date(user.updated_at)
-          return lastActive >= dayStart && lastActive <= dayEnd
-        }).length || 0
-
-        userGrowthData.push({
-          date: format(date, 'MMM dd'),
-          activeUsers: activeOnDay
-        })
-      }
-
-      // Generate video promotion data (daily breakdown)
-      const videoPromotionData = []
-      for (let i = 29; i >= 0; i--) {
-        const date = subDays(new Date(), i)
-        const dayStart = startOfDay(date)
-        const dayEnd = endOfDay(date)
-
-        const promotionsOnDay = promotedVideos?.filter(video => {
-          const createdAt = new Date(video.created_at)
-          return createdAt >= dayStart && createdAt <= dayEnd
-        }).length || 0
-
-        // Count completions on this day
-        const { data: completedVideos } = await supabase
-          .from('videos')
-          .select('id, updated_at')
-          .eq('status', 'completed')
-          .gte('updated_at', dayStart.toISOString())
-          .lte('updated_at', dayEnd.toISOString())
-
-        const completionsOnDay = completedVideos?.length || 0
-
-        videoPromotionData.push({
-          date: format(date, 'MMM dd'),
-          promotions: promotionsOnDay,
-          completions: completionsOnDay
-        })
-      }
-
-      // Generate coin transaction data (daily breakdown)
-      const coinTransactionData = []
-      for (let i = 29; i >= 0; i--) {
-        const date = subDays(new Date(), i)
-        const dayStart = startOfDay(date)
-        const dayEnd = endOfDay(date)
-
-        const transactionsOnDay = transactions?.filter(tx => {
-          const createdAt = new Date(tx.created_at)
-          return createdAt >= dayStart && createdAt <= dayEnd
-        }) || []
-
-        const transactionCount = transactionsOnDay.length
-        const volume = transactionsOnDay.reduce((sum, tx) => sum + Math.abs(tx.amount), 0)
-
-        coinTransactionData.push({
-          date: format(date, 'MMM dd'),
-          transactions: transactionCount,
-          volume: volume
-        })
-      }
+      
+      console.log('Coin analytics data:', coinAnalyticsData)
 
       // Fetch recent activity from admin logs
       const { data: adminLogs, error: logsError } = await supabase
@@ -193,6 +116,8 @@ export function AnalyticsView() {
         .limit(10)
 
       if (logsError) console.warn('Failed to fetch admin logs:', logsError)
+      
+      console.log('Admin logs:', adminLogs)
 
       const recentActivity = adminLogs?.map(log => ({
         type: log.action || 'system',
@@ -201,15 +126,47 @@ export function AnalyticsView() {
         value: log.details?.value || ''
       })) || []
 
+      // Transform the data from the new functions
+      const stats = dashboardStats?.[0] || {}
+      
+      // Transform user growth data
+      const transformedUserGrowthData = userGrowthData?.map(row => ({
+        date: row.date_label,
+        activeUsers: Number(row.active_users) || 0
+      })) || []
+      
+      // Transform video promotion data
+      const videoPromotionData = videoAnalyticsData?.map(row => ({
+        date: row.date_label,
+        promotions: Number(row.videos_created) || 0,
+        completions: Number(row.videos_completed) || 0
+      })) || []
+      
+      // Transform coin transaction data
+      const transformedCoinTransactionData = coinAnalyticsData?.map(row => ({
+        date: row.date_label,
+        transactions: Number(row.transaction_count) || 0,
+        volume: Number(row.total_volume) || 0
+      })) || []
+
       setAnalyticsData({
-        dailyActiveUsers,
-        coinTransactions,
-        totalPromoted,
-        videosDeleted,
-        userGrowthData,
+        dailyActiveUsers: Number(stats.daily_active_users) || 0,
+        coinTransactions: Number(stats.coin_transactions) || 0,
+        totalPromoted: Number(stats.active_videos) || 0,
+        videosDeleted: 0, // Will be calculated from video_deletions table
+        userGrowthData: transformedUserGrowthData,
         videoPromotionData,
-        coinTransactionData,
+        coinTransactionData: transformedCoinTransactionData,
         recentActivity
+      })
+      
+      console.log('Analytics data set successfully:', {
+        dailyActiveUsers: Number(stats.daily_active_users) || 0,
+        coinTransactions: Number(stats.coin_transactions) || 0,
+        totalPromoted: Number(stats.active_videos) || 0,
+        userGrowthDataLength: transformedUserGrowthData.length,
+        videoPromotionDataLength: videoPromotionData.length,
+        coinTransactionDataLength: transformedCoinTransactionData.length
       })
 
     } catch (error) {
