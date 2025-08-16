@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react'
-import { Search, Eye, TrendingUp, Calendar, MoreHorizontal, Copy } from 'lucide-react'
+import { Search, Eye, TrendingUp, Calendar, MoreHorizontal, Copy, Trash2 } from 'lucide-react'
 import { useAdminStore } from '../../stores/adminStore'
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card'
 import { Button } from '../ui/Button'
 import { Input } from '../ui/Input'
 import { Badge } from '../ui/Badge'
 import { VideoEditModal } from './VideoEditModal'
+import { VideoDeleteModal } from './VideoDeleteModal'
 import { formatNumber } from '../../lib/utils'
 import { format } from 'date-fns'
 
@@ -13,14 +14,31 @@ export function VideoManagement() {
   const { videos, videoFilters, isLoading, fetchVideos, setVideoFilters, copyToClipboard } = useAdminStore()
   const [selectedVideo, setSelectedVideo] = useState(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+  const [videoToDelete, setVideoToDelete] = useState(null)
+  const [userEmails, setUserEmails] = useState<Record<string, string>>({})
 
   useEffect(() => {
     fetchVideos()
+    fetchUserEmails()
   }, [fetchVideos])
+
+  const fetchUserEmails = async () => {
+    try {
+      const { users } = useAdminStore.getState()
+      const emailMap: Record<string, string> = {}
+      users.forEach(user => {
+        emailMap[user.id] = user.email
+      })
+      setUserEmails(emailMap)
+    } catch (error) {
+      console.error('Failed to fetch user emails:', error)
+    }
+  }
 
   const filteredVideos = videos.filter(video => {
     const matchesSearch = video.title.toLowerCase().includes(videoFilters.search.toLowerCase()) ||
-                         video.username.toLowerCase().includes(videoFilters.search.toLowerCase()) ||
+                         (userEmails[video.user_id] || '').toLowerCase().includes(videoFilters.search.toLowerCase()) ||
                          video.video_id.toLowerCase().includes(videoFilters.search.toLowerCase())
     const matchesStatus = videoFilters.status === 'all' || video.status === videoFilters.status
     
@@ -35,7 +53,6 @@ export function VideoManagement() {
         return <Badge variant="info" className="font-medium">Completed</Badge>
       case 'on_hold':
         return <Badge variant="warning" className="font-medium">On Hold</Badge>
-          case 'repromote':
       case 'repromoted':
         return <Badge variant="default" className="font-medium">Repromote</Badge>
       case 'deleted':
@@ -67,6 +84,31 @@ export function VideoManagement() {
     window.dispatchEvent(new CustomEvent('popupStateChange', { detail: { isOpen: false } }))
   }
 
+  const handleDeleteVideo = (video) => {
+    setVideoToDelete(video)
+    setIsDeleteModalOpen(true)
+  }
+
+  const handleCloseDeleteModal = () => {
+    setIsDeleteModalOpen(false)
+    setVideoToDelete(null)
+  }
+
+  const handleConfirmDelete = async (reason: string) => {
+    if (!videoToDelete) return
+    
+    try {
+      // Delete video logic will be implemented in the store
+      await useAdminStore.getState().deleteVideo(videoToDelete.id, reason)
+      setIsDeleteModalOpen(false)
+      setVideoToDelete(null)
+      // Refresh videos list
+      await fetchVideos()
+    } catch (error) {
+      console.error('Failed to delete video:', error)
+    }
+  }
+
   if (isLoading) {
     return (
       <div className="space-y-6">
@@ -87,7 +129,7 @@ export function VideoManagement() {
       </div>
 
       {/* Status Overview */}
-      <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {Object.entries(statusCounts).map(([status, count]) => (
           <Card key={status} className="text-center p-4 cursor-pointer gaming-interactive"
                 onClick={() => setVideoFilters({ status: status === videoFilters.status ? 'all' : status })}>
@@ -104,7 +146,7 @@ export function VideoManagement() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
               <Input
-                placeholder="Search by Video ID, title, or creator..."
+                placeholder="Search by title, user email, or video ID..."
                 value={videoFilters.search}
                 onChange={(e) => setVideoFilters({ search: e.target.value })}
                 className="pl-10"
@@ -134,10 +176,10 @@ export function VideoManagement() {
             <table className="w-full gaming-table">
               <thead>
                 <tr>
-                  <th className="text-left">User</th>
+                  <th className="text-left">Video Title</th>
+                  <th className="text-left">User Email</th>
                   <th className="text-left">Video Status</th>
                   <th className="text-left">View Criteria</th>
-                  <th className="text-left">Video ID</th>
                   <th className="text-right">Actions</th>
                 </tr>
               </thead>
@@ -145,13 +187,20 @@ export function VideoManagement() {
                 {filteredVideos.map((video) => (
                   <tr key={video.id} className="group">
                     <td className="py-4 px-6">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 bg-gradient-to-br from-violet-400 to-purple-600 rounded-full flex items-center justify-center text-white font-medium text-sm">
-                          {video.username.charAt(0).toUpperCase()}
+                      <div>
+                        <p className="font-medium text-gray-900 dark:text-white line-clamp-2">{video.title}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">ID: {video.id.slice(0, 8)}</p>
+                      </div>
+                    </td>
+                    <td className="py-4 px-6">
+                      <div className="flex items-center space-x-2">
+                        <div className="w-8 h-8 bg-gradient-to-br from-violet-400 to-purple-600 rounded-full flex items-center justify-center text-white font-medium text-xs">
+                          {(userEmails[video.user_id] || 'U').charAt(0).toUpperCase()}
                         </div>
                         <div>
-                          <p className="font-medium text-gray-900 dark:text-white">{video.username}</p>
-                          <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-1">{video.title}</p>
+                          <p className="text-sm font-medium text-gray-900 dark:text-white">
+                            {userEmails[video.user_id] || 'Unknown User'}
+                          </p>
                         </div>
                       </div>
                     </td>
@@ -164,29 +213,27 @@ export function VideoManagement() {
                         <span className="font-mono text-sm font-medium">{video.views_count}/{video.target_views}</span>
                       </div>
                     </td>
-                    <td className="py-4 px-6">
-                      <div className="flex items-center space-x-2">
-                        <code className="bg-violet-500/10 border border-violet-500/20 px-2 py-1 rounded text-sm font-mono text-violet-600 dark:text-violet-400">{video.id.slice(0, 8)}</code>
+                    <td className="py-4 px-6 text-right">
+                      <div className="flex items-center justify-end space-x-2">
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => copyToClipboard(video.id)}
-                          className="opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={() => handleViewVideo(video)}
+                          className="flex items-center space-x-1"
                         >
-                          <Copy className="w-3 h-3" />
+                          <Eye className="w-4 h-4" />
+                          <span>View</span>
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDeleteVideo(video)}
+                          className="flex items-center space-x-1 text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                          <span>Delete</span>
                         </Button>
                       </div>
-                    </td>
-                    <td className="py-4 px-6 text-right">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleViewVideo(video)}
-                        className="flex items-center space-x-1"
-                      >
-                        <Eye className="w-4 h-4" />
-                        <span>View</span>
-                      </Button>
                     </td>
                   </tr>
                 ))}
@@ -201,6 +248,17 @@ export function VideoManagement() {
         video={selectedVideo}
         isOpen={isModalOpen}
         onClose={handleCloseModal}
+        onDelete={handleDeleteVideo}
+        userEmail={selectedVideo ? userEmails[selectedVideo.user_id] : ''}
+      />
+
+      {/* Video Delete Modal */}
+      <VideoDeleteModal
+        video={videoToDelete}
+        isOpen={isDeleteModalOpen}
+        onClose={handleCloseDeleteModal}
+        onConfirm={handleConfirmDelete}
+        userEmail={videoToDelete ? userEmails[videoToDelete.user_id] : ''}
       />
     </div>
   )

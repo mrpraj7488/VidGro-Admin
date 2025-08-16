@@ -213,7 +213,7 @@ interface AdminStore {
   // Video Management
   approveVideo: (videoId: string) => Promise<void>
   rejectVideo: (videoId: string, reason: string) => Promise<void>
-  deleteVideo: (videoId: string) => Promise<void>
+  deleteVideo: (videoId: string, reason?: string) => Promise<void>
   
   // Bug Report Management
   updateBugReport: (reportId: string, updates: Partial<BugReport>) => Promise<void>
@@ -1124,7 +1124,8 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
         throw new Error('Supabase Admin not initialized')
       }
       console.log('✅ fetchVideos: Supabase Admin client created')
-      // Fetch videos without join to avoid relation issues
+      
+      // Fetch videos and users separately to get email information
       const { data, error } = await supabase
         .from('videos')
         .select('id, user_id, youtube_url, title, views_count, target_views, duration_seconds, coin_reward, coin_cost, status, hold_until, repromoted_at, total_watch_time, completion_rate, created_at, updated_at, completed, coins_earned_total')
@@ -1132,10 +1133,25 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
 
       if (error) throw error
 
-      // Transform the data to match our interface and add username fallback
+      // Get user emails for the videos
+      const userIds = [...new Set((data || []).map(v => v.user_id).filter(Boolean))]
+      const { data: usersData, error: usersError } = await supabase
+        .from('profiles')
+        .select('id, email, username')
+        .in('id', userIds)
+
+      const userMap = new Map()
+      if (!usersError && usersData) {
+        usersData.forEach(user => {
+          userMap.set(user.id, { email: user.email, username: user.username })
+        })
+      }
+
+      // Transform the data to match our interface
       const transformedVideos = (data || []).map((video: any) => ({
         ...video,
-        username: video.username || 'Unknown User'
+        username: userMap.get(video.user_id)?.username || 'Unknown User',
+        userEmail: userMap.get(video.user_id)?.email || 'Unknown Email'
       }))
 
       // Filter out any null or undefined entries and ensure required fields exist
@@ -1449,16 +1465,46 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
   },
 
   // Delete Video
-  deleteVideo: async (videoId: string) => {
+  deleteVideo: async (videoId: string, reason?: string) => {
     try {
       const supabase = getSupabaseAdminClient()
       if (!supabase) {
         throw new Error('Supabase not initialized')
       }
       
+      // Get video details before deletion for logging
+      const { data: videoData, error: fetchError } = await supabase
+        .from('videos')
+        .select('*')
+        .eq('id', videoId)
+        .single()
+
+      if (fetchError) throw fetchError
+
+      // Log the deletion with reason
+      await supabase.from('admin_logs').insert({
+        admin_id: 'admin', // TODO: Get actual admin ID from auth context
+        action: 'delete_video',
+        target_type: 'video',
+        target_id: videoId,
+        old_values: videoData,
+        new_values: { status: 'deleted' },
+        details: { 
+          reason: reason || 'Deleted by admin',
+          video_title: videoData?.title,
+          user_id: videoData?.user_id,
+          coin_cost: videoData?.coin_cost
+        }
+      })
+
+      // Update video status to deleted instead of hard delete
       const { error } = await supabase
         .from('videos')
-        .delete()
+        .update({ 
+          status: 'deleted',
+          deleted_at: new Date().toISOString(),
+          deletion_reason: reason || 'Deleted by admin'
+        })
         .eq('id', videoId)
 
       if (error) throw error

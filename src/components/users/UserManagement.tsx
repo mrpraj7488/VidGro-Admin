@@ -406,7 +406,7 @@ export function UserManagement() {
                     <td className="py-4 px-6">
                       <div className="flex items-center space-x-3">
                         <div className="w-10 h-10 bg-gradient-to-br from-violet-400 to-purple-600 rounded-full flex items-center justify-center text-white font-medium text-sm">
-                          {user.username.charAt(0).toUpperCase()}
+                          {(user.email || user.username || 'U').charAt(0).toUpperCase()}
                         </div>
                         <div>
                           <p className="font-medium text-gray-900 dark:text-white">{user.username}</p>
