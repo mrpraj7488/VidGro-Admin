@@ -13,10 +13,9 @@ interface VideoEditModalProps {
   onClose: () => void
   onDelete?: (video: any) => void
   userEmail?: string
-  userName?: string
 }
 
-export function VideoEditModal({ video, isOpen, onClose, onDelete, userEmail, userName }: VideoEditModalProps) {
+export function VideoEditModal({ video, isOpen, onClose, onDelete, userEmail }: VideoEditModalProps) {
   const { copyToClipboard } = useAdminStore()
 
   // Dispatch popup state events
@@ -44,17 +43,20 @@ export function VideoEditModal({ video, isOpen, onClose, onDelete, userEmail, us
     }
   }
 
+  const handleOpenYouTube = () => {
+    window.open(video.youtube_url, '_blank')
+  }
 
   return (
-    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4">
-      <div className="gaming-modal max-w-2xl w-full max-h-[95vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="gaming-modal max-w-4xl w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-violet-500/20">
           <div>
             <h2 className="text-xl font-bold text-white">Video Details</h2>
             <p className="text-sm text-gray-400">View video promotion information</p>
           </div>
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-2">
             {onDelete && (
               <Button 
                 variant="danger" 
@@ -63,7 +65,7 @@ export function VideoEditModal({ video, isOpen, onClose, onDelete, userEmail, us
                 className="flex items-center space-x-2"
               >
                 <Trash2 className="w-4 h-4" />
-                <span className="hidden sm:inline">Delete</span>
+                <span>Delete Video</span>
               </Button>
             )}
             <Button variant="ghost" size="icon" onClick={onClose}>
@@ -72,127 +74,243 @@ export function VideoEditModal({ video, isOpen, onClose, onDelete, userEmail, us
           </div>
         </div>
 
-        <div className="p-4 sm:p-6 space-y-4">
-          {/* Status Cards */}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="gaming-card p-3 text-center">
-              <div className="text-lg font-bold text-emerald-600 dark:text-emerald-400">
-                {Math.round((video.views_count / video.target_views) * 100)}%
+        <div className="p-6 space-y-6">
+          {/* Video Header */}
+          <div className="p-4 gaming-card">
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <h3 className="text-xl font-semibold text-white mb-2">{video.title}</h3>
+                <div className="flex items-center space-x-4 text-sm text-gray-400">
+                  <span className="flex items-center">
+                    <Eye className="w-4 h-4 mr-1" />
+                    {formatNumber(video.views_count)} / {formatNumber(video.target_views)} views
+                  </span>
+                  <span className="flex items-center">
+                    <TrendingUp className="w-4 h-4 mr-1" />
+                    {video.completion_rate || 0}% completion
+                  </span>
+                  <span>Created: {format(new Date(video.created_at), 'MMM dd, yyyy')}</span>
+                </div>
               </div>
-              <div className="text-xs text-gray-500 dark:text-gray-400">Completion Rate</div>
-            </div>
-            <div className="gaming-card p-3 text-center">
-              <div className="text-lg font-bold text-blue-600 dark:text-blue-400">
-                {formatNumber(video.views_count)}/{formatNumber(video.target_views)}
-              </div>
-              <div className="text-xs text-gray-500 dark:text-gray-400">Views</div>
-            </div>
-          </div>
-
-          {/* User Info */}
-          <div className="gaming-card p-4">
-            <h4 className="text-sm font-medium text-gray-300 mb-3">User Information</h4>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-400">Name:</span>
-                <span className="text-sm text-white">{userName || 'Unknown User'}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-400">Email:</span>
-                <span className="text-sm text-white">{userEmail || 'Unknown Email'}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Video URL */}
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              Video URL
-            </label>
-            <div className="flex items-center space-x-2">
-              <Input
-                value={video.youtube_url}
-                readOnly
-                className="!bg-violet-500/10 font-mono text-sm"
-              />
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => copyToClipboard(video.youtube_url)}
+                onClick={handleOpenYouTube}
+                className="flex items-center space-x-2"
               >
-                <Copy className="w-4 h-4" />
+                <ExternalLink className="w-4 h-4" />
+                <span>Open YouTube</span>
               </Button>
             </div>
           </div>
 
-          {/* Video Status */}
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              Video Status
-            </label>
-            <div className={`px-3 py-2 rounded-lg font-medium text-sm ${getStatusColor(video.status)}`}>
-              {video.status.charAt(0).toUpperCase() + video.status.slice(1)}
+          {/* Main Details Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Left Column */}
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  User Email
+                </label>
+                <div className="flex items-center space-x-2">
+                  <Input
+                    value={userEmail || 'Unknown User'}
+                    readOnly
+                    className="!bg-violet-500/10 text-sm"
+                  />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => copyToClipboard(userEmail || '')}
+                  >
+                    <Copy className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Video URL
+                </label>
+                <div className="flex items-center space-x-2">
+                  <Input
+                    value={video.youtube_url}
+                    readOnly
+                    className="!bg-violet-500/10 font-mono text-sm"
+                  />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => copyToClipboard(video.youtube_url)}
+                  >
+                    <Copy className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  View Progress
+                </label>
+                <div className="px-3 py-2 gaming-card">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm text-gray-400">Progress</span>
+                    <span className="text-sm font-medium text-white">
+                      {Math.round((video.views_count / video.target_views) * 100)}%
+                    </span>
+                  </div>
+                  <div className="w-full bg-gray-700 rounded-full h-2">
+                    <div 
+                      className="bg-gradient-to-r from-violet-500 to-purple-600 h-2 rounded-full transition-all duration-300"
+                      style={{ width: `${Math.min(100, (video.views_count / video.target_views) * 100)}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Column */}
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Spent Coins
+                </label>
+                <div className="px-3 py-2 gaming-card">
+                  <span className="font-mono text-sm text-orange-400">{formatNumber(video.coin_cost)}</span>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Video Status
+                </label>
+                <div className={`px-3 py-2 rounded-lg font-medium text-sm ${getStatusColor(video.status)}`}>
+                  {video.status.charAt(0).toUpperCase() + video.status.slice(1)}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Total Watch Time (seconds)
+                </label>
+                <div className="px-3 py-2 gaming-card">
+                  <span className="font-mono text-sm text-blue-400">
+                    {Math.floor((video.total_watch_time || 0) / 60)}m {(video.total_watch_time || 0) % 60}s
+                  </span>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Completion Rate
+                </label>
+                <div className="px-3 py-2 gaming-card">
+                  <span className="font-mono text-sm text-emerald-400">{video.completion_rate || 0}%</span>
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* Spent Coins */}
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              Spent Coins
-            </label>
-            <div className="px-3 py-2 gaming-card">
-              <span className="font-mono text-sm text-orange-400">{formatNumber(video.coin_cost)}</span>
+          {/* Performance Metrics */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="gaming-metric p-4 text-center">
+              <div className="gaming-metric-value !text-2xl">{formatNumber(video.views_count)}</div>
+              <div className="text-sm text-violet-400">Total Views</div>
+            </div>
+            <div className="gaming-metric p-4 text-center">
+              <div className="text-2xl font-bold text-emerald-400">{video.completion_rate || 0}%</div>
+              <div className="text-sm text-emerald-400">Completion Rate</div>
+            </div>
+            <div className="gaming-metric p-4 text-center">
+              <div className="text-2xl font-bold text-orange-400">{formatNumber(video.coin_cost)}</div>
+              <div className="text-sm text-orange-400">Coins Spent</div>
+            </div>
+            <div className="gaming-metric p-4 text-center">
+              <div className="text-2xl font-bold text-blue-400">{Math.floor((video.total_watch_time || 0) / 60)}m</div>
+              <div className="text-sm text-blue-400">Watch Time</div>
             </div>
           </div>
 
-          {/* View Progress */}
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              View Progress
-            </label>
-            <div className="px-3 py-2 gaming-card">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm text-gray-400">Progress</span>
-                <span className="text-sm font-medium text-white">
-                  {Math.round((video.views_count / video.target_views) * 100)}%
-                </span>
+          {/* Video Information */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Video ID
+                </label>
+                <div className="flex items-center space-x-2">
+                  <Input
+                    value={video.id}
+                    readOnly
+                    className="!bg-violet-500/10 font-mono text-sm"
+                  />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => copyToClipboard(video.id)}
+                  >
+                    <Copy className="w-4 h-4" />
+                  </Button>
+                </div>
               </div>
-              <div className="w-full bg-gray-700 rounded-full h-2">
-                <div 
-                  className="bg-gradient-to-r from-violet-500 to-purple-600 h-2 rounded-full transition-all duration-300"
-                  style={{ width: `${Math.min(100, (video.views_count / video.target_views) * 100)}%` }}
-                />
-              </div>
-            </div>
-          </div>
 
-          {/* Timestamps */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Created Date
-              </label>
-              <div className="px-3 py-2 gaming-card">
-                <span className="text-sm text-gray-300">
-                  {format(new Date(video.created_at), 'MMM dd, yyyy HH:mm')}
-                </span>
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  User ID
+                </label>
+                <div className="flex items-center space-x-2">
+                  <Input
+                    value={video.user_id}
+                    readOnly
+                    className="!bg-violet-500/10 font-mono text-sm"
+                  />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => copyToClipboard(video.user_id)}
+                  >
+                    <Copy className="w-4 h-4" />
+                  </Button>
+                </div>
               </div>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Last Updated
-              </label>
-              <div className="px-3 py-2 gaming-card">
-                <span className="text-sm text-gray-300">
-                  {format(new Date(video.updated_at), 'MMM dd, yyyy HH:mm')}
-                </span>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Created Date
+                </label>
+                <div className="px-3 py-2 gaming-card">
+                  <span className="text-sm text-gray-300">
+                    {format(new Date(video.created_at), 'MMM dd, yyyy HH:mm')}
+                  </span>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Last Updated
+                </label>
+                <div className="px-3 py-2 gaming-card">
+                  <span className="text-sm text-gray-300">
+                    {format(new Date(video.updated_at), 'MMM dd, yyyy HH:mm')}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end p-4 sm:p-6 border-t border-violet-500/20">
+        <div className="flex items-center justify-end space-x-3 p-6 border-t border-violet-500/20 gaming-card">
+          <Button 
+            variant="outline" 
+            onClick={handleOpenYouTube}
+            className="flex items-center space-x-2"
+          >
+            <ExternalLink className="w-4 h-4" />
+            <span>View on YouTube</span>
+          </Button>
           <Button variant="outline" onClick={onClose}>
             Close
           </Button>
