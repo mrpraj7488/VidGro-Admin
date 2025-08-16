@@ -17,7 +17,10 @@ import { InboxView } from './components/inbox/InboxView'
 
 function AppContent() {
   const { isAuthenticated, isLoading, isInitialized, login, signup, user } = useAuth()
-  const [activeTab, setActiveTab] = useState('dashboard')
+  const [activeTab, setActiveTab] = useState(() => {
+    // Restore last active tab from localStorage
+    return localStorage.getItem('vidgro_active_tab') || 'dashboard'
+  })
   const [isPopupOpen, setIsPopupOpen] = useState(false)
   const [isAdminSettingsOpen, setIsAdminSettingsOpen] = useState(false)
 
@@ -30,6 +33,11 @@ function AppContent() {
       console.log('VITE_SUPABASE_URL:', import.meta.env.VITE_SUPABASE_URL);
     }
   }, [])
+
+  // Save active tab to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('vidgro_active_tab', activeTab)
+  }, [activeTab])
 
   // Track popup state for header visibility
   React.useEffect(() => {

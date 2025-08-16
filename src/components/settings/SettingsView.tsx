@@ -391,12 +391,21 @@ export function SettingsView() {
                             {key === 'weeklyReports' && 'Send weekly analytics reports to admins'}
                           </p>
                         </div>
-                        <input
-                          type="checkbox"
-                          checked={value as boolean}
-                          onChange={(e) => handleSettingChange('notifications', key, e.target.checked)}
-                          className="rounded border-gray-300 dark:border-gray-600"
-                        />
+                        <button
+                          type="button"
+                          onClick={() => handleSettingChange('notifications', key, !(value as boolean))}
+                          className={`relative inline-flex h-7 w-12 items-center rounded-full transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 ${
+                            value as boolean
+                              ? 'bg-gradient-to-r from-violet-500 to-purple-600 shadow-[0_0_15px_rgba(139,92,246,0.5)]'
+                              : 'bg-gray-300 dark:bg-gray-600'
+                          }`}
+                        >
+                          <span
+                            className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-lg transition-transform duration-300 ${
+                              value as boolean ? 'translate-x-6' : 'translate-x-1'
+                            }`}
+                          />
+                        </button>
                       </div>
                     ))}
                   </div>
@@ -412,12 +421,21 @@ export function SettingsView() {
                         Two-Factor Authentication
                       </label>
                       <div className="flex items-center space-x-3 p-3 gaming-card rounded-lg">
-                        <input
-                          type="checkbox"
-                          checked={settings.security.twoFactorRequired}
-                          onChange={(e) => handleSettingChange('security', 'twoFactorRequired', e.target.checked)}
-                          className="rounded border-gray-300 dark:border-gray-600"
-                        />
+                        <button
+                          type="button"
+                          onClick={() => handleSettingChange('security', 'twoFactorRequired', !settings.security.twoFactorRequired)}
+                          className={`relative inline-flex h-7 w-12 items-center rounded-full transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 ${
+                            settings.security.twoFactorRequired
+                              ? 'bg-gradient-to-r from-violet-500 to-purple-600 shadow-[0_0_15px_rgba(139,92,246,0.5)]'
+                              : 'bg-gray-300 dark:bg-gray-600'
+                          }`}
+                        >
+                          <span
+                            className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-lg transition-transform duration-300 ${
+                              settings.security.twoFactorRequired ? 'translate-x-6' : 'translate-x-1'
+                            }`}
+                          />
+                        </button>
                         <span className="text-sm text-gray-600 dark:text-gray-400">Require 2FA for all admin accounts</span>
                       </div>
                     </div>
