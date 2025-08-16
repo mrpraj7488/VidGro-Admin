@@ -47,6 +47,7 @@ export function AnalyticsView() {
     fetchRealAnalytics()
   }, [dateRange])
 
+  const fetchRealAnalytics = async () => {
     setAnalyticsLoading(true)
     try {
       const supabase = getSupabaseAdminClient()
