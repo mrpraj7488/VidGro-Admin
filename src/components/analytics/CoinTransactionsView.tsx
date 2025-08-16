@@ -5,7 +5,7 @@ import { Button } from '../ui/Button'
 import { Input } from '../ui/Input'
 import { Badge } from '../ui/Badge'
 import { DateRangePicker } from '../ui/DateRangePicker'
-import { getSupabaseClient } from '../../lib/supabase'
+import { getSupabaseClient, getSupabaseAdminClient } from '../../lib/supabase'
 import { format, subDays } from 'date-fns'
 import { formatNumber, formatCurrency } from '../../lib/utils'
 

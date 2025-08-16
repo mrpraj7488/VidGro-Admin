@@ -21,7 +21,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Badge } from '../ui/Badge';
-import { getSupabaseClient } from '../../lib/supabase';
+import { getSupabaseClient, getSupabaseAdminClient } from '../../lib/supabase';
 import { format, formatDistanceToNow } from 'date-fns';
 
 interface BugReport {
