@@ -63,8 +63,8 @@ export function AnalyticsView() {
       const sevenDaysAgo = subDays(new Date(), 7)
       const { data: activeUsersData, error: activeUsersError } = await supabase
         .from('profiles')
-        .select('id, last_active, updated_at')
-        .gte('last_active', sevenDaysAgo.toISOString())
+        .select('id, updated_at')
+        .gte('updated_at', sevenDaysAgo.toISOString())
 
       if (activeUsersError) console.warn('Failed to fetch active users:', activeUsersError)
 
@@ -112,7 +112,7 @@ export function AnalyticsView() {
 
         // Count users who were active on this day
         const activeOnDay = activeUsersData?.filter(user => {
-          const lastActive = new Date(user.last_active || user.updated_at)
+          const lastActive = new Date(user.updated_at)
           return lastActive >= dayStart && lastActive <= dayEnd
         }).length || 0
 
@@ -137,10 +137,10 @@ export function AnalyticsView() {
         // Count completions on this day
         const { data: completedVideos } = await supabase
           .from('videos')
-          .select('id, completed_at')
+          .select('id, updated_at')
           .eq('status', 'completed')
-          .gte('completed_at', dayStart.toISOString())
-          .lte('completed_at', dayEnd.toISOString())
+          .gte('updated_at', dayStart.toISOString())
+          .lte('updated_at', dayEnd.toISOString())
 
         const completionsOnDay = completedVideos?.length || 0
 
