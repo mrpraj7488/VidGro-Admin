@@ -8,7 +8,8 @@ import {
   Bug,
   Play,
   Mail,
-  Database
+  Database,
+  Coins
 } from 'lucide-react'
 import { cn } from '../../lib/utils'
 
@@ -22,6 +23,7 @@ const menuItems = [
   { id: 'users', label: 'Users', icon: Users },
   { id: 'videos', label: 'Videos', icon: Video },
   { id: 'analytics', label: 'Analytics', icon: BarChart3 },
+  { id: 'coin-transactions', label: 'Coin Transactions', icon: Coins },
   { id: 'reports', label: 'Bug Reports', icon: Bug },
   { id: 'inbox', label: 'Inbox', icon: Mail, badge: 5 },
   { id: 'settings', label: 'System Config', icon: Settings }

@@ -9,6 +9,7 @@ import { DashboardView } from './components/dashboard/DashboardView'
 import { UserManagement } from './components/users/UserManagement'
 import { VideoManagement } from './components/videos/VideoManagement'
 import { AnalyticsView } from './components/analytics/AnalyticsView'
+import { CoinTransactionsView } from './components/analytics/CoinTransactionsView'
 import BugReportsView from './components/reports/BugReportsView'
 import { SystemConfigView } from './components/settings/SystemConfigView'
 import { InboxView } from './components/inbox/InboxView'
@@ -62,6 +63,8 @@ function AppContent() {
         return <VideoManagement />
       case 'analytics':
         return <AnalyticsView />
+      case 'coin-transactions':
+        return <CoinTransactionsView />
       case 'reports':
         return <BugReportsView />
       case 'inbox':

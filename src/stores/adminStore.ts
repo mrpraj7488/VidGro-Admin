@@ -136,6 +136,11 @@ interface AdminStore {
   videos: Video[]
   videosLoading: boolean
   videosError: string | null
+  // Coin Transactions
+  coinTransactions: any[]
+  coinTransactionsLoading: boolean
+  coinTransactionsStats: any
+  
   
   // Bug Reports
   bugReports: BugReport[]
@@ -153,6 +158,7 @@ interface AdminStore {
   analyticsError: string | null
   
   // System Metrics
+  fetchCoinTransactions: (filters?: any) => Promise<void>
   systemMetrics: SystemMetrics | null
   metricsLoading: boolean
   metricsError: string | null

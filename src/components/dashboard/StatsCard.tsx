@@ -44,6 +44,11 @@ export function StatsCard({
   color = 'violet' 
 }: StatsCardProps) {
   const formatValue = (val: number) => {
+    // Handle undefined, null, or non-numeric values
+    if (val === undefined || val === null || isNaN(val)) {
+      return '0'
+    }
+    
     switch (format) {
       case 'currency':
         return formatCurrency(val)

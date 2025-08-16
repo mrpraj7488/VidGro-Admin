@@ -141,6 +141,23 @@
                 inset 0 1px 0 rgba(255, 255, 255, 0.2);
   }
   
+  /* Enhanced mobile responsiveness for analytics */
+  @media (max-width: 640px) {
+    .gaming-card-enhanced:hover {
+      transform: translateY(-1px) scale(1.005);
+    }
+    
+    .gaming-stats-grid {
+      @apply grid-cols-2 gap-2;
+    }
+  }
+  
+  @media (max-width: 480px) {
+    .gaming-card-enhanced:hover {
+      transform: translateY(-1px);
+    }
+  }
+  
   .gaming-button {
     @apply relative overflow-hidden rounded-lg px-6 py-3 font-semibold text-white;
     background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
