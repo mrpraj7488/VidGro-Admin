@@ -3,6 +3,7 @@ import cors from 'cors';
 import axios from 'axios';
 import crypto from 'crypto';
 import dotenv from 'dotenv';
+import serverless from 'serverless-http';
 
 // Load environment variables
 dotenv.config();
@@ -175,101 +176,5 @@ app.get('/test-env', (req, res) => {
   });
 });
 
-// Netlify serverless function handler
-export const handler = async (event, context) => {
-  // Handle CORS preflight requests
-  if (event.httpMethod === 'OPTIONS') {
-    return {
-      statusCode: 200,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-api-key, x-app-version, x-env, x-admin-email',
-      },
-      body: ''
-    };
-  }
-
-  // Create a mock request object for Express
-  const req = {
-    method: event.httpMethod,
-    path: event.path.replace('/.netlify/functions/api', ''),
-    headers: event.headers,
-    query: event.queryStringParameters || {},
-    body: event.body ? JSON.parse(event.body) : {},
-    connection: { remoteAddress: event.headers['client-ip'] || 'unknown' },
-    socket: { remoteAddress: event.headers['client-ip'] || 'unknown' }
-  };
-
-  // Create a mock response object
-  let responseBody = '';
-  let responseStatus = 200;
-  let responseHeaders = {};
-
-  const res = {
-    status: (code) => {
-      responseStatus = code;
-      return res;
-    },
-    json: (data) => {
-      responseBody = JSON.stringify(data);
-      responseHeaders['Content-Type'] = 'application/json';
-    },
-    send: (data) => {
-      responseBody = typeof data === 'string' ? data : JSON.stringify(data);
-    },
-    set: (headers) => {
-      Object.assign(responseHeaders, headers);
-    }
-  };
-
-  try {
-    // Route the request through Express
-    await new Promise((resolve, reject) => {
-      const originalSend = res.send;
-      const originalJson = res.json;
-      
-      res.send = function(data) {
-        originalSend.call(this, data);
-        resolve();
-      };
-      
-      res.json = function(data) {
-        originalJson.call(this, data);
-        resolve();
-      };
-
-      // Handle the request
-      app._router.handle(req, res, (err) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve();
-        }
-      });
-    });
-
-    return {
-      statusCode: responseStatus,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-api-key, x-app-version, x-env, x-admin-email',
-        ...responseHeaders
-      },
-      body: responseBody
-    };
-  } catch (error) {
-    console.error('Serverless function error:', error);
-    return {
-      statusCode: 500,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-api-key, x-app-version, x-env, x-admin-email',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ error: 'Internal server error' })
-    };
-  }
-};
+// Export the serverless function handler
+export const handler = serverless(app);
