@@ -16,6 +16,8 @@ export default defineConfig({
     // Ensure proper build output for Netlify
     outDir: 'dist',
     sourcemap: false,
+    minify: 'esbuild',
+    target: 'es2015',
     rollupOptions: {
       output: {
         manualChunks: {
@@ -25,6 +27,12 @@ export default defineConfig({
           utils: ['clsx', 'tailwind-merge', 'class-variance-authority']
         }
       }
+    }
+  },
+  // Add resolve configuration for better module resolution
+  resolve: {
+    alias: {
+      '@': '/src'
     }
   }
 });
