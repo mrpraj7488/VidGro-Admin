@@ -9,23 +9,21 @@ export default defineConfig({
   },
   server: {
     port: 5173,
-    proxy: {
-      // Proxy API requests to the Express server
-      '/api': {
-        target: 'http://localhost:3001',
-        changeOrigin: true,
-        secure: false,
-      },
-      // Proxy health check and other server endpoints
-      '/health': {
-        target: 'http://localhost:3001',
-        changeOrigin: true,
-        secure: false,
-      },
-      '/test-env': {
-        target: 'http://localhost:3001',
-        changeOrigin: true,
-        secure: false,
+    // Remove proxy configuration for Netlify deployment
+    // API calls will be handled by serverless functions
+  },
+  build: {
+    // Ensure proper build output for Netlify
+    outDir: 'dist',
+    sourcemap: false,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom'],
+          ui: ['@headlessui/react', '@radix-ui/react-icons', '@radix-ui/react-slot'],
+          charts: ['recharts'],
+          utils: ['clsx', 'tailwind-merge', 'class-variance-authority']
+        }
       }
     }
   }
