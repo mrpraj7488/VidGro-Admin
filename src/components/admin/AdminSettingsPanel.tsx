@@ -33,7 +33,7 @@ export function AdminSettingsPanel({ isOpen, onClose }: AdminSettingsPanelProps)
     setIsLoading(true)
     try {
       // Get admin data from environment or stored data
-      const adminEmail = process.env.VITE_ADMIN_EMAIL || ''
+      const adminEmail = import.meta.env.VITE_ADMIN_EMAIL || ''
       const adminName = localStorage.getItem('vidgro_admin_name') || ''
       
       setFormData(prev => ({
