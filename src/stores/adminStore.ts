@@ -26,7 +26,7 @@ export interface Video {
   duration_seconds: number
   coin_reward: number
   coin_cost: number
-  status: 'pending' | 'active' | 'paused' | 'completed' | 'on_hold' | 'repromoted' | 'deleted' | 'rejected'
+  status: 'active' | 'completed' | 'on_hold' | 'repromoted' | 'deleted'
   hold_until?: string
   repromoted_at?: string
   total_watch_time: number
