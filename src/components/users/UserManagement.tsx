@@ -28,10 +28,8 @@ export function UserManagement() {
 
   useEffect(() => {
     const loadData = async () => {
-      console.log('Loading user management data...')
       await fetchUsers()
       await fetchUserVideoCounts()
-      console.log('User management data loaded')
     }
     loadData()
   }, [fetchUsers])
@@ -67,7 +65,6 @@ export function UserManagement() {
       })
 
       setUserVideoCounts(counts)
-      console.log('Video counts fetched:', counts)
     } catch (error) {
       console.error('Error fetching video counts:', error)
       setUserVideoCounts({})

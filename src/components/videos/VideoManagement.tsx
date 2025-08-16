@@ -22,10 +22,8 @@ export function VideoManagement() {
 
   useEffect(() => {
     const loadData = async () => {
-      console.log('Loading video management data...')
       await fetchVideos()
       await fetchUserData()
-      console.log('Video management data loaded')
     }
     loadData()
   }, [fetchVideos])

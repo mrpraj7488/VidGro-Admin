@@ -1,5 +1,3 @@
-// Centralized logging utility for VidGro Admin Panel
-// Replaces scattered console.log statements with structured logging
 
 type LogLevel = 'debug' | 'info' | 'warn' | 'error'
 

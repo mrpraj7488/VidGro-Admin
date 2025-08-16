@@ -5,15 +5,13 @@ import {
   Video, 
   UserFilters, 
   VideoFilters, 
-  ChartDataPoint, 
   AnalyticsData,
-  BugReportData,
   SystemSettings,
   RuntimeConfig,
   ConfigAuditLog,
   ClientRuntimeConfig
 } from '../types/admin'
-import { getSupabaseClient, getSupabaseAdminClient } from '../lib/supabase'
+import { getSupabaseAdminClient } from '../lib/supabase'
 import { format, subDays, startOfDay, endOfDay } from 'date-fns'
 
 interface AdminState {
@@ -43,7 +41,6 @@ interface AdminState {
   
   // System Settings
   systemSettings: SystemSettings | null
-  settingsLoading: boolean
   
   // Runtime Configuration
   runtimeConfig: RuntimeConfig[]
@@ -60,10 +57,6 @@ interface AdminState {
   fetchBugReports: () => Promise<void>
   fetchSystemSettings: () => Promise<void>
   fetchRuntimeConfig: (environment: string) => Promise<void>
-  fetchConfigAuditLogs: (configKey?: string, environment?: string) => Promise<void>
-  fetchClientConfig: (environment: string) => Promise<void>
-  
-  // User actions
   setUserFilters: (filters: Partial<UserFilters>) => void
   adjustUserCoins: (userId: string, amount: number, reason: string) => Promise<void>
   toggleUserVip: (userId: string) => Promise<void>
@@ -80,7 +73,6 @@ interface AdminState {
   deleteRuntimeConfigItem: (key: string, environment: string, reason?: string) => Promise<void>
   clearConfigCache: () => Promise<void>
   setSelectedEnvironment: (environment: string) => void
-  
   // Utility actions
   copyToClipboard: (text: string) => Promise<void>
 }
@@ -112,7 +104,6 @@ export const useAdminStore = create<AdminState>((set, get) => ({
   analyticsLoading: false,
   
   bugReportData: null,
-  bugReportsLoading: false,
   
   systemSettings: null,
   settingsLoading: false,
@@ -134,9 +125,6 @@ export const useAdminStore = create<AdminState>((set, get) => ({
       }
 
       // Get total users
-      const { data: usersData, error: usersError } = await supabase
-        .from('profiles')
-        .select('id, is_vip, coins, created_at')
 
       if (usersError) {
         console.error('Error fetching users for dashboard:', usersError)
@@ -532,46 +520,11 @@ export const useAdminStore = create<AdminState>((set, get) => ({
     }
   },
 
-  // Bug Reports actions
-  fetchBugReports: async () => {
-    set({ bugReportsLoading: true })
-    try {
-      const supabase = getSupabaseClient()
-      if (!supabase) {
-        throw new Error('Supabase not initialized')
-      }
-
-      const { data, error } = await supabase
-        .from('bug_reports')
-        .select('*')
-        .order('created_at', { ascending: false })
-
-      if (error) throw error
-
-      const bugReportData: BugReportData = {
-        newBugs: data?.filter(b => b.status === 'new').length || 0,
-        bugsFixedToday: data?.filter(b => 
-          b.status === 'fixed' && 
-          new Date(b.updated_at) > subDays(new Date(), 1)
-        ).length || 0,
-        totalBugs: data?.length || 0,
-        bugReports: data || []
-      }
-
-      set({ bugReportData })
-    } catch (error) {
-      console.error('Failed to fetch bug reports:', error)
-      set({ bugReportData: null })
-    } finally {
-      set({ bugReportsLoading: false })
-    }
-  },
 
   // System Settings actions
   fetchSystemSettings: async () => {
     set({ settingsLoading: true })
     try {
-      // Mock system settings for now
       const settings: SystemSettings = {
         general: {
           platformName: 'VidGro',
@@ -628,7 +581,6 @@ export const useAdminStore = create<AdminState>((set, get) => ({
 
   updateSystemSettings: async (settings: SystemSettings) => {
     try {
-      // Mock update for now
       set({ systemSettings: settings })
     } catch (error) {
       console.error('Failed to update system settings:', error)
@@ -640,7 +592,6 @@ export const useAdminStore = create<AdminState>((set, get) => ({
   fetchRuntimeConfig: async (environment: string) => {
     set({ isLoading: true })
     try {
-      // Mock runtime config for now
       const configs: RuntimeConfig[] = [
         {
           id: '1',
@@ -677,7 +628,6 @@ export const useAdminStore = create<AdminState>((set, get) => ({
 
   fetchConfigAuditLogs: async (configKey?: string, environment?: string) => {
     try {
-      // Mock audit logs for now
       const logs: ConfigAuditLog[] = [
         {
           id: '1',
@@ -730,7 +680,6 @@ export const useAdminStore = create<AdminState>((set, get) => ({
 
   saveRuntimeConfig: async (key: string, value: string, isPublic: boolean, environment: string, description?: string, category?: string, reason?: string) => {
     try {
-      // Mock save for now
       const newConfig: RuntimeConfig = {
         id: Date.now().toString(),
         key,
@@ -754,7 +703,6 @@ export const useAdminStore = create<AdminState>((set, get) => ({
 
   deleteRuntimeConfigItem: async (key: string, environment: string, reason?: string) => {
     try {
-      // Mock delete for now
       set(state => ({
         runtimeConfig: state.runtimeConfig.filter(c => c.key !== key)
       }))

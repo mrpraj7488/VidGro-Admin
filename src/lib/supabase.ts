@@ -29,12 +29,6 @@ export function initializeSupabaseAdmin(): SupabaseClient | null {
   const supabaseUrl = envManager.getEnvVar('VITE_SUPABASE_URL')
   const supabaseServiceKey = envManager.getEnvVar('VITE_SUPABASE_SERVICE_ROLE_KEY')
 
-  console.log('Initializing Supabase Admin with:', {
-    url: supabaseUrl,
-    serviceKeyLength: supabaseServiceKey?.length || 0,
-    serviceKeyPrefix: supabaseServiceKey?.substring(0, 20) || 'none'
-  })
-
   if (!supabaseUrl || !supabaseServiceKey || supabaseUrl.includes('your-project')) {
     console.warn('Supabase Admin not configured. Please set VITE_SUPABASE_URL and VITE_SUPABASE_SERVICE_ROLE_KEY')
     return null
@@ -47,7 +41,6 @@ export function initializeSupabaseAdmin(): SupabaseClient | null {
         persistSession: false
       }
     })
-    console.log('✅ Supabase Admin initialized successfully')
     return supabaseAdmin
   } catch (error) {
     console.error('Failed to initialize Supabase Admin:', error)
@@ -132,6 +125,22 @@ export interface DashboardStats {
   average_watch_time: number
   total_transactions: number
   pending_videos: number
+}
+
+// Empty dashboard stats as fallback when no real data is available
+export const emptyDashboardStats: DashboardStats = {
+  total_users: 0,
+  active_videos: 0,
+  vip_users: 0,
+  monthly_revenue: 0,
+  user_growth_rate: 0,
+  daily_active_users: 0,
+  coin_transactions: 0,
+  total_coins_distributed: 0,
+  video_completion_rate: 0,
+  average_watch_time: 0,
+  total_transactions: 0,
+  pending_videos: 0
 }
 
 // API Functions using real Supabase data
@@ -332,5 +341,3 @@ export async function getUserGrowthAnalytics(days: number) {
     return []
   }
 }
-
-// Add more real API functions as needed...

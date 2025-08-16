@@ -10,7 +10,6 @@ import { format, subDays } from 'date-fns'
 export function DashboardView() {
   const { 
     dashboardStats, 
-    chartData, 
     dashboardLoading, 
     fetchDashboardStats,
     analyticsData,
@@ -23,12 +22,10 @@ export function DashboardView() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        console.log('Loading dashboard data...')
         await Promise.all([
           fetchDashboardStats(),
           fetchAnalytics([subDays(new Date(), 30), new Date()])
         ])
-        console.log('Dashboard data loaded successfully')
       } catch (error) {
         console.error('Failed to load dashboard data:', error)
       }
@@ -41,12 +38,10 @@ export function DashboardView() {
   const handleRefresh = async () => {
     setRefreshing(true)
     try {
-      console.log('Refreshing dashboard data...')
       await Promise.all([
         fetchDashboardStats(),
         fetchAnalytics([subDays(new Date(), 30), new Date()])
       ])
-      console.log('Dashboard data refreshed successfully')
       setLastRefresh(new Date())
     } catch (error) {
       console.error('Failed to refresh dashboard:', error)
@@ -78,7 +73,6 @@ export function DashboardView() {
   if (dashboardLoading && !dashboardStats) {
     return (
       <div className="space-y-4 md:space-y-6 animate-fade-in">
-        {/* Mobile-optimized loading skeleton */}
         <div className="flex flex-col space-y-2">
           <div className="h-6 md:h-8 bg-gray-200 dark:bg-slate-700 animate-pulse rounded w-48" />
           <div className="h-4 bg-gray-200 dark:bg-slate-700 animate-pulse rounded w-64" />
@@ -100,7 +94,6 @@ export function DashboardView() {
 
   return (
     <div className="space-y-4 md:space-y-6 animate-fade-in">
-      {/* Header - Mobile Optimized */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 md:gap-4">
         <div className="space-y-1">
           <h1 className="text-2xl md:text-3xl font-bold gaming-gradient-text gaming-text-shadow">
@@ -129,7 +122,6 @@ export function DashboardView() {
         </div>
       </div>
 
-      {/* Stats Cards - Mobile Responsive Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6 animate-stagger-children">
         <StatsCard
           title="Total Users"
@@ -159,10 +151,7 @@ export function DashboardView() {
         />
       </div>
 
-
-      {/* Charts Section - Mobile Responsive */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
-        {/* User Growth Chart */}
         <Card className="gaming-card-enhanced">
           <CardHeader className="pb-2 md:pb-4">
             <CardTitle className="flex items-center justify-between">
@@ -224,7 +213,6 @@ export function DashboardView() {
           </CardContent>
         </Card>
 
-        {/* Revenue Trend */}
         <Card className="gaming-card-enhanced">
           <CardHeader className="pb-2 md:pb-4">
             <CardTitle className="flex items-center space-x-2 gaming-text-shadow">
@@ -272,8 +260,6 @@ export function DashboardView() {
         </Card>
       </div>
 
-
-      {/* Data Status Alert */}
       {!hasRealChartData && (
         <Card className="gaming-card-enhanced border-orange-500/50 bg-orange-50/50 dark:bg-orange-900/20">
           <CardContent className="p-4 md:p-6">

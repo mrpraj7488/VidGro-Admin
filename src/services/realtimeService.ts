@@ -1,4 +1,4 @@
-import { supabase } from '../lib/supabase'
+import { getSupabaseClient } from '../lib/supabase'
 import { logger } from '../lib/logger'
 
 export interface RealtimeEvent {
@@ -36,6 +36,11 @@ class RealtimeService {
     }
 
     try {
+      const supabase = getSupabaseClient()
+      if (!supabase) {
+        throw new Error('Supabase not initialized')
+      }
+
       const subscription = supabase
         .channel('user-updates')
         .on('postgres_changes', 
@@ -63,6 +68,11 @@ class RealtimeService {
     }
 
     try {
+      const supabase = getSupabaseClient()
+      if (!supabase) {
+        throw new Error('Supabase not initialized')
+      }
+
       const subscription = supabase
         .channel('video-updates')
         .on('postgres_changes',
@@ -85,7 +95,6 @@ class RealtimeService {
 
   async sendUserNotification(userId: string, notification: NotificationPayload) {
     try {
-      // Mock implementation - in real app this would send push notification
       logger.info('Sending notification to user', { userId, notification }, 'realtimeService')
       
       // Simulate API call delay
@@ -118,7 +127,10 @@ class RealtimeService {
   unsubscribe(channelName: string) {
     const subscription = this.subscriptions.get(channelName)
     if (subscription) {
+      const supabase = getSupabaseClient()
+      if (supabase) {
       supabase.removeChannel(subscription)
+      }
       this.subscriptions.delete(channelName)
     }
   }

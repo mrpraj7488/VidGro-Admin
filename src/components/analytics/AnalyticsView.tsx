@@ -1,12 +1,11 @@
 import React, { useEffect, useState } from 'react'
 import { Calendar, Download, TrendingUp, Users, Coins, BarChart3, Video, ArrowRight } from 'lucide-react'
 import { LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts'
-import { useAdminStore } from '../../stores/adminStore'
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card'
 import { Button } from '../ui/Button'
 import { DateRangePicker } from '../ui/DateRangePicker'
 import { StatsCard } from '../dashboard/StatsCard'
-import { getSupabaseClient, getSupabaseAdminClient } from '../../lib/supabase'
+import { getSupabaseAdminClient } from '../../lib/supabase'
 import { format, subDays, startOfDay, endOfDay } from 'date-fns'
 
 interface AnalyticsData {
@@ -48,7 +47,6 @@ export function AnalyticsView() {
     fetchRealAnalytics()
   }, [dateRange])
 
-  const fetchRealAnalytics = async () => {
     setAnalyticsLoading(true)
     try {
       const supabase = getSupabaseAdminClient()
@@ -57,7 +55,6 @@ export function AnalyticsView() {
       }
 
       const startDate = dateRange[0] || subDays(new Date(), 30)
-      const endDate = dateRange[1] || new Date()
 
       // Fetch Daily Active Users (users active in last 7 days)
       const sevenDaysAgo = subDays(new Date(), 7)
@@ -71,7 +68,6 @@ export function AnalyticsView() {
       }
 
       const dailyActiveUsers = activeUsersData?.length || 0
-      console.log('Daily active users found:', dailyActiveUsers)
 
       // Fetch total videos promoted in date range
       const { data: promotedVideos, error: promotedError } = await supabase
@@ -85,7 +81,6 @@ export function AnalyticsView() {
       }
 
       const totalPromoted = promotedVideos?.length || 0
-      console.log('Total promoted videos found:', totalPromoted)
 
       // Fetch videos deleted in date range
       const { data: deletedVideos, error: deletedError } = await supabase
@@ -99,7 +94,6 @@ export function AnalyticsView() {
       }
 
       const videosDeleted = deletedVideos?.length || 0
-      console.log('Videos deleted found:', videosDeleted)
 
       // Fetch coin transactions count
       const { data: transactions, error: transactionsError } = await supabase
@@ -113,7 +107,6 @@ export function AnalyticsView() {
       }
 
       const coinTransactions = transactions?.length || 0
-      console.log('Coin transactions found:', coinTransactions)
 
       // Generate user growth data (daily breakdown)
       const userGrowthData = []
@@ -263,7 +256,6 @@ export function AnalyticsView() {
 
   return (
     <div className="space-y-4 md:space-y-6 animate-fade-in">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white gaming-text-shadow">
@@ -285,7 +277,6 @@ export function AnalyticsView() {
         </div>
       </div>
 
-      {/* Key Metrics - Mobile Optimized */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6 animate-stagger-children">
         <StatsCard
           title="Daily Active Users"
@@ -319,9 +310,7 @@ export function AnalyticsView() {
         />
       </div>
 
-      {/* Charts Grid - Enhanced for Mobile */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
-        {/* Daily Active Users Chart */}
         <Card className="gaming-card-enhanced">
           <CardHeader className="pb-2 md:pb-4">
             <CardTitle className="flex items-center space-x-2 gaming-text-shadow">
@@ -385,7 +374,6 @@ export function AnalyticsView() {
           </CardContent>
         </Card>
 
-        {/* Video Promotion Chart - New */}
         <Card className="gaming-card-enhanced">
           <CardHeader className="pb-2 md:pb-4">
             <CardTitle className="flex items-center space-x-2 gaming-text-shadow">
@@ -438,7 +426,6 @@ export function AnalyticsView() {
         </Card>
       </div>
 
-      {/* Coin Transactions Chart - Clickable */}
       <Card className="gaming-card-enhanced cursor-pointer hover:scale-[1.01] transition-all duration-300" onClick={handleNavigateToCoinTransactions}>
         <CardHeader className="pb-2 md:pb-4">
           <CardTitle className="flex items-center justify-between">
@@ -497,7 +484,6 @@ export function AnalyticsView() {
         </CardContent>
       </Card>
 
-      {/* Recent Activity - Enhanced for Mobile */}
       {hasRecentActivity && (
         <Card className="gaming-card-enhanced">
           <CardHeader>
@@ -535,7 +521,6 @@ export function AnalyticsView() {
         </Card>
       )}
 
-      {/* No Data Message */}
       {!hasUserGrowthData && !hasVideoPromotionData && !hasCoinTransactionData && !hasRecentActivity && (
         <Card className="gaming-card-enhanced">
           <CardHeader>
