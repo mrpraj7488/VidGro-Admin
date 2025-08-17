@@ -10,28 +10,31 @@
   # Set Node.js version
   NODE_VERSION = "18.19.0"
 
-# Redirect rules for SPA routing
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
-
-# API redirects to serverless functions
+# API redirects to serverless functions - MUST COME FIRST
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/api/:splat"
   status = 200
+  force = true
 
 # Health check redirect
 [[redirects]]
   from = "/health"
   to = "/.netlify/functions/api/health"
   status = 200
+  force = true
 
 # Test environment redirect
 [[redirects]]
   from = "/test-env"
   to = "/.netlify/functions/api/test-env"
+  status = 200
+  force = true
+
+# SPA routing - MUST COME LAST
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
   status = 200
 
 # Headers for security
