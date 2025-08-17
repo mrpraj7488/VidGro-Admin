@@ -105,9 +105,16 @@ export class EnvironmentManager {
 
     // Log the loading process for debugging
     console.log('🔍 Environment loading:')
-    console.log('📋 import.meta.env VITE_SUPABASE_SERVICE_ROLE_KEY:', envFromVite.VITE_SUPABASE_SERVICE_ROLE_KEY ? (envFromVite.VITE_SUPABASE_SERVICE_ROLE_KEY.substring(0, 20) + '...') : 'NOT FOUND')
-    console.log('📋 localStorage VITE_SUPABASE_SERVICE_ROLE_KEY:', envFromStorage.VITE_SUPABASE_SERVICE_ROLE_KEY ? (envFromStorage.VITE_SUPABASE_SERVICE_ROLE_KEY.substring(0, 20) + '...') : 'NOT FOUND')
-    console.log('📋 Final merged VITE_SUPABASE_SERVICE_ROLE_KEY:', mergedEnv.VITE_SUPABASE_SERVICE_ROLE_KEY ? (mergedEnv.VITE_SUPABASE_SERVICE_ROLE_KEY.substring(0, 20) + '...') : 'NOT FOUND')
+    const serviceKeyFromVite = envFromVite.VITE_SUPABASE_SERVICE_ROLE_KEY
+    const serviceKeyFromStorage = envFromStorage.VITE_SUPABASE_SERVICE_ROLE_KEY
+    const serviceKeyMerged = mergedEnv.VITE_SUPABASE_SERVICE_ROLE_KEY
+    
+    console.log('📋 import.meta.env VITE_SUPABASE_SERVICE_ROLE_KEY:', 
+      serviceKeyFromVite ? (serviceKeyFromVite.substring(0, 20) + '...') : 'NOT FOUND')
+    console.log('📋 localStorage VITE_SUPABASE_SERVICE_ROLE_KEY:', 
+      serviceKeyFromStorage ? (serviceKeyFromStorage.substring(0, 20) + '...') : 'NOT FOUND')
+    console.log('📋 Final merged VITE_SUPABASE_SERVICE_ROLE_KEY:', 
+      serviceKeyMerged ? (serviceKeyMerged.substring(0, 20) + '...') : 'NOT FOUND')
 
     return mergedEnv
   }
