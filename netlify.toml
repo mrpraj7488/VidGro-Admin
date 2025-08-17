@@ -9,6 +9,7 @@
 [build.environment]
   # Set Node.js version
   NODE_VERSION = "16"
+  NPM_FLAGS = "--legacy-peer-deps"
 
 # Redirect rules for SPA routing
 [[redirects]]
