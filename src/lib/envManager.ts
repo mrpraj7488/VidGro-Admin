@@ -105,9 +105,9 @@ export class EnvironmentManager {
 
     // Log the loading process for debugging
     console.log('🔍 Environment loading:')
-    console.log('📋 import.meta.env VITE_SUPABASE_SERVICE_ROLE_KEY:', envFromVite.VITE_SUPABASE_SERVICE_ROLE_KEY ? envFromVite.VITE_SUPABASE_SERVICE_ROLE_KEY.substring(0, 20) + '...' : 'NOT FOUND')
-    console.log('📋 localStorage VITE_SUPABASE_SERVICE_ROLE_KEY:', envFromStorage.VITE_SUPABASE_SERVICE_ROLE_KEY ? envFromStorage.VITE_SUPABASE_SERVICE_ROLE_KEY.substring(0, 20) + '...' : 'NOT FOUND')
-    console.log('📋 Final merged VITE_SUPABASE_SERVICE_ROLE_KEY:', mergedEnv.VITE_SUPABASE_SERVICE_ROLE_KEY ? mergedEnv.VITE_SUPABASE_SERVICE_ROLE_KEY.substring(0, 20) + '...' : 'NOT FOUND')
+    console.log('📋 import.meta.env VITE_SUPABASE_SERVICE_ROLE_KEY:', envFromVite.VITE_SUPABASE_SERVICE_ROLE_KEY ? (envFromVite.VITE_SUPABASE_SERVICE_ROLE_KEY.substring(0, 20) + '...') : 'NOT FOUND')
+    console.log('📋 localStorage VITE_SUPABASE_SERVICE_ROLE_KEY:', envFromStorage.VITE_SUPABASE_SERVICE_ROLE_KEY ? (envFromStorage.VITE_SUPABASE_SERVICE_ROLE_KEY.substring(0, 20) + '...') : 'NOT FOUND')
+    console.log('📋 Final merged VITE_SUPABASE_SERVICE_ROLE_KEY:', mergedEnv.VITE_SUPABASE_SERVICE_ROLE_KEY ? (mergedEnv.VITE_SUPABASE_SERVICE_ROLE_KEY.substring(0, 20) + '...') : 'NOT FOUND')
 
     return mergedEnv
   }
@@ -258,7 +258,7 @@ NODE_ENV=${vars.NODE_ENV}`
       
       // Log the current service role key
       const serviceKey = this.envVars.VITE_SUPABASE_SERVICE_ROLE_KEY
-      console.log('🔑 Current service role key:', serviceKey ? serviceKey.substring(0, 20) + '...' : 'NOT FOUND')
+      console.log('🔑 Current service role key:', serviceKey ? (serviceKey.substring(0, 20) + '...') : 'NOT FOUND')
       
     } catch (error) {
       console.error('Failed to force reload environment:', error)
