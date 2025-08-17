@@ -1,6 +1,6 @@
 [build]
   # Build command for the React app
-  command = "npm install --legacy-peer-deps && vite build"
+  command = "npm install --legacy-peer-deps --force && vite build"
   # Publish directory (Vite build output)
   publish = "dist"
   # Functions directory for serverless API
