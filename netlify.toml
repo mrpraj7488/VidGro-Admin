@@ -1,6 +1,6 @@
 [build]
   # Build command for the React app
-  command = "npm run build:netlify"
+  command = "npm install --legacy-peer-deps && vite build"
   # Publish directory (Vite build output)
   publish = "dist"
   # Functions directory for serverless API
@@ -9,7 +9,6 @@
 [build.environment]
   # Set Node.js version
   NODE_VERSION = "16"
-  NPM_FLAGS = "--legacy-peer-deps"
 
 # Redirect rules for SPA routing
 [[redirects]]
