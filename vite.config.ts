@@ -6,6 +6,7 @@ export default defineConfig({
   plugins: [react()],
   optimizeDeps: {
     exclude: ['lucide-react'],
+    include: ['react-is']
   },
   server: {
     port: 5173,
@@ -19,11 +20,12 @@ export default defineConfig({
     minify: 'esbuild',
     target: 'es2015',
     rollupOptions: {
+      external: [],
       output: {
         manualChunks: {
           vendor: ['react', 'react-dom'],
           ui: ['@headlessui/react', '@radix-ui/react-icons', '@radix-ui/react-slot'],
-          charts: ['recharts'],
+          charts: ['recharts', 'react-is'],
           utils: ['clsx', 'tailwind-merge', 'class-variance-authority']
         }
       }
