@@ -1,7 +1,5 @@
 import express from 'express';
 import cors from 'cors';
-import axios from 'axios';
-import crypto from 'crypto';
 import dotenv from 'dotenv';
 import serverless from 'serverless-http';
 
