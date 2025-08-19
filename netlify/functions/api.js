@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import serverless from 'serverless-http';
+import { createClient } from '@supabase/supabase-js';
 
 // Load environment variables
 dotenv.config();
@@ -48,7 +49,64 @@ app.get('/api/test', (req, res) => {
   });
 });
 
-// Enhanced public endpoint for client runtime config
+// ----- Helpers for Supabase Storage backup -----
+const BACKUP_BUCKET = process.env.SUPABASE_BACKUP_BUCKET || 'database-backup';
+
+const getSupabaseAdmin = () => {
+  const supabaseUrl = process.env.SUPABASE_URL || process.env.MOBILE_SUPABASE_URL;
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!supabaseUrl || !serviceKey) return null;
+  return createClient(supabaseUrl, serviceKey, {
+    auth: { autoRefreshToken: false, persistSession: false }
+  });
+};
+
+const ensureBucketExists = async (supabase, bucket = BACKUP_BUCKET) => {
+  try {
+    // Try listing buckets if available; otherwise assume it exists
+    if (typeof supabase.storage.listBuckets === 'function') {
+      const { data: listResult, error: listError } = await supabase.storage.listBuckets();
+      if (!listError && listResult && listResult.some(b => b.name === bucket)) {
+        return { ok: true, created: false };
+      }
+    } else {
+      // Older SDKs may not support listBuckets; don't fail backup on this
+      return { ok: true, created: false };
+    }
+  } catch (_) {
+    // Ignore and try create
+  }
+
+  try {
+    const { error } = await supabase.storage.createBucket(bucket, { public: true });
+    if (error && !String(error.message || '').includes('already exists')) {
+      return { ok: false, error };
+    }
+    return { ok: true, created: true };
+  } catch (e) {
+    // If create fails (likely due to permissions), continue assuming it exists
+    return { ok: true, created: false };
+  }
+};
+
+const getBackupUrls = async (supabase, bucket = BACKUP_BUCKET, objectPath) => {
+  // Try public URL first
+  const { data: pub } = supabase.storage.from(bucket).getPublicUrl(objectPath);
+  let publicUrl = pub?.publicUrl || null;
+
+  // If not public, generate signed URL (7 days)
+  let signedUrl = null;
+  if (!publicUrl) {
+    const { data: signed } = await supabase
+      .storage
+      .from(bucket)
+      .createSignedUrl(objectPath, 60 * 60 * 24 * 7);
+    signedUrl = signed?.signedUrl || null;
+  }
+  return { publicUrl, signedUrl };
+};
+
+// ----- Enhanced public endpoint for client runtime config -----
 app.get('/client-runtime-config', async (req, res) => {
   try {
     const environment = req.headers['x-env'] || req.query.env || 'production';
@@ -250,28 +308,6 @@ app.post('/admin/env-sync', async (req, res) => {
   }
 });
 
-// Health check endpoint
-app.get('/health', (req, res) => {
-  res.json({ 
-    status: 'OK', 
-    timestamp: new Date().toISOString(),
-    cacheSize: configCache.size,
-    environment: process.env.NODE_ENV || 'development',
-    version: '2.1.0',
-    platform: 'netlify-functions'
-  });
-});
-
-// Test endpoint to check environment
-app.get('/test-env', (req, res) => {
-  res.json({
-    NODE_ENV: process.env.NODE_ENV,
-    isDevelopment: process.env.NODE_ENV === 'development',
-    timestamp: new Date().toISOString(),
-    platform: 'netlify-functions'
-  });
-});
-
 // Backup download endpoint
 app.get('/backup', (req, res) => {
   try {
@@ -295,8 +331,7 @@ app.post('/api/admin/database-backup', async (req, res) => {
 
     // Resolve Supabase settings (use env or fallbacks)
     const supabaseUrl = process.env.SUPABASE_URL || process.env.MOBILE_SUPABASE_URL || 'https://kuibswqfmhhdybttbcoa.supabase.co';
-    const anonKey = process.env.SUPABASE_ANON_KEY || process.env.MOBILE_SUPABASE_ANON_KEY || '';
-
+    
     // Minimal SQL header (serverless-safe)
     let sqlContent = `-- VidGro Database Backup (Serverless)\n` +
       `-- Created: ${new Date().toISOString()}\n` +
@@ -307,27 +342,82 @@ app.post('/api/admin/database-backup', async (req, res) => {
       `-- For full schema/data export, run the backup from a trusted server or Supabase dashboard.\n` +
       `-- The mobile app will work using runtime configuration.\n\nCOMMIT;\n`;
 
-    // Prepare download link via function
+    // Upload to Supabase Storage using service role
+    const supabaseAdmin = getSupabaseAdmin();
+    let publicUrl = null;
+    let signedUrl = null;
+    let storagePath = null;
+
+    if (supabaseAdmin) {
+      await ensureBucketExists(supabaseAdmin, BACKUP_BUCKET);
+
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      const safeName = customName ? String(customName).replace(/[^a-zA-Z0-9-_]/g, '_') : '';
+      const filename = `backup_${backupType}_${timestamp}${safeName ? '_' + safeName : ''}.sql`;
+      storagePath = `${filename}`;
+
+      const { error: uploadError } = await supabaseAdmin
+        .storage
+        .from(BACKUP_BUCKET)
+        .upload(storagePath, Buffer.from(sqlContent, 'utf8'), {
+          contentType: 'application/sql',
+          upsert: true
+        });
+
+      if (!uploadError) {
+        const urls = await getBackupUrls(supabaseAdmin, BACKUP_BUCKET, storagePath);
+        publicUrl = urls.publicUrl;
+        signedUrl = urls.signedUrl;
+      }
+    }
+
+    // Fallback: in-memory download link (if storage not configured)
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
     const safeName = customName ? String(customName).replace(/[^a-zA-Z0-9-_]/g, '_') : '';
     const filename = `backup_${backupType}_${timestamp}${safeName ? '_' + safeName : ''}.sql`;
     const token = Buffer.from(sqlContent, 'utf8').toString('base64');
-
-    // Construct a function URL path that UI can open directly
     const filePath = `/.netlify/functions/api/backup?filename=${encodeURIComponent(filename)}&token=${encodeURIComponent(token)}`;
 
     return res.json({
       success: true,
-      message: 'Backup generated (serverless) – use the download URL to save the file.',
+      message: 'Backup generated',
       filename,
-      filePath,
+      filePath, // in-memory download link
+      storage: {
+        bucket: BACKUP_BUCKET,
+        uploaded: Boolean(publicUrl || signedUrl),
+        publicUrl,
+        signedUrl,
+        path: storagePath
+      },
       size: (sqlContent.length / 1024).toFixed(2),
-      tables: 0,
       timestamp: new Date().toISOString()
     });
   } catch (error) {
     return res.status(500).json({ success: false, message: 'Failed to create backup' });
   }
+});
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.json({ 
+    status: 'OK', 
+    timestamp: new Date().toISOString(),
+    cacheSize: configCache.size,
+    environment: process.env.NODE_ENV || 'development',
+    version: '2.1.0',
+    platform: 'netlify-functions'
+  });
+});
+
+// Test endpoint to check environment
+app.get('/test-env', (req, res) => {
+  res.json({
+    NODE_ENV: process.env.NODE_ENV,
+    isDevelopment: process.env.NODE_ENV === 'development',
+    timestamp: new Date().toISOString(),
+    platform: 'netlify-functions'
+  });
 });
 
 // Export the serverless function handler
