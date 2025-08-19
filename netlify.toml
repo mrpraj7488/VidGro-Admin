@@ -9,6 +9,7 @@
 [build.environment]
   # Set Node.js version
   NODE_VERSION = "18.19.0"
+  BACKUP_MAX_ROWS = "100000"
 
 # API redirects to serverless functions - MUST COME FIRST
 [[redirects]]
