@@ -136,17 +136,17 @@ class BackupService {
     }
   }
 
-  async deleteBackup(backupId: string): Promise<{ success: boolean; message: string }> {
+  async deleteBackup(backupId: string, storagePath?: string): Promise<{ success: boolean; message: string }> {
     try {
       const backup = this.backupQueue.get(backupId)
-      const storagePath: string | undefined = backup?.serverPath || backup?.storagePath
+      const pathToDelete: string | undefined = storagePath || backup?.serverPath || backup?.storagePath
 
       // Request serverless delete if we have a storage path
-      if (storagePath) {
+      if (pathToDelete) {
         const response = await fetch('/api/admin/database-backup/delete', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ path: storagePath })
+          body: JSON.stringify({ path: pathToDelete })
         })
         if (!response.ok) {
           const err = await response.json().catch(() => ({}))
@@ -155,7 +155,7 @@ class BackupService {
       }
 
       this.backupQueue.delete(backupId)
-      logger.info('Backup deleted', { backupId, storagePath }, 'backupService')
+      logger.info('Backup deleted', { backupId, storagePath: pathToDelete }, 'backupService')
       return { success: true, message: 'Backup deleted successfully' }
     } catch (error) {
       logger.error('Failed to delete backup', error, 'backupService')
