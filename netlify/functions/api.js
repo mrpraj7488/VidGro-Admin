@@ -280,37 +280,54 @@ app.get('/api/client-runtime-config', async (req, res) => {
       'Referrer-Policy': 'strict-origin-when-cross-origin'
     });
 
-    // Basic rate limiting
+    // Get client information
     const clientIP = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-    const rateLimitKey = `rate_limit:${clientIP}`;
-    
-    // Check if client is from your mobile app domain
     const userAgent = req.headers['user-agent'] || '';
     const referer = req.headers['referer'] || '';
     const origin = req.headers['origin'] || '';
     
-    // Only allow requests from your mobile app or admin panel
+    console.log('🔍 Runtime config request:', {
+      ip: clientIP,
+      userAgent: userAgent.substring(0, 100),
+      referer: referer.substring(0, 100),
+      origin: origin.substring(0, 100)
+    });
+    
+    // More permissive origin validation for mobile apps
     const allowedOrigins = [
       'https://admin-vidgro.netlify.app',
       'exp://localhost',
       'exp://192.168',
       'exp://10.0',
-      'exp://172.16'
+      'exp://172.16',
+      'http://localhost',
+      'http://192.168',
+      'http://10.0',
+      'http://172.16'
     ];
+    
+    // Check if request is from mobile app or allowed origin
+    const isMobileApp = userAgent.includes('Expo') || 
+                        userAgent.includes('ReactNative') || 
+                        userAgent.includes('VidGro') ||
+                        userAgent.includes('Mobile');
     
     const isAllowedOrigin = allowedOrigins.some(allowed => 
       origin.includes(allowed) || 
-      referer.includes(allowed) ||
-      userAgent.includes('Expo') ||
-      userAgent.includes('ReactNative')
+      referer.includes(allowed)
     );
     
-    if (!isAllowedOrigin) {
+    // Allow mobile apps and allowed origins, or if no origin/referer (direct API calls)
+    const shouldAllow = isMobileApp || isAllowedOrigin || (!origin && !referer);
+    
+    if (!shouldAllow) {
       console.warn('🚨 Unauthorized access attempt to runtime config:', {
         ip: clientIP,
-        userAgent,
-        referer,
-        origin
+        userAgent: userAgent.substring(0, 100),
+        referer: referer.substring(0, 100),
+        origin: origin.substring(0, 100),
+        isMobileApp,
+        isAllowedOrigin
       });
       return res.status(403).json({ 
         error: 'Access denied',
@@ -318,16 +335,20 @@ app.get('/api/client-runtime-config', async (req, res) => {
       });
     }
 
-    // Return minimal configuration with sensitive data removed
+    console.log('✅ Access granted for runtime config:', { isMobileApp, isAllowedOrigin });
+
+    // Return configuration with sensitive data for mobile apps
     const config = {
       data: {
         supabase: {
           url: process.env.SUPABASE_URL || process.env.MOBILE_SUPABASE_URL || 'https://kuibswqfmhhdybttbcoa.supabase.co',
-          // Remove anonKey from public endpoint - client should get this from secure source
+          anonKey: process.env.SUPABASE_ANON_KEY || process.env.MOBILE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1aWJzd3FmbWhoZHlidHRiY29hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM3ODIwNTYsImV4cCI6MjA2OTM1ODA1Nn0.LRmGLu1OAcJza-eEPSIJUaFAyhxkdAGrbyRFRGSWpVw'
         },
         admob: {
-          // Remove AdMob IDs from public endpoint - these should be in app bundle
-          appId: process.env.ADMOB_APP_ID || 'ca-app-pub-2892152842024866~2841739969'
+          appId: process.env.ADMOB_APP_ID || 'ca-app-pub-2892152842024866~2841739969',
+          bannerId: process.env.ADMOB_BANNER_ID || 'ca-app-pub-2892152842024866/6180566789',
+          interstitialId: process.env.ADMOB_INTERSTITIAL_ID || 'ca-app-pub-2892152842024866/2604283857',
+          rewardedId: process.env.ADMOB_REWARDED_ID || 'ca-app-pub-2892152842024866/2049185437'
         },
         features: {
           coinsEnabled: true,
@@ -343,9 +364,9 @@ app.get('/api/client-runtime-config', async (req, res) => {
           apiVersion: "v1"
         },
         security: {
-          allowEmulators: false, // Changed to false for security
+          allowEmulators: false,
           allowRooted: false,
-          requireSignatureValidation: true, // Changed to true for security
+          requireSignatureValidation: true,
           adBlockDetection: true
         },
         metadata: {
@@ -362,86 +383,6 @@ app.get('/api/client-runtime-config', async (req, res) => {
   } catch (error) {
     console.error('Error in client-runtime-config:', error);
     res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-// Backward compatibility endpoint for mobile app
-app.get('/api/client-runtime-config', async (req, res) => {
-  // Call the same logic as the main endpoint
-  try {
-    const environment = req.headers['x-env'] || req.query.env || 'production';
-    const appVersion = req.headers['x-app-version'];
-    const clientIP = getClientIP(req);
-    const cacheKey = `public-config-${environment}`;
-    
-    console.log(`[CONFIG ACCESS - API] ${clientIP} requested ${environment} config (v${appVersion || 'unknown'})`);
-    
-    const cached = configCache.get(cacheKey);
-    if (cached && (Date.now() - cached.timestamp) < CACHE_TTL) {
-      res.set({
-        'X-Content-Type-Options': 'nosniff',
-        'X-Frame-Options': 'DENY',
-        'X-XSS-Protection': '1; mode=block',
-        'Cache-Control': 'private, max-age=300'
-      });
-      return res.json({ data: cached.data, cached: true, timestamp: cached.timestamp, environment });
-    }
-
-    // Resolve Supabase values
-    const resolvedSupabaseUrl = runtimeOverrides.supabaseUrl || process.env.MOBILE_SUPABASE_URL || process.env.SUPABASE_URL || 'https://kuibswqfmhhdybttbcoa.supabase.co';
-    const resolvedSupabaseAnonKey = runtimeOverrides.supabaseAnonKey || process.env.MOBILE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1aWJzd3FmbWhoZHlidHRiY29hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM3ODIwNTYsImV4cCI6MjA2OTM1ODA1Nn0.LRmGLu1OAcJza-eEPSIJUaFAyhxkdAGrbyRFRGSWpVw';
-
-    if (resolvedSupabaseUrl && resolvedSupabaseAnonKey) {
-      const cfg = {
-        supabase: { url: resolvedSupabaseUrl, anonKey: resolvedSupabaseAnonKey },
-        admob: {
-          appId: process.env.ADMOB_APP_ID || 'ca-app-pub-test',
-          bannerId: process.env.ADMOB_BANNER_ID || 'ca-app-pub-test-banner',
-          interstitialId: process.env.ADMOB_INTERSTITIAL_ID || 'ca-app-pub-test-interstitial',
-          rewardedId: process.env.ADMOB_REWARDED_ID || 'ca-app-pub-test-rewarded',
-        },
-        features: { coinsEnabled: true, adsEnabled: true, vipEnabled: true, referralsEnabled: true, analyticsEnabled: true },
-        app: { minVersion: '1.0.0', forceUpdate: false, maintenanceMode: false, apiVersion: 'v1' },
-        security: { allowEmulators: true, allowRooted: false, requireSignatureValidation: false, adBlockDetection: true },
-        metadata: { configVersion: '1.0.0', lastUpdated: new Date().toISOString(), ttl: 3600 },
-      };
-
-      configCache.set(cacheKey, { data: cfg, timestamp: Date.now() });
-      res.set({ 'X-Content-Type-Options': 'nosniff', 'X-Frame-Options': 'DENY', 'X-XSS-Protection': '1; mode=block', 'Cache-Control': 'private, max-age=300' });
-      return res.json({ data: cfg, cached: false, environment });
-    }
-
-    // Fallback configuration
-    const productionConfig = {
-      supabase: { 
-        url: runtimeOverrides.supabaseUrl || process.env.MOBILE_SUPABASE_URL || process.env.SUPABASE_URL || 'https://kuibswqfmhhdybttbcoa.supabase.co',
-        anonKey: runtimeOverrides.supabaseAnonKey || process.env.MOBILE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1aWJzd3FmbWhoZHlidHRiY29hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM3ODIwNTYsImV4cCI6MjA2OTM1ODA1Nn0.LRmGLu1OAcJza-eEPSIJUaFAyhxkdAGrbyRFRGSWpVw'
-      },
-      admob: { 
-        appId: process.env.ADMOB_APP_ID || 'ca-app-pub-2892152842024866~2841739969',
-        bannerId: process.env.ADMOB_BANNER_ID || 'ca-app-pub-2892152842024866/6180566789',
-        interstitialId: process.env.ADMOB_INTERSTITIAL_ID || 'ca-app-pub-2892152842024866/2604283857',
-        rewardedId: process.env.ADMOB_REWARDED_ID || 'ca-app-pub-2892152842024866/2049185437'
-      },
-      features: { coinsEnabled: true, adsEnabled: true, vipEnabled: true, referralsEnabled: true, analyticsEnabled: true },
-      app: { minVersion: '1.0.0', forceUpdate: false, maintenanceMode: false, apiVersion: 'v1' },
-      security: { allowEmulators: process.env.NODE_ENV === 'development', allowRooted: false, requireSignatureValidation: process.env.NODE_ENV === 'production', adBlockDetection: true },
-      metadata: { configVersion: '1.0.0', lastUpdated: new Date().toISOString(), ttl: 3600 },
-    };
-    
-    if (productionConfig.supabase.url && productionConfig.supabase.anonKey) {
-      res.set({ 'X-Content-Type-Options': 'nosniff', 'X-Frame-Options': 'DENY', 'X-XSS-Protection': '1; mode=block', 'Cache-Control': 'private, max-age=300' });
-      return res.json({ data: productionConfig, cached: false, environment });
-    }
-
-    console.error('[CONFIG ERROR] No valid Supabase configuration available');
-    return res.status(503).json({
-      error: 'Service temporarily unavailable',
-      message: 'Application configuration not properly set up. Please contact administrator.'
-    });
-  } catch (error) {
-    console.error('Error fetching client runtime config:', error);
-    return res.status(500).json({ error: 'Failed to fetch runtime configuration' });
   }
 });
 
