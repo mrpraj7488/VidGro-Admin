@@ -3,6 +3,10 @@
 
 import React from 'react'
 import { logger } from '../lib/logger'
+import { getSupabaseAdminClient } from '../lib/supabase'
+
+// Define backup bucket name (should match serverless function)
+const BACKUP_BUCKET = 'database-backup'
 
 export interface BackupOptions {
   type: 'full' | 'users' | 'videos' | 'config' | 'analytics'
@@ -156,6 +160,52 @@ class BackupService {
     } catch (error) {
       logger.error('Failed to delete backup', error, 'backupService')
       return { success: false, message: error instanceof Error ? error.message : 'Deletion failed' }
+    }
+  }
+
+  async listExistingBackups(): Promise<{ success: boolean; backups: any[]; error?: string }> {
+    try {
+      const response = await fetch('/api/admin/database-backup/list')
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}))
+        throw new Error(err.message || 'Failed to fetch backups')
+      }
+      const result = await response.json()
+      return { success: true, backups: result.backups || [] }
+    } catch (error) {
+      logger.error('Failed to list backups', error, 'backupService')
+      return { 
+        success: false, 
+        backups: [], 
+        error: error instanceof Error ? error.message : 'Failed to fetch backups' 
+      }
+    }
+  }
+
+  async getBackupUrls(storagePath: string): Promise<{ publicUrl?: string; signedUrl?: string }> {
+    try {
+      const supabaseAdmin = getSupabaseAdminClient()
+      if (!supabaseAdmin) {
+        throw new Error('Storage admin not configured')
+      }
+      
+      // Get public URL
+      const { data: publicData } = supabaseAdmin.storage
+        .from(BACKUP_BUCKET)
+        .getPublicUrl(storagePath)
+      
+      // Get signed URL (valid for 1 hour)
+      const { data: signedData, error } = await supabaseAdmin.storage
+        .from(BACKUP_BUCKET)
+        .createSignedUrl(storagePath, 3600) // 1 hour
+      
+      return {
+        publicUrl: publicData?.publicUrl,
+        signedUrl: signedData?.signedUrl
+      }
+    } catch (error) {
+      logger.error('Failed to get backup URLs', error, 'backupService')
+      return {}
     }
   }
 
