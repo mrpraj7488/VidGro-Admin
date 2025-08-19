@@ -51,6 +51,37 @@ export function DatabaseBackupScreen() {
     setBackups([])
   }, [])
 
+  // Load existing backups from storage on component mount
+  useEffect(() => {
+    const loadExistingBackups = async () => {
+      try {
+        const { backupService } = await import('../../services/backupService')
+        const result = await backupService.listExistingBackups()
+        
+        if (result.success && result.backups.length > 0) {
+          const formattedBackups: DatabaseBackup[] = result.backups.map((backup: any) => ({
+            id: backup.id || `backup-${Date.now()}-${Math.random()}`,
+            name: backup.name || 'Database Backup',
+            size: formatFileSize(backup.size || 0),
+            date: new Date(backup.created_at || backup.updated_at || Date.now()),
+            status: 'completed' as const,
+            duration: 0, // We don't have duration for existing backups
+            downloadUrl: undefined, // Will be generated when needed
+            checksum: undefined,
+            storagePath: backup.path,
+            sqlFilePath: undefined
+          }))
+          
+          setBackups(formattedBackups)
+        }
+      } catch (error) {
+        console.error('Failed to load existing backups:', error)
+      }
+    }
+
+    loadExistingBackups()
+  }, [])
+
   const handleCreateBackup = async (customName?: string) => {
     if (isCreatingBackup) return
     
@@ -163,34 +194,25 @@ export function DatabaseBackupScreen() {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i]
   }
 
-  const handleDownloadBackup = (backup: DatabaseBackup) => {
+  const handleDownloadBackup = async (backup: DatabaseBackup) => {
     try {
-      if (backup.downloadUrl) {
-        // Create download link
-        const link = document.createElement('a')
-        link.href = backup.downloadUrl
-        link.download = `${backup.name.replace(/[^a-zA-Z0-9]/g, '_')}.sql`
-        document.body.appendChild(link)
-        link.click()
-        document.body.removeChild(link)
+      let downloadUrl = backup.downloadUrl
+      
+      // If no download URL exists, generate one using the storage path
+      if (!downloadUrl && backup.storagePath) {
+        const { backupService } = await import('../../services/backupService')
+        const urls = await backupService.getBackupUrls(backup.storagePath)
+        downloadUrl = urls.publicUrl || urls.signedUrl
+      }
+      
+      if (downloadUrl) {
+        window.open(downloadUrl, '_blank')
       } else {
-        // Simulate SQL file download
-        const sqlContent = generateMockSQLBackup(backup)
-        const blob = new Blob([sqlContent], { type: 'application/sql' })
-        const url = URL.createObjectURL(blob)
-        
-        const link = document.createElement('a')
-        link.href = url
-        link.download = `vidgro_backup_${format(backup.date, 'yyyyMMdd_HHmmss')}.sql`
-        document.body.appendChild(link)
-        link.click()
-        document.body.removeChild(link)
-        
-        URL.revokeObjectURL(url)
+        showNotification('Download Failed', 'No download URL available', 'error')
       }
     } catch (error) {
-      console.error('Download failed:', error)
-      showNotification('Download Failed', 'Failed to download backup file', 'error')
+      const errorMessage = error instanceof Error ? error.message : 'Download failed'
+      showNotification('Download Failed', errorMessage, 'error')
     }
   }
 
