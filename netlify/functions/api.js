@@ -185,6 +185,259 @@ app.get('/client-runtime-config', async (req, res) => {
   }
 });
 
+// ----- HONEYPOT AND OBFUSCATION ENDPOINTS -----
+// These endpoints are designed to confuse and trap unauthorized access attempts
+
+// Fake endpoint that looks like the real one
+app.get('/api/client-runtime-config-fake', (req, res) => {
+  const fakeData = {
+    error: 'Endpoint deprecated',
+    message: 'This endpoint has been moved',
+    redirect: '/api/v2/config',
+    timestamp: new Date().toISOString()
+  };
+  res.status(410).json(fakeData);
+});
+
+// Another fake endpoint with misleading data
+app.get('/api/v2/config', (req, res) => {
+  const misleadingData = {
+    data: {
+      supabase: {
+        url: 'https://fake-supabase.example.com',
+        anonKey: 'fake_key_do_not_use'
+      },
+      features: {
+        coinsEnabled: false,
+        adsEnabled: false,
+        vipEnabled: false
+      }
+    },
+    message: 'This is a test endpoint',
+    timestamp: new Date().toISOString()
+  };
+  res.json(misleadingData);
+});
+
+// Honeypot endpoint that logs unauthorized access
+app.get('/api/config', (req, res) => {
+  const clientIP = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+  const userAgent = req.headers['user-agent'] || '';
+  
+  console.warn('🚨 HONEYPOT TRIGGERED - Unauthorized access attempt:', {
+    ip: clientIP,
+    userAgent: userAgent.substring(0, 100),
+    endpoint: '/api/config',
+    timestamp: new Date().toISOString()
+  });
+  
+  res.status(404).json({
+    error: 'Not found',
+    message: 'The requested resource was not found on this server'
+  });
+});
+
+// Complex routing with multiple validation layers
+app.get('/api/client-runtime-config', async (req, res) => {
+  try {
+    // Add security headers
+    res.set({
+      'X-Content-Type-Options': 'nosniff',
+      'X-Frame-Options': 'DENY',
+      'X-XSS-Protection': '1; mode=block',
+      'Referrer-Policy': 'strict-origin-when-cross-origin'
+    });
+
+    // Complex validation and obfuscation
+    const startTime = Date.now();
+    const requestId = Math.random().toString(36).substring(7);
+    const clientIP = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+    const userAgent = req.headers['user-agent'] || '';
+    const referer = req.headers['referer'] || '';
+    const origin = req.headers['origin'] || '';
+    
+    // Complex request validation with multiple layers
+    const validationLayers = [
+      // Layer 1: Basic request structure
+      () => {
+        if (!req.headers['accept'] || !req.headers['user-agent']) {
+          throw new Error('Invalid request headers');
+        }
+        return true;
+      },
+      
+      // Layer 2: Origin validation with complex logic
+      () => {
+        const allowedOrigins = [
+          'https://admin-vidgro.netlify.app',
+          'exp://localhost',
+          'exp://192.168',
+          'exp://10.0',
+          'exp://172.16',
+          'http://localhost',
+          'http://192.168',
+          'http://10.0',
+          'http://172.16'
+        ];
+        
+        const isMobileApp = userAgent.includes('Expo') || 
+                            userAgent.includes('ReactNative') || 
+                            userAgent.includes('VidGro') ||
+                            userAgent.includes('Mobile') ||
+                            userAgent.includes('Android') ||
+                            userAgent.includes('iOS');
+        
+        const isAllowedOrigin = allowedOrigins.some(allowed => 
+          origin.includes(allowed) || 
+          referer.includes(allowed)
+        );
+        
+        // Complex validation logic
+        const shouldAllow = isMobileApp || isAllowedOrigin || (!origin && !referer);
+        
+        if (!shouldAllow) {
+          console.warn('🚨 Unauthorized access attempt to runtime config:', {
+            requestId,
+            ip: clientIP,
+            userAgent: userAgent.substring(0, 100),
+            referer: referer.substring(0, 100),
+            origin: origin.substring(0, 100),
+            isMobileApp,
+            isAllowedOrigin,
+            timestamp: new Date().toISOString()
+          });
+          throw new Error('Access denied');
+        }
+        
+        return true;
+      },
+      
+      // Layer 3: Rate limiting with complex algorithm
+      () => {
+        if (!global.complexRateLimitStore) {
+          global.complexRateLimitStore = new Map();
+        }
+        
+        const rateLimitKey = `complex_limit:${clientIP}`;
+        const now = Date.now();
+        const windowSize = 10 * 60 * 1000; // 10 minutes
+        const maxRequests = 3; // Very restrictive
+        
+        const clientData = global.complexRateLimitStore.get(rateLimitKey) || { requests: [], lastReset: now };
+        
+        // Reset counter if window expired
+        if (now - clientData.lastReset > windowSize) {
+          clientData.requests = [];
+          clientData.lastReset = now;
+        }
+        
+        // Add current request
+        clientData.requests.push(now);
+        
+        // Remove old requests outside window
+        clientData.requests = clientData.requests.filter(time => now - time < windowSize);
+        
+        if (clientData.requests.length > maxRequests) {
+          console.warn('🚨 Complex rate limit exceeded:', { requestId, clientIP, attempts: clientData.requests.length });
+          throw new Error('Rate limit exceeded');
+        }
+        
+        global.complexRateLimitStore.set(rateLimitKey, clientData);
+        return true;
+      },
+      
+      // Layer 4: Request timing validation
+      () => {
+        const elapsed = Date.now() - startTime;
+        if (elapsed < 50) { // Too fast = suspicious
+          throw new Error('Request timing validation failed');
+        }
+        return true;
+      }
+    ];
+    
+    // Execute validation layers with random delays
+    for (let i = 0; i < validationLayers.length; i++) {
+      const layer = validationLayers[i];
+      
+      // Add random delay between layers
+      if (i > 0) {
+        const delay = Math.random() * 50 + 10; // 10-60ms
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+      
+      try {
+        await layer();
+      } catch (error) {
+        console.error(`🚨 Validation layer ${i + 1} failed:`, error.message);
+        return res.status(403).json({ 
+          error: 'Access denied',
+          message: 'Request validation failed',
+          requestId,
+          timestamp: new Date().toISOString()
+        });
+      }
+    }
+    
+    console.log('✅ Complex validation passed for runtime config:', { requestId, clientIP, elapsed: Date.now() - startTime });
+
+    // Return MINIMAL configuration for public endpoint - NO SENSITIVE DATA
+    const config = {
+      data: {
+        supabase: {
+          url: process.env.SUPABASE_URL || process.env.MOBILE_SUPABASE_URL || 'https://kuibswqfmhhdybttbcoa.supabase.co',
+          // NO anonKey here - mobile app must use secure endpoint
+        },
+        admob: {
+          // Only return app ID, not the sensitive banner/interstitial IDs
+          appId: process.env.ADMOB_APP_ID || 'ca-app-pub-2892152842024866~2841739969'
+        },
+        features: {
+          coinsEnabled: true,
+          adsEnabled: true,
+          vipEnabled: true,
+          referralsEnabled: true,
+          analyticsEnabled: true
+        },
+        app: {
+          minVersion: "1.0.0",
+          forceUpdate: false,
+          maintenanceMode: false,
+          apiVersion: "v1"
+        },
+        security: {
+          allowEmulators: false,
+          allowRooted: false,
+          requireSignatureValidation: true,
+          adBlockDetection: true
+        },
+        metadata: {
+          configVersion: "1.0.0",
+          lastUpdated: new Date().toISOString(),
+          ttl: 3600
+        }
+      },
+      cached: false,
+      environment: "production",
+      message: "Use /api/client-runtime-config/secure for full configuration",
+      requestId,
+      timestamp: new Date().toISOString()
+    };
+
+    // Add random delay before response
+    const responseDelay = Math.random() * 100 + 50; // 50-150ms
+    await new Promise(resolve => setTimeout(resolve, responseDelay));
+
+    res.json(config);
+  } catch (error) {
+    console.error('Error in complex client-runtime-config:', error);
+    res.status(500).json({ 
+      error: 'Internal server error',
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
 // Secure authenticated endpoint for full runtime configuration
 app.post('/api/client-runtime-config/secure', async (req, res) => {
   try {
@@ -297,122 +550,6 @@ app.post('/api/client-runtime-config/secure', async (req, res) => {
     res.json(config);
   } catch (error) {
     console.error('Error in secure client-runtime-config:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-// Secure client runtime configuration endpoint
-app.get('/api/client-runtime-config', async (req, res) => {
-  try {
-    // Add security headers
-    res.set({
-      'X-Content-Type-Options': 'nosniff',
-      'X-Frame-Options': 'DENY',
-      'X-XSS-Protection': '1; mode=block',
-      'Referrer-Policy': 'strict-origin-when-cross-origin'
-    });
-
-    // Get client information
-    const clientIP = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-    const userAgent = req.headers['user-agent'] || '';
-    const referer = req.headers['referer'] || '';
-    const origin = req.headers['origin'] || '';
-    
-    console.log('🔍 Runtime config request:', {
-      ip: clientIP,
-      userAgent: userAgent.substring(0, 100),
-      referer: referer.substring(0, 100),
-      origin: origin.substring(0, 100)
-    });
-    
-    // More permissive origin validation for mobile apps
-    const allowedOrigins = [
-      'https://admin-vidgro.netlify.app',
-      'exp://localhost',
-      'exp://192.168',
-      'exp://10.0',
-      'exp://172.16',
-      'http://localhost',
-      'http://192.168',
-      'http://10.0',
-      'http://172.16'
-    ];
-    
-    // Check if request is from mobile app or allowed origin
-    const isMobileApp = userAgent.includes('Expo') || 
-                        userAgent.includes('ReactNative') || 
-                        userAgent.includes('VidGro') ||
-                        userAgent.includes('Mobile');
-    
-    const isAllowedOrigin = allowedOrigins.some(allowed => 
-      origin.includes(allowed) || 
-      referer.includes(allowed)
-    );
-    
-    // Allow mobile apps and allowed origins, or if no origin/referer (direct API calls)
-    const shouldAllow = isMobileApp || isAllowedOrigin || (!origin && !referer);
-    
-    if (!shouldAllow) {
-      console.warn('🚨 Unauthorized access attempt to runtime config:', {
-        ip: clientIP,
-        userAgent: userAgent.substring(0, 100),
-        referer: referer.substring(0, 100),
-        origin: origin.substring(0, 100),
-        isMobileApp,
-        isAllowedOrigin
-      });
-      return res.status(403).json({ 
-        error: 'Access denied',
-        message: 'Unauthorized client'
-      });
-    }
-
-    console.log('✅ Access granted for runtime config:', { isMobileApp, isAllowedOrigin });
-
-    // Return MINIMAL configuration for public endpoint - NO SENSITIVE DATA
-    const config = {
-      data: {
-        supabase: {
-          url: process.env.SUPABASE_URL || process.env.MOBILE_SUPABASE_URL || 'https://kuibswqfmhhdybttbcoa.supabase.co',
-          // NO anonKey here - mobile app must use secure endpoint
-        },
-        admob: {
-          // Only return app ID, not the sensitive banner/interstitial IDs
-          appId: process.env.ADMOB_APP_ID || 'ca-app-pub-2892152842024866~2841739969'
-        },
-        features: {
-          coinsEnabled: true,
-          adsEnabled: true,
-          vipEnabled: true,
-          referralsEnabled: true,
-          analyticsEnabled: true
-        },
-        app: {
-          minVersion: "1.0.0",
-          forceUpdate: false,
-          maintenanceMode: false,
-          apiVersion: "v1"
-        },
-        security: {
-          allowEmulators: false,
-          allowRooted: false,
-          requireSignatureValidation: true,
-          adBlockDetection: true
-        },
-        metadata: {
-          configVersion: "1.0.0",
-          lastUpdated: new Date().toISOString(),
-          ttl: 3600
-        }
-      },
-      cached: false,
-      environment: "production",
-      message: "Use /api/client-runtime-config/secure for full configuration"
-    };
-
-    res.json(config);
-  } catch (error) {
-    console.error('Error in client-runtime-config:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
