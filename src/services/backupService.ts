@@ -15,25 +15,24 @@ export interface BackupOptions {
 export interface BackupResult {
   success: boolean
   backupId: string
-  size: number
+  size: number // bytes
   duration: number
   checksum?: string
   downloadUrl?: string
   error?: string
-  sqlContent?: string
 }
-
 
 class BackupService {
   private backupQueue: Map<string, any> = new Map()
 
-  async createBackup(options: BackupOptions): Promise<{ success: boolean; backupId?: string; error?: string }> {
+  async createBackup(options: BackupOptions): Promise<BackupResult | { success: false; error: string }> {
     const backupId = this.generateBackupId()
-    
+    const startedAt = Date.now()
+
     try {
       logger.info('Starting backup creation', { backupId, options }, 'backupService')
-      
-      // Add to queue
+
+      // Track status locally (for this session)
       this.backupQueue.set(backupId, {
         id: backupId,
         status: 'running',
@@ -41,135 +40,126 @@ class BackupService {
         startTime: new Date(),
         options
       })
-      
-      // Notify listeners
+
       this.notifyBackupUpdate(backupId)
-      
+
       // Trigger server-side backup
       const response = await fetch('/api/admin/database-backup', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           backupType: options.type,
           customName: options.customName
         })
       })
-      
+
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}))
         throw new Error(errorData.message || `Server error: ${response.status}`)
       }
-      
+
       const result = await response.json()
-      
-      if (!result.success) {
-        throw new Error(result.message || 'Backup failed')
+      if (!result?.success) {
+        throw new Error(result?.message || 'Backup failed')
       }
-      
-      // Update backup status
+
+      // Choose best download URL: publicUrl -> signedUrl -> filePath
+      const storage = result.storage || {}
+      const preferredUrl: string | undefined = storage.publicUrl || storage.signedUrl || result.filePath
+
+      // Convert reported size (string in KB) to bytes if needed
+      let sizeBytes = 0
+      if (typeof result.size === 'number') sizeBytes = result.size
+      if (typeof result.size === 'string') {
+        const n = parseFloat(result.size)
+        if (!isNaN(n)) sizeBytes = Math.round(n * 1024) // KB -> bytes
+      }
+
+      const durationMs = Date.now() - startedAt
+
+      // Update queue
       this.backupQueue.set(backupId, {
         id: backupId,
         status: 'completed',
         progress: 100,
-        startTime: new Date(),
+        startTime: new Date(startedAt),
         endTime: new Date(),
         options,
-        serverFile: result.filePath,
-        serverFilename: result.filename,
-        serverSize: result.size,
-        tables: result.tables
+        downloadUrl: preferredUrl,
+        serverPath: storage.path,
+        sizeBytes
       })
-      
-      logger.info('Backup completed successfully', { 
-        backupId, 
-        filename: result.filename,
-        size: result.size,
-        tables: result.tables
-      }, 'backupService')
-      
-      // Notify listeners
+
       this.notifyBackupUpdate(backupId)
-      
-      return { success: true, backupId }
-      
+
+      logger.info('Backup completed successfully', {
+        backupId,
+        filename: result.filename,
+        sizeBytes,
+        storagePath: storage.path
+      }, 'backupService')
+
+      return {
+        success: true,
+        backupId,
+        size: sizeBytes,
+        duration: Math.round(durationMs / 1000),
+        checksum: undefined,
+        downloadUrl: preferredUrl
+      }
     } catch (error) {
       logger.error('Backup creation failed', error, 'backupService')
-      
-      // Update backup status
+
       this.backupQueue.set(backupId, {
         id: backupId,
         status: 'failed',
         progress: 0,
-        startTime: new Date(),
+        startTime: new Date(startedAt),
         endTime: new Date(),
         options,
         error: error instanceof Error ? error.message : 'Unknown error'
       })
-      
-      // Notify listeners
+
       this.notifyBackupUpdate(backupId)
-      
-      return { 
-        success: false, 
-        error: error instanceof Error ? error.message : 'Unknown error' 
+
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error'
       }
     }
   }
-
 
   async deleteBackup(backupId: string): Promise<{ success: boolean; message: string }> {
     try {
-      // Clean up blob URL and remove from queue
       const backup = this.backupQueue.get(backupId)
       if (backup && backup.downloadUrl) {
-        URL.revokeObjectURL(backup.downloadUrl)
+        // no-op for remote URLs
       }
       this.backupQueue.delete(backupId)
-
       logger.info('Backup deleted', { backupId }, 'backupService')
-      
-      return {
-        success: true,
-        message: 'Backup deleted successfully'
-      }
+      return { success: true, message: 'Backup deleted successfully' }
     } catch (error) {
       logger.error('Failed to delete backup', error, 'backupService')
-      
-      return {
-        success: false,
-        message: error instanceof Error ? error.message : 'Deletion failed'
-      }
+      return { success: false, message: error instanceof Error ? error.message : 'Deletion failed' }
     }
   }
-
 
   getBackupStatus(backupId: string): any {
     return this.backupQueue.get(backupId)
   }
 
-
-  // Method to download backup as file
   downloadBackup(backupId: string, filename?: string): void {
-    try {
-      const backup = this.backupQueue.get(backupId)
-      if (!backup || !backup.downloadUrl) {
-        throw new Error('Backup not found or not ready for download')
-      }
-
-      const link = document.createElement('a')
-      link.href = backup.downloadUrl
-      link.download = filename || `backup_${backupId}.sql`
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
-
-      logger.info('Backup download initiated', { backupId, filename }, 'backupService')
-    } catch (error) {
-      logger.error('Failed to download backup', error, 'backupService')
-      throw error
+    const backup = this.backupQueue.get(backupId)
+    if (!backup || !backup.downloadUrl) {
+      throw new Error('Backup not found or not ready for download')
     }
+    const link = document.createElement('a')
+    link.href = backup.downloadUrl
+    if (filename) link.download = filename
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    logger.info('Backup download initiated', { backupId, filename }, 'backupService')
   }
 
   private generateBackupId(): string {
@@ -181,10 +171,8 @@ class BackupService {
   }
 }
 
-// Export singleton instance
 export const backupService = new BackupService()
 
-// React hook for backup operations
 export const useBackupService = () => {
   const [isLoading, setIsLoading] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
@@ -192,10 +180,9 @@ export const useBackupService = () => {
   const createBackup = async (options: BackupOptions) => {
     setIsLoading(true)
     setError(null)
-    
     try {
       const result = await backupService.createBackup(options)
-      if (!result.success) { // The new createBackup returns a string, so check if it's not empty
+      if (!result.success) {
         setError(result.error || 'Backup failed to start')
       }
       return result
@@ -208,7 +195,6 @@ export const useBackupService = () => {
     }
   }
 
-
   const downloadBackup = (backupId: string, filename?: string) => {
     try {
       backupService.downloadBackup(backupId, filename)
@@ -218,11 +204,5 @@ export const useBackupService = () => {
     }
   }
 
-  return {
-    createBackup,
-    downloadBackup,
-    isLoading,
-    error,
-    clearError: () => setError(null)
-  }
+  return { createBackup, downloadBackup, isLoading, error, clearError: () => setError(null) }
 }
