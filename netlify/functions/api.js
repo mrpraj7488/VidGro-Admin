@@ -506,6 +506,35 @@ app.post('/api/admin/database-backup', async (req, res) => {
   }
 });
 
+// List existing backup objects from Supabase Storage
+app.get('/api/admin/database-backup/list', async (req, res) => {
+  try {
+    const supabaseAdmin = getSupabaseAdmin()
+    if (!supabaseAdmin) {
+      return res.status(500).json({ success: false, message: 'Storage admin not configured' })
+    }
+    const { data, error } = await supabaseAdmin.storage.from(BACKUP_BUCKET).list('', {
+      limit: 100,
+      offset: 0,
+      sortBy: { column: 'created_at', order: 'desc' }
+    })
+    if (error) {
+      return res.status(400).json({ success: false, message: error.message || 'Failed to list backups' })
+    }
+    const backups = data?.map(file => ({
+      id: file.id,
+      name: file.name,
+      size: file.metadata?.size || 0,
+      created_at: file.created_at,
+      updated_at: file.updated_at,
+      path: file.name
+    })) || []
+    return res.json({ success: true, backups })
+  } catch (e) {
+    return res.status(500).json({ success: false, message: 'Failed to list backups' })
+  }
+})
+
 // Delete a backup object from Supabase Storage
 app.post('/api/admin/database-backup/delete', async (req, res) => {
   try {
