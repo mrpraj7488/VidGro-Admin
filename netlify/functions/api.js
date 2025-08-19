@@ -539,20 +539,33 @@ app.get('/api/admin/database-backup/list', async (req, res) => {
 app.post('/api/admin/database-backup/delete', async (req, res) => {
   try {
     const { path, bucket } = req.body || {};
+    console.log('Delete backup request:', { path, bucket });
+    
     if (!path) {
+      console.log('Missing path in delete request');
       return res.status(400).json({ success: false, message: 'Missing path' });
     }
+    
     const supabaseAdmin = getSupabaseAdmin();
     if (!supabaseAdmin) {
+      console.log('Supabase admin not configured');
       return res.status(500).json({ success: false, message: 'Storage admin not configured' });
     }
+    
     const targetBucket = bucket || BACKUP_BUCKET;
+    console.log('Attempting to delete from bucket:', targetBucket, 'path:', path);
+    
     const { data, error } = await supabaseAdmin.storage.from(targetBucket).remove([path]);
+    
     if (error) {
+      console.log('Delete error:', error);
       return res.status(400).json({ success: false, message: error.message || 'Failed to delete object' });
     }
+    
+    console.log('Delete successful:', { path, bucket: targetBucket, data });
     return res.json({ success: true, path, bucket: targetBucket, data });
   } catch (e) {
+    console.log('Delete exception:', e);
     return res.status(500).json({ success: false, message: 'Failed to delete backup' });
   }
 });
