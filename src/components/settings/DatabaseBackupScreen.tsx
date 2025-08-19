@@ -17,6 +17,7 @@ interface DatabaseBackup {
   downloadUrl?: string
   checksum?: string
   sqlFilePath?: string
+  storagePath?: string
 }
 
 interface BackupSettings {
@@ -104,6 +105,7 @@ export function DatabaseBackupScreen() {
                 duration: result.duration || 0,
                 checksum: result.checksum,
                 downloadUrl: result.downloadUrl,
+                storagePath: (result as any).storagePath,
                 sqlFilePath: undefined
               }
             : backup
@@ -681,6 +683,30 @@ CREATE TABLE IF NOT EXISTS videos (
                         >
                           <Download className="w-4 h-4 mr-1" />
                           <span className="hidden sm:inline">Download SQL</span>
+                        </Button>
+                      )}
+                      {backup.status === 'completed' && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={async () => {
+                            if (!confirm('Delete this backup from storage?')) return
+                            const id = backup.id
+                            try {
+                              const del = await (await import('../../services/backupService')).backupService.deleteBackup(id)
+                              if (del.success) {
+                                setBackups(prev => prev.filter(b => b.id !== id))
+                                showNotification('Backup Deleted', 'Backup removed from storage', 'success')
+                              } else {
+                                showNotification('Delete Failed', del.message || 'Could not delete backup', 'error')
+                              }
+                            } catch (e) {
+                              const msg = e instanceof Error ? e.message : 'Delete failed'
+                              showNotification('Delete Failed', msg, 'error')
+                            }
+                          }}
+                        >
+                          <span className="hidden sm:inline">Delete</span>
                         </Button>
                       )}
                       {backup.status === 'failed' && (
