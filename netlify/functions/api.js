@@ -506,6 +506,28 @@ app.post('/api/admin/database-backup', async (req, res) => {
   }
 });
 
+// Delete a backup object from Supabase Storage
+app.post('/api/admin/database-backup/delete', async (req, res) => {
+  try {
+    const { path, bucket } = req.body || {};
+    if (!path) {
+      return res.status(400).json({ success: false, message: 'Missing path' });
+    }
+    const supabaseAdmin = getSupabaseAdmin();
+    if (!supabaseAdmin) {
+      return res.status(500).json({ success: false, message: 'Storage admin not configured' });
+    }
+    const targetBucket = bucket || BACKUP_BUCKET;
+    const { data, error } = await supabaseAdmin.storage.from(targetBucket).remove([path]);
+    if (error) {
+      return res.status(400).json({ success: false, message: error.message || 'Failed to delete object' });
+    }
+    return res.json({ success: true, path, bucket: targetBucket, data });
+  } catch (e) {
+    return res.status(500).json({ success: false, message: 'Failed to delete backup' });
+  }
+});
+
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.json({ 
