@@ -331,31 +331,140 @@ app.post('/api/admin/database-backup', async (req, res) => {
 
     // Resolve Supabase settings (use env or fallbacks)
     const supabaseUrl = process.env.SUPABASE_URL || process.env.MOBILE_SUPABASE_URL || 'https://kuibswqfmhhdybttbcoa.supabase.co';
-    
-    // Minimal SQL header (serverless-safe)
-    let sqlContent = `-- VidGro Database Backup (Serverless)\n` +
-      `-- Created: ${new Date().toISOString()}\n` +
-      `-- Type: ${backupType}\n` +
-      `-- Supabase: ${supabaseUrl}\n` +
-      `\nBEGIN;\n\n` +
-      `-- NOTE: This is a lightweight serverless backup stub.\n` +
-      `-- For full schema/data export, run the backup from a trusted server or Supabase dashboard.\n` +
-      `-- The mobile app will work using runtime configuration.\n\nCOMMIT;\n`;
+    const supabaseAdmin = getSupabaseAdmin();
+
+    // Controls
+    const MAX_ROWS_PER_TABLE = Number(process.env.BACKUP_MAX_ROWS || 2000);
+    const PAGE_SIZE = 1000;
+
+    // Helpers to safely format SQL
+    const qIdent = (name) => '"' + String(name).replace(/"/g, '""') + '"';
+    const qLit = (val) => {
+      if (val === null || val === undefined) return 'NULL';
+      if (typeof val === 'number') return String(val);
+      if (typeof val === 'boolean') return val ? 'TRUE' : 'FALSE';
+      const s = typeof val === 'string' ? val : JSON.stringify(val);
+      return '\'' + s.replace(/'/g, "''") + '\'';
+    };
+
+    // Try to detect existing public tables by probing a candidate list
+    const candidateTables = [
+      'profiles',
+      'videos',
+      'coin_transactions',
+      'runtime_config',
+      'admin_audit_logs',
+      'bug_reports'
+    ];
+    const presentTables = [];
+
+    if (supabaseAdmin) {
+      for (const t of candidateTables) {
+        try {
+          const { error } = await supabaseAdmin.from(t).select('*', { count: 'exact', head: true });
+          if (!error) presentTables.push(t);
+        } catch (_) {}
+      }
+    }
+
+    // Build SQL
+    let parts = [];
+    parts.push(`-- VidGro Database Backup\n-- Created: ${new Date().toISOString()}\n-- Type: ${backupType}\n-- Supabase: ${supabaseUrl}`);
+    parts.push('SET statement_timeout = 0;');
+    parts.push("SET lock_timeout = 0;");
+    parts.push("SET client_encoding = 'UTF8';");
+    parts.push("SET standard_conforming_strings = on;");
+    parts.push('BEGIN;');
+
+    // Attempt to include schema via RPC helper functions if available
+    const trySchemaForTable = async (table) => {
+      if (!supabaseAdmin) return [];
+      const schemaChunks = [];
+      try {
+        const { data: tbl, error: errTbl } = await supabaseAdmin.rpc('get_table_structure', { table_name: table });
+        if (!errTbl && Array.isArray(tbl)) schemaChunks.push(...tbl.map(r => r.create_statement).filter(Boolean));
+      } catch (_) {}
+      try {
+        const { data: idx, error: errIdx } = await supabaseAdmin.rpc('get_table_indexes', { table_name: table });
+        if (!errIdx && Array.isArray(idx)) schemaChunks.push(...idx.map(r => r.create_statement).filter(Boolean));
+      } catch (_) {}
+      try {
+        const { data: trg, error: errTrg } = await supabaseAdmin.rpc('get_table_triggers', { table_name: table });
+        if (!errTrg && Array.isArray(trg)) schemaChunks.push(...trg.map(r => r.create_statement).filter(Boolean));
+      } catch (_) {}
+      try {
+        const { data: pol, error: errPol } = await supabaseAdmin.rpc('get_table_policies', { table_name: table });
+        if (!errPol && Array.isArray(pol)) schemaChunks.push(...pol.map(r => r.create_statement).filter(Boolean));
+      } catch (_) {}
+      return schemaChunks;
+    };
+
+    // Dump schema (best-effort)
+    for (const t of presentTables) {
+      parts.push(`\n-- Schema for ${t}`);
+      const schemaParts = await trySchemaForTable(t);
+      if (schemaParts.length > 0) {
+        parts.push(...schemaParts);
+      } else {
+        // Fallback minimal table stub if schema RPC not available
+        parts.push(`-- NOTE: Schema function not available for ${t}. Create table manually in restore env.`);
+      }
+    }
+
+    // Dump data with INSERT statements (capped)
+    for (const t of presentTables) {
+      parts.push(`\n-- Data for ${t}`);
+      let fetched = 0;
+      let offset = 0;
+      let firstRowCols = null;
+      while (fetched < MAX_ROWS_PER_TABLE) {
+        const { data: rows, error } = await supabaseAdmin
+          .from(t)
+          .select('*')
+          .range(offset, offset + PAGE_SIZE - 1);
+        if (error) break;
+        if (!rows || rows.length === 0) break;
+        if (!firstRowCols) firstRowCols = Object.keys(rows[0]);
+        for (const row of rows) {
+          const cols = firstRowCols;
+          const values = cols.map(c => qLit(row[c] ?? null)).join(', ');
+          parts.push(`INSERT INTO ${qIdent(t)} (${cols.map(qIdent).join(', ')}) VALUES (${values});`);
+        }
+        fetched += rows.length;
+        offset += rows.length;
+        if (rows.length < PAGE_SIZE) break;
+      }
+      if (fetched >= MAX_ROWS_PER_TABLE) {
+        parts.push(`-- NOTE: Row export for ${t} truncated at ${MAX_ROWS_PER_TABLE} rows.`);
+      }
+    }
+
+    // Include all functions (best-effort)
+    if (supabaseAdmin) {
+      try {
+        const { data: fns } = await supabaseAdmin.rpc('get_all_functions');
+        if (Array.isArray(fns) && fns.length) {
+          parts.push('\n-- Functions');
+          parts.push(...fns.map(r => r.create_statement).filter(Boolean));
+        }
+      } catch (_) {}
+    }
+
+    parts.push('COMMIT;');
+    const sqlContent = parts.join('\n');
 
     // Upload to Supabase Storage using service role
-    const supabaseAdmin = getSupabaseAdmin();
     let publicUrl = null;
     let signedUrl = null;
     let storagePath = null;
+    let filename = null;
 
     if (supabaseAdmin) {
       await ensureBucketExists(supabaseAdmin, BACKUP_BUCKET);
-
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
       const safeName = customName ? String(customName).replace(/[^a-zA-Z0-9-_]/g, '_') : '';
-      const filename = `backup_${backupType}_${timestamp}${safeName ? '_' + safeName : ''}.sql`;
+      filename = `backup_${backupType}_${timestamp}${safeName ? '_' + safeName : ''}.sql`;
       storagePath = `${filename}`;
-
       const { error: uploadError } = await supabaseAdmin
         .storage
         .from(BACKUP_BUCKET)
@@ -363,7 +472,6 @@ app.post('/api/admin/database-backup', async (req, res) => {
           contentType: 'application/sql',
           upsert: true
         });
-
       if (!uploadError) {
         const urls = await getBackupUrls(supabaseAdmin, BACKUP_BUCKET, storagePath);
         publicUrl = urls.publicUrl;
@@ -372,17 +480,17 @@ app.post('/api/admin/database-backup', async (req, res) => {
     }
 
     // Fallback: in-memory download link (if storage not configured)
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    const safeName = customName ? String(customName).replace(/[^a-zA-Z0-9-_]/g, '_') : '';
-    const filename = `backup_${backupType}_${timestamp}${safeName ? '_' + safeName : ''}.sql`;
+    const timestamp2 = new Date().toISOString().replace(/[:.]/g, '-');
+    const safeName2 = customName ? String(customName).replace(/[^a-zA-Z0-9-_]/g, '_') : '';
+    const filename2 = filename || `backup_${backupType}_${timestamp2}${safeName2 ? '_' + safeName2 : ''}.sql`;
     const token = Buffer.from(sqlContent, 'utf8').toString('base64');
-    const filePath = `/.netlify/functions/api/backup?filename=${encodeURIComponent(filename)}&token=${encodeURIComponent(token)}`;
+    const filePath = `/.netlify/functions/api/backup?filename=${encodeURIComponent(filename2)}&token=${encodeURIComponent(token)}`;
 
     return res.json({
       success: true,
       message: 'Backup generated',
-      filename,
-      filePath, // in-memory download link
+      filename: filename2,
+      filePath,
       storage: {
         bucket: BACKUP_BUCKET,
         uploaded: Boolean(publicUrl || signedUrl),
