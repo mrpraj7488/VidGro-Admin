@@ -45,49 +45,9 @@ export function DatabaseBackupScreen() {
     notifyOnFailure: true
   })
 
-  // Load backup history
+  // No mock history. Only real backups created in this session
   useEffect(() => {
-    const mockBackups: DatabaseBackup[] = [
-      {
-        id: 'backup-1',
-        name: 'Complete Database Backup - Auto',
-        size: '2.4 GB',
-        date: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
-        status: 'completed',
-        duration: 1847,
-        checksum: 'sha256:abc123def456...',
-        sqlFilePath: '/backups/vidgro_backup_20250108_020000.sql'
-      },
-      {
-        id: 'backup-2',
-        name: 'Complete Database Backup - Manual',
-        size: '2.3 GB',
-        date: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
-        status: 'completed',
-        duration: 1623,
-        checksum: 'sha256:def789ghi012...',
-        sqlFilePath: '/backups/vidgro_backup_20250105_143000.sql'
-      },
-      {
-        id: 'backup-3',
-        name: 'Complete Database Backup - Auto',
-        size: '2.2 GB',
-        date: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
-        status: 'completed',
-        duration: 1534,
-        checksum: 'sha256:ghi345jkl678...',
-        sqlFilePath: '/backups/vidgro_backup_20250101_020000.sql'
-      },
-      {
-        id: 'backup-4',
-        name: 'Complete Database Backup - Auto',
-        size: '0 MB',
-        date: new Date(Date.now() - 2 * 60 * 60 * 1000),
-        status: 'failed',
-        duration: 45
-      }
-    ]
-    setBackups(mockBackups)
+    setBackups([])
   }, [])
 
   const handleCreateBackup = async (customName?: string) => {
@@ -144,7 +104,7 @@ export function DatabaseBackupScreen() {
                 duration: result.duration || 0,
                 checksum: result.checksum,
                 downloadUrl: result.downloadUrl,
-                sqlFilePath: `/backups/vidgro_backup_${format(new Date(), 'yyyyMMdd_HHmmss')}.sql`
+                sqlFilePath: undefined
               }
             : backup
         ))
