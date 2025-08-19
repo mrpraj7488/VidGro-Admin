@@ -196,27 +196,59 @@ app.post('/api/client-runtime-config/secure', async (req, res) => {
       'Referrer-Policy': 'strict-origin-when-cross-origin'
     });
 
+    // Basic rate limiting
+    const clientIP = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+    const rateLimitKey = `secure_config:${clientIP}`;
+    
+    // Simple in-memory rate limiting (5 attempts per 15 minutes)
+    const now = Date.now();
+    const rateLimitWindow = 15 * 60 * 1000; // 15 minutes
+    const maxAttempts = 5;
+    
+    if (!global.rateLimitStore) {
+      global.rateLimitStore = new Map();
+    }
+    
+    const clientAttempts = global.rateLimitStore.get(rateLimitKey) || [];
+    const validAttempts = clientAttempts.filter(timestamp => now - timestamp < rateLimitWindow);
+    
+    if (validAttempts.length >= maxAttempts) {
+      console.warn('🚨 Rate limit exceeded for secure config:', { clientIP, attempts: validAttempts.length });
+      return res.status(429).json({ 
+        error: 'Rate limit exceeded',
+        message: 'Too many authentication attempts. Please try again later.',
+        retryAfter: Math.ceil(rateLimitWindow / 1000)
+      });
+    }
+    
+    // Add current attempt
+    validAttempts.push(now);
+    global.rateLimitStore.set(rateLimitKey, validAttempts);
+
     // Verify client authentication
     const { clientId, clientSecret, deviceId } = req.body;
     
     if (!clientId || !clientSecret || !deviceId) {
+      console.warn('🚨 Missing credentials for secure config:', { clientIP, hasClientId: !!clientId, hasSecret: !!clientSecret, hasDeviceId: !!deviceId });
       return res.status(401).json({ 
         error: 'Authentication required',
         message: 'Missing credentials'
       });
     }
 
-    // Verify client credentials (you should implement proper validation)
+    // Verify client credentials
     const validClientId = process.env.MOBILE_CLIENT_ID || 'vidgro_mobile_2024';
     const validClientSecret = process.env.MOBILE_CLIENT_SECRET || 'vidgro_secret_key_2024';
     
     if (clientId !== validClientId || clientSecret !== validClientSecret) {
-      console.warn('🚨 Invalid client credentials attempt:', { clientId, deviceId });
+      console.warn('🚨 Invalid client credentials attempt:', { clientIP, clientId, deviceId });
       return res.status(401).json({ 
         error: 'Authentication failed',
         message: 'Invalid credentials'
       });
     }
+
+    console.log('✅ Secure config access granted for:', { clientIP, deviceId });
 
     // Return full configuration for authenticated clients
     const config = {
@@ -337,18 +369,16 @@ app.get('/api/client-runtime-config', async (req, res) => {
 
     console.log('✅ Access granted for runtime config:', { isMobileApp, isAllowedOrigin });
 
-    // Return configuration with sensitive data for mobile apps
+    // Return MINIMAL configuration for public endpoint - NO SENSITIVE DATA
     const config = {
       data: {
         supabase: {
           url: process.env.SUPABASE_URL || process.env.MOBILE_SUPABASE_URL || 'https://kuibswqfmhhdybttbcoa.supabase.co',
-          anonKey: process.env.SUPABASE_ANON_KEY || process.env.MOBILE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1aWJzd3FmbWhoZHlidHRiY29hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM3ODIwNTYsImV4cCI6MjA2OTM1ODA1Nn0.LRmGLu1OAcJza-eEPSIJUaFAyhxkdAGrbyRFRGSWpVw'
+          // NO anonKey here - mobile app must use secure endpoint
         },
         admob: {
-          appId: process.env.ADMOB_APP_ID || 'ca-app-pub-2892152842024866~2841739969',
-          bannerId: process.env.ADMOB_BANNER_ID || 'ca-app-pub-2892152842024866/6180566789',
-          interstitialId: process.env.ADMOB_INTERSTITIAL_ID || 'ca-app-pub-2892152842024866/2604283857',
-          rewardedId: process.env.ADMOB_REWARDED_ID || 'ca-app-pub-2892152842024866/2049185437'
+          // Only return app ID, not the sensitive banner/interstitial IDs
+          appId: process.env.ADMOB_APP_ID || 'ca-app-pub-2892152842024866~2841739969'
         },
         features: {
           coinsEnabled: true,
@@ -376,7 +406,8 @@ app.get('/api/client-runtime-config', async (req, res) => {
         }
       },
       cached: false,
-      environment: "production"
+      environment: "production",
+      message: "Use /api/client-runtime-config/secure for full configuration"
     };
 
     res.json(config);
