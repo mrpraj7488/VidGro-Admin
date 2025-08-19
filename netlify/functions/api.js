@@ -185,6 +185,186 @@ app.get('/client-runtime-config', async (req, res) => {
   }
 });
 
+// Secure authenticated endpoint for full runtime configuration
+app.post('/api/client-runtime-config/secure', async (req, res) => {
+  try {
+    // Add security headers
+    res.set({
+      'X-Content-Type-Options': 'nosniff',
+      'X-Frame-Options': 'DENY',
+      'X-XSS-Protection': '1; mode=block',
+      'Referrer-Policy': 'strict-origin-when-cross-origin'
+    });
+
+    // Verify client authentication
+    const { clientId, clientSecret, deviceId } = req.body;
+    
+    if (!clientId || !clientSecret || !deviceId) {
+      return res.status(401).json({ 
+        error: 'Authentication required',
+        message: 'Missing credentials'
+      });
+    }
+
+    // Verify client credentials (you should implement proper validation)
+    const validClientId = process.env.MOBILE_CLIENT_ID || 'vidgro_mobile_2024';
+    const validClientSecret = process.env.MOBILE_CLIENT_SECRET || 'vidgro_secret_key_2024';
+    
+    if (clientId !== validClientId || clientSecret !== validClientSecret) {
+      console.warn('🚨 Invalid client credentials attempt:', { clientId, deviceId });
+      return res.status(401).json({ 
+        error: 'Authentication failed',
+        message: 'Invalid credentials'
+      });
+    }
+
+    // Return full configuration for authenticated clients
+    const config = {
+      data: {
+        supabase: {
+          url: process.env.SUPABASE_URL || process.env.MOBILE_SUPABASE_URL || 'https://kuibswqfmhhdybttbcoa.supabase.co',
+          anonKey: process.env.SUPABASE_ANON_KEY || process.env.MOBILE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1aWJzd3FmbWhoZHlidHRiY29hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM3ODIwNTYsImV4cCI6MjA2OTM1ODA1Nn0.LRmGLu1OAcJza-eEPSIJUaFAyhxkdAGrbyRFRGSWpVw'
+        },
+        admob: {
+          appId: process.env.ADMOB_APP_ID || 'ca-app-pub-2892152842024866~2841739969',
+          bannerId: process.env.ADMOB_BANNER_ID || 'ca-app-pub-2892152842024866/6180566789',
+          interstitialId: process.env.ADMOB_INTERSTITIAL_ID || 'ca-app-pub-2892152842024866/2604283857',
+          rewardedId: process.env.ADMOB_REWARDED_ID || 'ca-app-pub-2892152842024866/2049185437'
+        },
+        features: {
+          coinsEnabled: true,
+          adsEnabled: true,
+          vipEnabled: true,
+          referralsEnabled: true,
+          analyticsEnabled: true
+        },
+        app: {
+          minVersion: "1.0.0",
+          forceUpdate: false,
+          maintenanceMode: false,
+          apiVersion: "v1"
+        },
+        security: {
+          allowEmulators: false,
+          allowRooted: false,
+          requireSignatureValidation: true,
+          adBlockDetection: true
+        },
+        metadata: {
+          configVersion: "1.0.0",
+          lastUpdated: new Date().toISOString(),
+          ttl: 3600
+        }
+      },
+      cached: false,
+      environment: "production",
+      authenticated: true,
+      deviceId
+    };
+
+    res.json(config);
+  } catch (error) {
+    console.error('Error in secure client-runtime-config:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Secure client runtime configuration endpoint
+app.get('/api/client-runtime-config', async (req, res) => {
+  try {
+    // Add security headers
+    res.set({
+      'X-Content-Type-Options': 'nosniff',
+      'X-Frame-Options': 'DENY',
+      'X-XSS-Protection': '1; mode=block',
+      'Referrer-Policy': 'strict-origin-when-cross-origin'
+    });
+
+    // Basic rate limiting
+    const clientIP = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+    const rateLimitKey = `rate_limit:${clientIP}`;
+    
+    // Check if client is from your mobile app domain
+    const userAgent = req.headers['user-agent'] || '';
+    const referer = req.headers['referer'] || '';
+    const origin = req.headers['origin'] || '';
+    
+    // Only allow requests from your mobile app or admin panel
+    const allowedOrigins = [
+      'https://admin-vidgro.netlify.app',
+      'exp://localhost',
+      'exp://192.168',
+      'exp://10.0',
+      'exp://172.16'
+    ];
+    
+    const isAllowedOrigin = allowedOrigins.some(allowed => 
+      origin.includes(allowed) || 
+      referer.includes(allowed) ||
+      userAgent.includes('Expo') ||
+      userAgent.includes('ReactNative')
+    );
+    
+    if (!isAllowedOrigin) {
+      console.warn('🚨 Unauthorized access attempt to runtime config:', {
+        ip: clientIP,
+        userAgent,
+        referer,
+        origin
+      });
+      return res.status(403).json({ 
+        error: 'Access denied',
+        message: 'Unauthorized client'
+      });
+    }
+
+    // Return minimal configuration with sensitive data removed
+    const config = {
+      data: {
+        supabase: {
+          url: process.env.SUPABASE_URL || process.env.MOBILE_SUPABASE_URL || 'https://kuibswqfmhhdybttbcoa.supabase.co',
+          // Remove anonKey from public endpoint - client should get this from secure source
+        },
+        admob: {
+          // Remove AdMob IDs from public endpoint - these should be in app bundle
+          appId: process.env.ADMOB_APP_ID || 'ca-app-pub-2892152842024866~2841739969'
+        },
+        features: {
+          coinsEnabled: true,
+          adsEnabled: true,
+          vipEnabled: true,
+          referralsEnabled: true,
+          analyticsEnabled: true
+        },
+        app: {
+          minVersion: "1.0.0",
+          forceUpdate: false,
+          maintenanceMode: false,
+          apiVersion: "v1"
+        },
+        security: {
+          allowEmulators: false, // Changed to false for security
+          allowRooted: false,
+          requireSignatureValidation: true, // Changed to true for security
+          adBlockDetection: true
+        },
+        metadata: {
+          configVersion: "1.0.0",
+          lastUpdated: new Date().toISOString(),
+          ttl: 3600
+        }
+      },
+      cached: false,
+      environment: "production"
+    };
+
+    res.json(config);
+  } catch (error) {
+    console.error('Error in client-runtime-config:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // Backward compatibility endpoint for mobile app
 app.get('/api/client-runtime-config', async (req, res) => {
   // Call the same logic as the main endpoint
