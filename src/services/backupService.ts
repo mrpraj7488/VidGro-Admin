@@ -20,6 +20,7 @@ export interface BackupResult {
   checksum?: string
   downloadUrl?: string
   error?: string
+  storagePath?: string
 }
 
 class BackupService {
@@ -66,6 +67,7 @@ class BackupService {
       // Choose best download URL: publicUrl -> signedUrl -> filePath
       const storage = result.storage || {}
       const preferredUrl: string | undefined = storage.publicUrl || storage.signedUrl || result.filePath
+      const storagePath: string | undefined = storage.path
 
       // Convert reported size (string in KB) to bytes if needed
       let sizeBytes = 0
@@ -86,7 +88,7 @@ class BackupService {
         endTime: new Date(),
         options,
         downloadUrl: preferredUrl,
-        serverPath: storage.path,
+        serverPath: storagePath,
         sizeBytes
       })
 
@@ -105,7 +107,8 @@ class BackupService {
         size: sizeBytes,
         duration: Math.round(durationMs / 1000),
         checksum: undefined,
-        downloadUrl: preferredUrl
+        downloadUrl: preferredUrl,
+        storagePath
       }
     } catch (error) {
       logger.error('Backup creation failed', error, 'backupService')
@@ -132,11 +135,23 @@ class BackupService {
   async deleteBackup(backupId: string): Promise<{ success: boolean; message: string }> {
     try {
       const backup = this.backupQueue.get(backupId)
-      if (backup && backup.downloadUrl) {
-        // no-op for remote URLs
+      const storagePath: string | undefined = backup?.serverPath || backup?.storagePath
+
+      // Request serverless delete if we have a storage path
+      if (storagePath) {
+        const response = await fetch('/api/admin/database-backup/delete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ path: storagePath })
+        })
+        if (!response.ok) {
+          const err = await response.json().catch(() => ({}))
+          throw new Error(err.message || 'Failed to delete backup from storage')
+        }
       }
+
       this.backupQueue.delete(backupId)
-      logger.info('Backup deleted', { backupId }, 'backupService')
+      logger.info('Backup deleted', { backupId, storagePath }, 'backupService')
       return { success: true, message: 'Backup deleted successfully' }
     } catch (error) {
       logger.error('Failed to delete backup', error, 'backupService')
