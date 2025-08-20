@@ -636,15 +636,28 @@ app.post('/api/admin/database-backup', async (req, res) => {
       return '\'' + s.replace(/'/g, "''") + '\'';
     };
 
-    // Try to detect existing public tables by probing a candidate list
-    const candidateTables = [
-      'profiles',
-      'videos',
-      'coin_transactions',
-      'runtime_config',
-      'admin_audit_logs',
-      'bug_reports'
-    ];
+    // Get ALL tables from information_schema instead of hardcoded list
+    let allTables = [];
+    if (supabaseAdmin) {
+      try {
+        const { data: tableList, error } = await supabaseAdmin.rpc('get_all_tables');
+        if (!error && Array.isArray(tableList)) {
+          allTables = tableList.map(t => t.table_name);
+        }
+      } catch (_) {
+        // Fallback to hardcoded list if RPC not available
+        allTables = [
+          'profiles',
+          'videos', 
+          'transactions',  // Added missing transactions table
+          'coin_transactions',
+          'runtime_config',
+          'admin_audit_logs',
+          'bug_reports'
+        ];
+      }
+    }
+    const candidateTables = allTables;
     const presentTables = [];
 
     if (supabaseAdmin) {
@@ -879,6 +892,76 @@ app.get('/test-env', (req, res) => {
     timestamp: new Date().toISOString(),
     platform: 'netlify-functions'
   });
+});
+
+// Database restore endpoint
+app.post('/api/admin/database-restore', async (req, res) => {
+  try {
+    const { sqlContent } = req.body || {};
+    
+    if (!sqlContent) {
+      return res.status(400).json({ success: false, error: 'Missing SQL content' });
+    }
+
+    const supabaseAdmin = getSupabaseAdmin();
+    if (!supabaseAdmin) {
+      return res.status(500).json({ success: false, error: 'Database admin not configured' });
+    }
+
+    // Split SQL content into individual statements
+    const statements = sqlContent
+      .split(';')
+      .map(s => s.trim())
+      .filter(s => s.length > 0 && !s.startsWith('--'));
+
+    let tablesRestored = 0;
+    let policiesRestored = 0;
+    let functionsRestored = 0;
+    const errors = [];
+
+    // Execute each statement
+    for (const statement of statements) {
+      try {
+        if (statement.toLowerCase().includes('begin') || statement.toLowerCase().includes('commit')) {
+          continue; // Skip transaction control statements
+        }
+
+        const { error } = await supabaseAdmin.rpc('exec_sql', { sql_statement: statement });
+        
+        if (!error) {
+          // Count what was restored
+          if (statement.toLowerCase().includes('create table')) tablesRestored++;
+          if (statement.toLowerCase().includes('create policy')) policiesRestored++;
+          if (statement.toLowerCase().includes('create function') || statement.toLowerCase().includes('create or replace function')) functionsRestored++;
+        } else {
+          errors.push(`Statement failed: ${statement.substring(0, 100)}... - ${error.message}`);
+        }
+      } catch (err) {
+        errors.push(`Execution error: ${statement.substring(0, 100)}... - ${err.message}`);
+      }
+    }
+
+    if (errors.length > 0 && errors.length === statements.length) {
+      return res.status(500).json({ 
+        success: false, 
+        error: 'Restore failed completely', 
+        details: errors.slice(0, 5) // Limit error details
+      });
+    }
+
+    return res.json({
+      success: true,
+      message: 'Database restore completed',
+      tablesRestored,
+      policiesRestored,
+      functionsRestored,
+      statementsExecuted: statements.length - errors.length,
+      errors: errors.length > 0 ? errors.slice(0, 3) : undefined
+    });
+  } catch (error) {
+    console.error('Restore error:', error);
+    return res.status(500).json({ success: false, error: 'Restore operation failed' });
+  }
 });
 
 // Export the serverless function handler
