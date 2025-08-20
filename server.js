@@ -213,25 +213,20 @@ app.get('/api/client-runtime-config', rateLimit, validateClientRequest, async (r
     const resolvedSupabaseUrl = runtimeOverrides.supabaseUrl || process.env.MOBILE_SUPABASE_URL || process.env.SUPABASE_PUBLIC_URL || process.env.SUPABASE_URL;
     const resolvedSupabaseAnonKey = runtimeOverrides.supabaseAnonKey || process.env.MOBILE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
 
-    // If we have resolved values (from overrides/env), serve them immediately
-    if (resolvedSupabaseUrl && resolvedSupabaseAnonKey) {
+    // If we have resolved values (from overrides/env), serve minimal PUBLIC payload immediately
+    if (resolvedSupabaseUrl) {
       const cfg = {
-        supabase: { url: resolvedSupabaseUrl, anonKey: resolvedSupabaseAnonKey },
-        admob: {
-          appId: process.env.ADMOB_APP_ID || 'ca-app-pub-test',
-          bannerId: process.env.ADMOB_BANNER_ID || 'ca-app-pub-test-banner',
-          interstitialId: process.env.ADMOB_INTERSTITIAL_ID || 'ca-app-pub-test-interstitial',
-          rewardedId: process.env.ADMOB_REWARDED_ID || 'ca-app-pub-test-rewarded',
-        },
+        supabase: { url: resolvedSupabaseUrl },
+        // Omit AdMob and all IDs from public payload intentionally
         features: { coinsEnabled: true, adsEnabled: true, vipEnabled: true, referralsEnabled: true, analyticsEnabled: true },
         app: { minVersion: '1.0.0', forceUpdate: false, maintenanceMode: false, apiVersion: 'v1' },
-        security: { allowEmulators: true, allowRooted: false, requireSignatureValidation: false, adBlockDetection: true },
+        security: { allowEmulators: process.env.NODE_ENV !== 'production', allowRooted: false, requireSignatureValidation: true, adBlockDetection: true },
         metadata: { configVersion: '1.0.0', lastUpdated: new Date().toISOString(), ttl: 3600 },
       };
 
       configCache.set(cacheKey, { data: cfg, timestamp: Date.now() });
-      res.set({ 'X-Content-Type-Options': 'nosniff', 'X-Frame-Options': 'DENY', 'X-XSS-Protection': '1; mode=block', 'Cache-Control': 'private, max-age=300' });
-      return res.json({ data: cfg, cached: false, environment });
+      res.set({ 'X-Content-Type-Options': 'nosniff', 'X-Frame-Options': 'DENY', 'X-XSS-Protection': '1; mode=block', 'Cache-Control': 'public, max-age=300' });
+      return res.json({ data: cfg, cached: false, environment, message: 'Use /api/client-runtime-config/secure for full configuration' });
     }
 
     // Fallback: fetch from Supabase DB if configured with service role
@@ -252,28 +247,22 @@ app.get('/api/client-runtime-config', rateLimit, validateClientRequest, async (r
       return res.json({ data: result, cached: false, requestId: `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}` });
     }
 
-    // Production fallback with real configuration
-    const productionConfig = {
+    // Production fallback with minimal PUBLIC configuration (no keys)
+    const productionPublicConfig = {
       supabase: { 
-        url: runtimeOverrides.supabaseUrl || process.env.MOBILE_SUPABASE_URL || process.env.SUPABASE_URL,
-        anonKey: runtimeOverrides.supabaseAnonKey || process.env.MOBILE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY
+        url: runtimeOverrides.supabaseUrl || process.env.MOBILE_SUPABASE_URL || process.env.SUPABASE_URL
       },
-      admob: { 
-        appId: process.env.ADMOB_APP_ID || 'ca-app-pub-2892152842024866~2841739969',
-        bannerId: process.env.ADMOB_BANNER_ID || 'ca-app-pub-2892152842024866/6180566789',
-        interstitialId: process.env.ADMOB_INTERSTITIAL_ID || 'ca-app-pub-2892152842024866/2604283857',
-        rewardedId: process.env.ADMOB_REWARDED_ID || 'ca-app-pub-2892152842024866/2049185437'
-      },
+      // Omit AdMob IDs from public payload
       features: { coinsEnabled: true, adsEnabled: true, vipEnabled: true, referralsEnabled: true, analyticsEnabled: true },
       app: { minVersion: '1.0.0', forceUpdate: false, maintenanceMode: false, apiVersion: 'v1' },
-      security: { allowEmulators: process.env.NODE_ENV === 'development', allowRooted: false, requireSignatureValidation: process.env.NODE_ENV === 'production', adBlockDetection: true },
+      security: { allowEmulators: process.env.NODE_ENV !== 'production', allowRooted: false, requireSignatureValidation: true, adBlockDetection: true },
       metadata: { configVersion: '1.0.0', lastUpdated: new Date().toISOString(), ttl: 3600 },
     };
     
-    // Only return if we have valid Supabase config
-    if (productionConfig.supabase.url && productionConfig.supabase.anonKey) {
-      res.set({ 'X-Content-Type-Options': 'nosniff', 'X-Frame-Options': 'DENY', 'X-XSS-Protection': '1; mode=block', 'Cache-Control': 'private, max-age=300' });
-      return res.json({ data: productionConfig, cached: false, environment });
+    // Only return if we have a Supabase URL; keys are never exposed here
+    if (productionPublicConfig.supabase.url) {
+      res.set({ 'X-Content-Type-Options': 'nosniff', 'X-Frame-Options': 'DENY', 'X-XSS-Protection': '1; mode=block', 'Cache-Control': 'public, max-age=300' });
+      return res.json({ data: productionPublicConfig, cached: false, environment, message: 'Use /api/client-runtime-config/secure for full configuration' });
     }
     
     // If no valid config is available, return error
