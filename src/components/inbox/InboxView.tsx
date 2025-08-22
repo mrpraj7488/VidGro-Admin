@@ -598,7 +598,8 @@ const getAllMessages = (ticket: SupportTicket) => {
       messages.push({
         ...reply,
         isAdmin: true,
-        sender: reply.adminName || 'Admin Support'
+        sender: 'Admin Support',
+        timestamp: reply.created_at || new Date().toISOString()
       })
     })
   }
@@ -609,10 +610,21 @@ const getAllMessages = (ticket: SupportTicket) => {
       messages.push({
         ...msg,
         isAdmin: false,
-        sender: ticket.reported_by
+        sender: ticket.reported_by,
+        timestamp: msg.created_at || new Date().toISOString()
       })
     })
   }
+  
+  // Add initial ticket message
+  messages.push({
+    id: 'initial',
+    message: ticket.description,
+    isAdmin: false,
+    sender: ticket.reported_by,
+    timestamp: ticket.created_at || new Date().toISOString(),
+    attachments: ticket.attachments || []
+  })
   
   // Sort by timestamp
   return messages.sort((a, b) => 
