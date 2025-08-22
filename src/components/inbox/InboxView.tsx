@@ -190,43 +190,33 @@ export function InboxView() {
       const supabase = getSupabaseAdminClient()
       if (!supabase) return
 
-      const newReply = {
-        id: `reply-${Date.now()}`,
-        adminId: 'admin-1',
-        adminName: 'Admin Support',
-        message: message.trim(),
-        timestamp: new Date().toISOString()
-      }
-
-      // Get current ticket
-      const ticket = tickets.find(t => t.id === ticketId)
-      if (!ticket) return
-
-      const updatedAdminReplies = [...(ticket.admin_replies || []), newReply]
-      const newStatus = ticket.status === 'active' ? 'answered' : ticket.status
-
-      const { error } = await supabase
-        .from('support_tickets')
-        .update({ 
-          admin_replies: updatedAdminReplies,
-          status: newStatus,
-          last_admin_reply: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', ticketId)
+      // Use the RPC function to add message with proper is_admin flag
+      const { data, error } = await supabase.rpc('add_ticket_message', {
+        p_ticket_id: ticketId,
+        p_user_id: 'admin-1', // Admin user ID
+        p_message: message.trim(),
+        p_is_admin: true, // Mark as admin message
+        p_attachments: []
+      })
 
       if (error) {
         console.error('Failed to send reply:', error)
         return
       }
 
+      // Reload tickets to get the updated data
+      await fetchTickets()
+      
+      // Clear reply message
+      setReplyMessage('')
+
       // Update local state
       setTickets(prev => prev.map(t => 
         t.id === ticketId 
           ? { 
               ...t, 
-              admin_replies: updatedAdminReplies,
-              status: newStatus as any,
+              admin_replies: [...t.admin_replies, { message: message.trim(), created_at: new Date().toISOString() }],
+              status: 'answered' as any,
               last_admin_reply: new Date().toISOString(),
               updated_at: new Date().toISOString()
             } 
@@ -236,14 +226,12 @@ export function InboxView() {
       if (selectedTicket?.id === ticketId) {
         setSelectedTicket(prev => prev ? {
           ...prev,
-          admin_replies: updatedAdminReplies,
-          status: newStatus as any,
+          admin_replies: [...prev.admin_replies, { message: message.trim(), created_at: new Date().toISOString() }],
+          status: 'answered' as any,
           last_admin_reply: new Date().toISOString(),
           updated_at: new Date().toISOString()
         } : null)
       }
-
-      setReplyMessage('')
     } catch (error) {
       console.error('Error sending reply:', error)
     }
