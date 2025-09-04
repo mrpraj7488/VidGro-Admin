@@ -24,7 +24,6 @@ interface BackupSettings {
   autoBackupEnabled: boolean
   backupFrequency: 'daily' | 'weekly' | 'monthly'
   backupTime: string
-  retentionDays: number
   notifyOnCompletion: boolean
   notifyOnFailure: boolean
 }
@@ -41,7 +40,6 @@ export function DatabaseBackupScreen() {
     autoBackupEnabled: true,
     backupFrequency: 'daily',
     backupTime: '02:00',
-    retentionDays: 30,
     notifyOnCompletion: true,
     notifyOnFailure: true
   })
@@ -354,9 +352,9 @@ CREATE TABLE IF NOT EXISTS videos (
 
       {/* Backup Status Overview */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <Card className="gaming-card-enhanced">
+        <Card className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-all duration-200">
           <CardContent className="p-6 text-center">
-            <div className="w-12 h-12 bg-gradient-to-br from-violet-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-3 gaming-glow">
+            <div className="w-12 h-12 bg-gradient-to-br from-violet-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-3 shadow-lg">
               <Database className="w-6 h-6 text-white" />
             </div>
             <div className="text-2xl font-bold text-violet-600 dark:text-violet-400">
@@ -366,9 +364,9 @@ CREATE TABLE IF NOT EXISTS videos (
           </CardContent>
         </Card>
 
-        <Card className="gaming-card-enhanced">
+        <Card className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-all duration-200">
           <CardContent className="p-6 text-center">
-            <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-green-600 rounded-full flex items-center justify-center mx-auto mb-3 gaming-glow">
+            <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-green-600 rounded-full flex items-center justify-center mx-auto mb-3 shadow-lg">
               <Timer className="w-6 h-6 text-white" />
             </div>
             <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
@@ -378,9 +376,9 @@ CREATE TABLE IF NOT EXISTS videos (
           </CardContent>
         </Card>
 
-        <Card className="gaming-card-enhanced">
+        <Card className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-all duration-200">
           <CardContent className="p-6 text-center">
-            <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-amber-600 rounded-full flex items-center justify-center mx-auto mb-3 gaming-glow">
+            <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-amber-600 rounded-full flex items-center justify-center mx-auto mb-3 shadow-lg">
               <Clock className="w-6 h-6 text-white" />
             </div>
             <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">
@@ -446,21 +444,21 @@ CREATE TABLE IF NOT EXISTS videos (
       )}
 
       {/* Automatic Backup Settings */}
-      <Card>
+      <Card className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
         <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
+          <CardTitle className="flex items-center space-x-2 text-gray-900 dark:text-white">
             <Timer className="w-5 h-5" />
             <span>Automatic Backup Settings</span>
             {backupSettings.autoBackupEnabled ? (
-              <Badge variant="success" className="text-xs gaming-pulse">Active</Badge>
+              <Badge variant="success" className="text-xs">Active</Badge>
             ) : (
               <Badge variant="default" className="text-xs">Disabled</Badge>
             )}
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-4">
           {/* Auto Backup Toggle */}
-          <div className="flex items-center justify-between p-4 gaming-card">
+          <div className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:shadow-md transition-all duration-200">
             <div>
               <h4 className="font-medium text-gray-900 dark:text-white">Enable Automatic Backup</h4>
               <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -473,7 +471,7 @@ CREATE TABLE IF NOT EXISTS videos (
               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-all duration-300 ${
                 backupSettings.autoBackupEnabled
                   ? 'bg-gradient-to-r from-violet-500 to-purple-600 shadow-[0_0_15px_rgba(139,92,246,0.5)]'
-                  : 'bg-gray-600'
+                  : 'bg-gray-300 dark:bg-gray-600'
               }`}
             >
               <span
@@ -486,7 +484,7 @@ CREATE TABLE IF NOT EXISTS videos (
 
           {/* Backup Schedule Settings */}
           {backupSettings.autoBackupEnabled && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Backup Frequency
@@ -494,7 +492,7 @@ CREATE TABLE IF NOT EXISTS videos (
                 <select
                   value={backupSettings.backupFrequency}
                   onChange={(e) => setBackupSettings(prev => ({ ...prev, backupFrequency: e.target.value as any }))}
-                  className="w-full px-3 py-2 border border-violet-500/30 rounded-lg bg-violet-500/10 text-gray-900 dark:text-white text-sm"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
                 >
                   <option value="daily">Daily</option>
                   <option value="weekly">Weekly</option>
@@ -510,21 +508,7 @@ CREATE TABLE IF NOT EXISTS videos (
                   type="time"
                   value={backupSettings.backupTime}
                   onChange={(e) => setBackupSettings(prev => ({ ...prev, backupTime: e.target.value }))}
-                  className="text-sm"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Retention (Days)
-                </label>
-                <Input
-                  type="number"
-                  min="1"
-                  max="365"
-                  value={backupSettings.retentionDays}
-                  onChange={(e) => setBackupSettings(prev => ({ ...prev, retentionDays: Number(e.target.value) }))}
-                  className="text-sm"
+                  className="text-sm bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white"
                 />
               </div>
             </div>
@@ -534,7 +518,7 @@ CREATE TABLE IF NOT EXISTS videos (
           <div className="space-y-4">
             <h4 className="font-medium text-gray-900 dark:text-white">Notification Settings</h4>
             
-            <div className="flex items-center justify-between p-4 gaming-card">
+            <div className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:shadow-md transition-all duration-200">
               <div className="flex items-center space-x-3">
                 <CheckCircle className="w-5 h-5 text-emerald-500" />
                 <div>
@@ -547,8 +531,8 @@ CREATE TABLE IF NOT EXISTS videos (
                 onClick={() => setBackupSettings(prev => ({ ...prev, notifyOnCompletion: !prev.notifyOnCompletion }))}
                 className={`relative inline-flex h-5 w-9 items-center rounded-full transition-all duration-300 ${
                   backupSettings.notifyOnCompletion
-                    ? 'bg-gradient-to-r from-emerald-500 to-green-600'
-                    : 'bg-gray-600'
+                    ? 'bg-gradient-to-r from-emerald-500 to-green-600 shadow-[0_0_10px_rgba(16,185,129,0.5)]'
+                    : 'bg-gray-300 dark:bg-gray-600'
                 }`}
               >
                 <span
@@ -559,7 +543,7 @@ CREATE TABLE IF NOT EXISTS videos (
               </button>
             </div>
 
-            <div className="flex items-center justify-between p-4 gaming-card">
+            <div className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:shadow-md transition-all duration-200">
               <div className="flex items-center space-x-3">
                 <AlertTriangle className="w-5 h-5 text-red-500" />
                 <div>
@@ -572,8 +556,8 @@ CREATE TABLE IF NOT EXISTS videos (
                 onClick={() => setBackupSettings(prev => ({ ...prev, notifyOnFailure: !prev.notifyOnFailure }))}
                 className={`relative inline-flex h-5 w-9 items-center rounded-full transition-all duration-300 ${
                   backupSettings.notifyOnFailure
-                    ? 'bg-gradient-to-r from-red-500 to-red-600'
-                    : 'bg-gray-600'
+                    ? 'bg-gradient-to-r from-red-500 to-red-600 shadow-[0_0_10px_rgba(239,68,68,0.5)]'
+                    : 'bg-gray-300 dark:bg-gray-600'
                 }`}
               >
                 <span
@@ -597,7 +581,7 @@ CREATE TABLE IF NOT EXISTS videos (
 
       {/* Next Scheduled Backup Info */}
       {backupSettings.autoBackupEnabled && (
-        <Card className="gaming-card-enhanced border-emerald-500/50 bg-emerald-50/50 dark:bg-emerald-900/20">
+        <Card className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800">
           <CardContent className="p-6">
             <div className="flex items-center space-x-3">
               <CheckCircle className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
@@ -610,7 +594,7 @@ CREATE TABLE IF NOT EXISTS videos (
                   will run tomorrow at {backupSettings.backupTime}
                 </p>
                 <p className="text-xs text-emerald-600 dark:text-emerald-500 mt-1">
-                  Backups are retained for {backupSettings.retentionDays} days and automatically cleaned up
+                  Backups are automatically managed and cleaned up based on system settings
                 </p>
               </div>
             </div>
@@ -619,9 +603,9 @@ CREATE TABLE IF NOT EXISTS videos (
       )}
 
       {/* Backup History */}
-      <Card>
+      <Card className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
         <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
+          <CardTitle className="flex items-center space-x-2 text-gray-900 dark:text-white">
             <Database className="w-5 h-5" />
             <span>Backup History</span>
             <Badge variant="default" className="text-xs">
