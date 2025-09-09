@@ -29,7 +29,7 @@ export function CoinAdjustmentModal({ isOpen, onClose, user, onAdjust }: CoinAdj
       setAmount(0)
       setReason('')
     } catch (error) {
-      console.error('Failed to adjust coins:', error)
+      // Failed to adjust coins
     } finally {
       setIsLoading(false)
     }
