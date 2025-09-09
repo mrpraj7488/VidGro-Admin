@@ -73,7 +73,7 @@ export function AuthScreen({ onLogin, onSignup }: AuthScreenProps) {
         await onSignup(formData.email, formData.password, formData.username)
       }
     } catch (error) {
-      console.error('Auth error:', error)
+      // Auth error
       if (error instanceof Error) {
         setErrors({ general: error.message })
       } else {
