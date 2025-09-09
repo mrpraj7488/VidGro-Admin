@@ -52,7 +52,7 @@ export function DeletedUsersView() {
         .limit(500)
 
       if (error) {
-        console.error('Failed to fetch deleted users:', error)
+        // Failed to fetch deleted users
         setDeletedUsers([])
         return
       }
@@ -63,7 +63,7 @@ export function DeletedUsersView() {
         try {
           metadata = typeof user.metadata === 'string' ? JSON.parse(user.metadata) : (user.metadata || {})
         } catch (e) {
-          console.warn('Failed to parse metadata for user:', user.user_id, e)
+          // Failed to parse metadata for user
           metadata = {}
         }
         
@@ -84,9 +84,9 @@ export function DeletedUsersView() {
 
       setDeletedUsers(processedUsers)
       calculateStats(processedUsers)
-      console.log('Deleted users fetched:', processedUsers.length)
+      // Deleted users fetched
     } catch (error) {
-      console.error('Failed to fetch deleted users:', error)
+      // Failed to fetch deleted users
       setDeletedUsers([])
     } finally {
       setIsLoading(false)
@@ -204,7 +204,7 @@ export function DeletedUsersView() {
         .in('user_id', Array.from(selectedUsers))
 
       if (error) {
-        console.error('Failed to delete users:', error)
+        // Failed to delete users
         alert('Failed to delete users. Please try again.')
         return
       }
@@ -214,7 +214,7 @@ export function DeletedUsersView() {
       setSelectedUsers(new Set())
       alert(`Successfully deleted ${selectedUsers.size} user(s) from the database.`)
     } catch (error) {
-      console.error('Failed to delete users:', error)
+      // Failed to delete users
       alert('Failed to delete users. Please try again.')
     } finally {
       setIsDeleting(false)
