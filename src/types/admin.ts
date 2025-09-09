@@ -1,6 +1,7 @@
 export interface DashboardStats {
   total_users: number
   active_videos: number
+  total_videos: number
   vip_users: number
   monthly_revenue: number
   total_revenue: number
