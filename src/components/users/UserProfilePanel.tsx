@@ -60,7 +60,7 @@ export function UserProfilePanel({ isOpen, onClose, user, onDeleteUser, onBanUse
         .order('created_at', { ascending: false })
 
       if (videosError) {
-        console.error('Failed to fetch user videos:', videosError)
+        // Failed to fetch user videos
       }
 
       // Get user's transaction history
@@ -72,7 +72,7 @@ export function UserProfilePanel({ isOpen, onClose, user, onDeleteUser, onBanUse
         .limit(10)
 
       if (transactionsError) {
-        console.error('Failed to fetch user transactions:', transactionsError)
+        // Failed to fetch user transactions
       }
 
       const userDetails = {
@@ -97,20 +97,14 @@ export function UserProfilePanel({ isOpen, onClose, user, onDeleteUser, onBanUse
           date: video.created_at
         })) || [],
         isBanned: user.is_banned || false,
-        banReason: user.ban_reason || null,
-        banDate: user.ban_date || null
+        banReason: user.ban_reason || '',
+        banDate: user.ban_date || ''
       }
 
       setUserDetails(userDetails)
-      console.log('User details fetched:', {
-        userId: user.id,
-        videosCount: videos?.length || 0,
-        transactionsCount: userTransactions?.length || 0,
-        totalSpent: userDetails.totalSpentCoins,
-        referralEarnings: userDetails.referralEarnings
-      })
+      // User details fetched
     } catch (error) {
-      console.error('Failed to fetch user details:', error)
+      // Failed to fetch user details
       // Use basic user data on error
       setUserDetails({
         ...user,
