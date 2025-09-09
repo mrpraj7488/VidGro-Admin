@@ -62,6 +62,7 @@ const BugReportsView: React.FC = () => {
   const [bugReports, setBugReports] = useState<BugReport[]>([]);
   const [stats, setStats] = useState<BugReportStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [selectedReport, setSelectedReport] = useState<BugReport | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [filters, setFilters] = useState({
@@ -78,13 +79,24 @@ const BugReportsView: React.FC = () => {
   });
 
   useEffect(() => {
-    fetchBugReports();
+    // Use background refresh for filter changes
+    fetchBugReports(true);
     fetchStats();
   }, [filters]);
 
-  const fetchBugReports = async () => {
+  // Initial load without filters
+  useEffect(() => {
+    fetchBugReports();
+    fetchStats();
+  }, []);
+
+  const fetchBugReports = async (backgroundRefresh = false) => {
     try {
-      setLoading(true);
+      if (backgroundRefresh) {
+        setIsRefreshing(true);
+      } else {
+        setLoading(true);
+      }
       
       const supabase = getSupabaseAdminClient();
       if (!supabase) {
@@ -122,7 +134,7 @@ const BugReportsView: React.FC = () => {
           updated_at: report.updated_at
         }))
       } else {
-        console.warn('No bug reports found in database, using sample data')
+        // No bug reports found in database
         // Fallback to sample data if no real data exists
         bugReportsArray = [
           {
@@ -158,10 +170,11 @@ const BugReportsView: React.FC = () => {
 
       setBugReports(filteredReports);
     } catch (error) {
-      console.error('Error fetching bug reports:', error);
+      // Error fetching bug reports
       setBugReports([]);
     } finally {
       setLoading(false);
+      setIsRefreshing(false);
     }
   };
 
@@ -178,7 +191,7 @@ const BugReportsView: React.FC = () => {
         .select('status, priority, source')
       
       if (error) {
-        console.warn('Failed to fetch bug stats from database:', error)
+        // Failed to fetch bug stats from database
         // Calculate stats from current bug reports as fallback
         const totalBugs = bugReports.length;
         const newBugs = bugReports.filter(b => b.status === 'new').length;
@@ -223,7 +236,7 @@ const BugReportsView: React.FC = () => {
         system_bugs: systemBugs
       });
     } catch (error) {
-      console.error('Error fetching stats:', error);
+      // Error fetching stats
       // Set zero stats on error
       setStats({
         total_bugs: 0,
@@ -252,7 +265,7 @@ const BugReportsView: React.FC = () => {
       setShowModal(false);
       setSelectedReport(null);
     } catch (error) {
-      console.error('Error updating bug report:', error);
+      // Error updating bug report
     }
   };
 
@@ -349,13 +362,13 @@ const BugReportsView: React.FC = () => {
             Total: {stats?.total_bugs || 0} | New: {stats?.new_bugs || 0} | Critical: {stats?.critical_bugs || 0}
           </div>
           <Button 
-            onClick={fetchBugReports}
+            onClick={() => fetchBugReports()}
             variant="outline"
             size="sm"
-            disabled={loading}
+            disabled={loading || isRefreshing}
             className="flex items-center space-x-2"
           >
-            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`w-4 h-4 ${loading || isRefreshing ? 'animate-spin' : ''}`} />
             <span className="hidden sm:inline">Refresh</span>
           </Button>
         </div>
