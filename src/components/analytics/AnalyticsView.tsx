@@ -168,7 +168,7 @@ export function AnalyticsView() {
       })
 
     } catch (error) {
-      console.error('Failed to fetch analytics:', error)
+      // Failed to fetch analytics
       // Set empty data on error
       setAnalyticsData({
         dailyActiveUsers: 0,
