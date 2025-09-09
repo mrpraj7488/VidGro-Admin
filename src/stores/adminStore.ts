@@ -139,6 +139,11 @@ export const useAdminStore = create<AdminState>((set, get) => ({
       const totalUsers = usersData?.length || 0
       const vipUsers = usersData?.filter(u => u.is_vip).length || 0
       const activeVideos = videosData?.filter(v => v.status === 'active').length || 0
+      const totalVideos = videosData?.filter(v => 
+        v.status === 'active' || 
+        v.status === 'completed' || 
+        v.status === 'repromoted'
+      ).length || 0
       
       // Calculate revenue from coin purchases and VIP subscriptions (already in INR)
       const monthlyRevenue = transactionsData?.reduce((sum, t) => {
@@ -170,15 +175,16 @@ export const useAdminStore = create<AdminState>((set, get) => ({
         return sum
       }, 0) || 0
 
-      const stats: DashboardStats = {
+      const stats = {
         total_users: totalUsers,
-        active_videos: activeVideos,
         vip_users: vipUsers,
+        active_videos: activeVideos,
+        total_videos: totalVideos,
         monthly_revenue: monthlyRevenue,
-        total_revenue: totalRevenue,
-        user_growth_rate: 12.5,
-        daily_active_users: Math.floor(totalUsers * 0.3),
-        coin_transactions: transactionsData?.length || 0,
+        total_revenue: 0,
+        user_growth_rate: 0,
+        daily_active_users: 0,
+        coin_transactions: 0,
         total_coins_distributed: totalCoinsDistributed,
         video_completion_rate: 85.2,
         average_watch_time: 45,
@@ -189,12 +195,14 @@ export const useAdminStore = create<AdminState>((set, get) => ({
       set({ dashboardStats: stats })
     } catch (error) {
       // Failed to fetch dashboard stats
-      // Set empty stats on error
-      set({ 
+      // Dashboard stats calculated
+
+      set({
         dashboardStats: {
           total_users: 0,
-          active_videos: 0,
           vip_users: 0,
+          active_videos: 0,
+          total_videos: 0,
           monthly_revenue: 0,
           total_revenue: 0,
           user_growth_rate: 0,
