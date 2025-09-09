@@ -42,7 +42,7 @@ export function CreateUserModal({ isOpen, onClose, onCreateUser }: CreateUserMod
       })
       onClose()
     } catch (error) {
-      console.error('Failed to create user:', error)
+      // Failed to create user
     } finally {
       setIsLoading(false)
     }
