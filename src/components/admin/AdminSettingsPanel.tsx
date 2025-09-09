@@ -42,7 +42,7 @@ export function AdminSettingsPanel({ isOpen, onClose }: AdminSettingsPanelProps)
         email: adminEmail
       }))
     } catch (error) {
-      console.error('Failed to fetch admin data:', error)
+      // Failed to fetch admin data
     } finally {
       setIsLoading(false)
     }
@@ -67,12 +67,12 @@ export function AdminSettingsPanel({ isOpen, onClose }: AdminSettingsPanelProps)
 
   const handleSave = async () => {
     // Save functionality will be implemented when backend API is ready
-    console.log('Saving admin settings:', formData)
+    // Saving admin settings
   }
 
   const handleForgotPassword = () => {
     // Forgot password functionality will be implemented when backend API is ready
-    console.log('Forgot password triggered')
+    // Forgot password triggered
   }
 
   if (!isOpen) return null
