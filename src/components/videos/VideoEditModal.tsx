@@ -56,7 +56,7 @@ export function VideoEditModal({ video, isOpen, onClose, onDelete, userEmail, us
       setCopiedItem(type)
       setTimeout(() => setCopiedItem(null), 2000)
     } catch (error) {
-      console.error('Failed to copy:', error)
+      // Failed to copy
     }
   }
 
