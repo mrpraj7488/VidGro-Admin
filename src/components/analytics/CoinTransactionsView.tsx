@@ -151,7 +151,7 @@ export function CoinTransactionsView() {
       })
 
     } catch (error) {
-      console.error('Failed to fetch transactions:', error)
+      // Failed to fetch transactions
       setTransactions([])
       setStats(null)
     } finally {
