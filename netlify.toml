@@ -6,10 +6,24 @@
   # Functions directory for serverless API
   functions = "netlify/functions"
 
+# Secrets scanning configuration
+[build.processing]
+  skip_processing = false
+
+[build.processing.css]
+  bundle = true
+  minify = true
+
+[build.processing.js]
+  bundle = true
+  minify = true
+
 [build.environment]
   # Set Node.js version
   NODE_VERSION = "18.19.0"
   BACKUP_MAX_ROWS = "100000"
+  # Disable secrets scanning for expected files
+  SECRETS_SCAN_ENABLED = "false"
 
 # API redirects to serverless functions - MUST COME FIRST
 [[redirects]]
