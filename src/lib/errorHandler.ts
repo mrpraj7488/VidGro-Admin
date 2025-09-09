@@ -36,12 +36,7 @@ export class ErrorHandler {
     
     // Log error locally
     this.errorLog.push({ error, context, timestamp })
-    console.error('Error occurred:', {
-      message: error.message,
-      stack: error.stack,
-      context,
-      timestamp
-    })
+    // Error occurred - logged internally
 
     // Send to external error tracking service (mock)
     this.sendToErrorTracking(error, context)
@@ -124,7 +119,7 @@ export class ErrorHandler {
         }
         
         const delay = initialDelay * Math.pow(2, attempt - 1) // Exponential backoff
-        console.warn(`Attempt ${attempt} failed, retrying in ${delay}ms...`, error)
+        // Retry attempt
         
         await new Promise(resolve => setTimeout(resolve, delay))
       }
@@ -146,14 +141,14 @@ export class ErrorHandler {
         url: window.location.href
       }
 
-      console.log('📊 Error tracked:', errorData)
+      // Error tracked
       
       // Store in localStorage for demo
       const errors = this.getStoredErrors()
       errors.push(errorData)
       localStorage.setItem('vidgro_error_log', JSON.stringify(errors.slice(-100))) // Keep last 100 errors
     } catch (trackingError) {
-      console.error('Failed to track error:', trackingError)
+      // Failed to track error
     }
   }
 
