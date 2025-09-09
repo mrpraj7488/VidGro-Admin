@@ -40,7 +40,7 @@ export function VideoDeleteModal({ video, isOpen, onClose, onConfirm, userEmail,
       setDeleteReason('')
       onClose()
     } catch (error) {
-      console.error('Failed to delete video:', error)
+      // Failed to delete video
     } finally {
       setIsDeleting(false)
     }
