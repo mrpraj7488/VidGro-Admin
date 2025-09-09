@@ -50,7 +50,7 @@ export function DateRangePicker({ value, onChange }: DateRangePickerProps) {
       </Button>
 
       {isOpen && (
-        <div className="absolute top-full left-0 mt-2 w-64 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-600 rounded-lg shadow-lg z-50">
+        <div className="absolute top-full right-0 mt-2 w-64 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-600 rounded-lg shadow-lg z-[99999]">
           <div className="p-3 space-y-2">
             {presets.map((preset) => (
               <button
@@ -70,7 +70,7 @@ export function DateRangePicker({ value, onChange }: DateRangePickerProps) {
 
       {isOpen && (
         <div
-          className="fixed inset-0 z-40"
+          className="fixed inset-0 z-[99998]"
           onClick={() => setIsOpen(false)}
         />
       )}
