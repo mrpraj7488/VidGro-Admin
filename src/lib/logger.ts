@@ -29,17 +29,7 @@ class Logger {
       this.logs.shift()
     }
 
-    // Only log to console in development
-    if (this.isDevelopment) {
-      const logMethod = console[level] || console.log
-      const prefix = `[${level.toUpperCase()}] ${component ? `[${component}] ` : ''}`
-      
-      if (data) {
-        logMethod(prefix + message, data)
-      } else {
-        logMethod(prefix + message)
-      }
-    }
+    // Silent in production - no console output
   }
 
   debug(message: string, data?: any, component?: string) {
