@@ -8,15 +8,9 @@ class ConfigService {
   private cache: Map<string, { data: ClientRuntimeConfig; timestamp: number }> = new Map()
   private readonly CACHE_TTL = 5 * 60 * 1000 // 5 minutes
   
-  // For Netlify deployment, use relative URLs or environment-based URLs
   private getApiBaseUrl(): string {
-    // In development, use localhost
-    if (import.meta.env.DEV) {
-      return import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001'
-    }
-    
-    // In production (Netlify), use the Netlify URL
-    return import.meta.env.VITE_API_BASE_URL || 'https://admin-vidgro.netlify.app'
+    // Always use production URL for Netlify deployment
+    return 'https://admin-vidgro.netlify.app'
   }
 
   async getClientConfig(environment = 'production', forceRefresh = false): Promise<ClientRuntimeConfig | null> {
