@@ -10,6 +10,7 @@ import { UserManagement } from './components/users/UserManagement'
 import { VideoManagement } from './components/videos/VideoManagement'
 import { AnalyticsView } from './components/analytics/AnalyticsView'
 import { CoinTransactionsView } from './components/analytics/CoinTransactionsView'
+import { DeletedUsersView } from './components/analytics/DeletedUsersView'
 import BugReportsView from './components/reports/BugReportsView'
 import { SystemConfigView } from './components/settings/SystemConfigView'
 import { InboxView } from './components/inbox/InboxView'
@@ -27,10 +28,7 @@ function AppContent() {
   // Debug environment variables in development
   useEffect(() => {
     if (import.meta.env.DEV) {
-      console.log('🔧 Development Mode - Environment Variables:');
-      console.log('VITE_ADMIN_EMAIL:', import.meta.env.VITE_ADMIN_EMAIL);
-      console.log('VITE_ADMIN_SECRET_KEY:', import.meta.env.VITE_ADMIN_SECRET_KEY ? '***' : 'undefined');
-      console.log('VITE_SUPABASE_URL:', import.meta.env.VITE_SUPABASE_URL);
+      // Development environment variables loaded
     }
   }, [])
 
@@ -73,6 +71,8 @@ function AppContent() {
         return <AnalyticsView />
       case 'coin-transactions':
         return <CoinTransactionsView />
+      case 'deleted-users':
+        return <DeletedUsersView />
       case 'reports':
         return <BugReportsView />
       case 'inbox':
@@ -111,14 +111,14 @@ function AppContent() {
     <>
       <ErrorBoundary>
         <div className="min-h-screen transition-colors duration-300">
-          <div className="flex">
+          <div className="flex min-h-screen">
             <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
-            <div className="flex-1">
+            <div className="flex-1 min-w-0">
               <Header 
                 isPopupOpen={isPopupOpen} 
                 onOpenSettings={handleOpenAdminSettings} 
               />
-                <main className="p-2 md:p-4 lg:p-6 dark:text-white min-h-screen relative pt-16 sm:pt-20">
+                <main className="p-2 md:p-4 lg:p-6 dark:text-white min-h-screen relative">
                 <div className="absolute inset-0 bg-gradient-to-br from-violet-500/5 via-transparent to-emerald-500/5 pointer-events-none" />
                 <div className="relative z-10">
                 <ErrorBoundary>
