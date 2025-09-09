@@ -39,7 +39,7 @@ export function UserManagement() {
     try {
       const supabase = getSupabaseAdminClient()
       if (!supabase) {
-        console.warn('Cannot fetch video counts - Supabase not initialized')
+        // Cannot fetch video counts - Supabase not initialized
         setUserVideoCounts({})
         return
       }
@@ -51,7 +51,7 @@ export function UserManagement() {
         .not('user_id', 'is', null)
 
       if (error) {
-        console.error('Failed to fetch video counts:', error)
+        // Failed to fetch video counts
         setUserVideoCounts({})
         return
       }
@@ -66,7 +66,7 @@ export function UserManagement() {
 
       setUserVideoCounts(counts)
     } catch (error) {
-      console.error('Error fetching video counts:', error)
+      // Error fetching video counts
       setUserVideoCounts({})
     } finally {
       setIsLoadingVideoCounts(false)
@@ -91,7 +91,7 @@ export function UserManagement() {
       // Refresh users list to show updated data
       await fetchUsers()
     } catch (error) {
-      console.error('Failed to adjust coins:', error)
+      // Failed to adjust coins
     }
   }
 
@@ -102,7 +102,7 @@ export function UserManagement() {
       // Refresh users list to show updated data
       await fetchUsers()
     } catch (error) {
-      console.error('Failed to toggle VIP status:', error)
+      // Failed to toggle VIP status
     } finally {
       setActionLoading(prev => ({ ...prev, [`vip-${userId}`]: false }))
     }
@@ -133,7 +133,7 @@ export function UserManagement() {
         closeProfilePanel()
       }
     } catch (error) {
-      console.error('Failed to delete user:', error)
+      // Failed to delete user
       alert('Failed to delete user. Please try again.')
     } finally {
       setActionLoading(prev => ({ ...prev, [`delete-${userId}`]: false }))
@@ -166,7 +166,7 @@ export function UserManagement() {
       // Refresh users list
       await fetchUsers()
     } catch (error) {
-      console.error('Failed to ban/unban user:', error)
+      // Failed to ban/unban user
       alert('Failed to update user ban status. Please try again.')
     } finally {
       setActionLoading(prev => ({ ...prev, [`ban-${userId}`]: false }))
@@ -199,12 +199,12 @@ export function UserManagement() {
 
   const handleCreateUser = async (userData: any) => {
     // User creation will be implemented when backend API is ready
-    console.log('Creating user:', userData)
+    // Creating user
     await fetchUsers() // Refresh users list
   }
 
   const handleSendBulkNotification = async (notification: any) => {
-    console.log('Sending bulk notification:', notification)
+    // Sending bulk notification
     // Bulk notification sending will be implemented when backend API is ready
   }
 
@@ -323,8 +323,22 @@ export function UserManagement() {
                 <div key={user.id} className="p-4 hover:bg-violet-500/5 transition-colors">
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 bg-gradient-to-br from-violet-400 to-purple-600 rounded-full flex items-center justify-center text-white font-medium text-sm gaming-glow">
-                        {user.username.charAt(0).toUpperCase()}
+                      <div className="relative">
+                        {user.avatar_url ? (
+                          <img
+                            src={user.avatar_url}
+                            alt={user.username}
+                            className="w-10 h-10 rounded-full object-cover border-2 border-gray-200 dark:border-gray-600"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement
+                              target.style.display = 'none'
+                              target.nextElementSibling?.classList.remove('hidden')
+                            }}
+                          />
+                        ) : null}
+                        <div className={`w-10 h-10 bg-gradient-to-br from-violet-400 to-purple-600 rounded-full flex items-center justify-center text-white font-medium text-sm gaming-glow ${user.avatar_url ? 'hidden' : ''}`}>
+                          {user.username.charAt(0).toUpperCase()}
+                        </div>
                       </div>
                       <div>
                         <p className="font-medium text-gray-900 dark:text-white text-sm">{user.username}</p>
@@ -411,8 +425,22 @@ export function UserManagement() {
                   <tr key={user.id} className="border-b border-gray-200 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
                     <td className="py-4 px-6">
                       <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 bg-gradient-to-br from-violet-400 to-purple-600 rounded-full flex items-center justify-center text-white font-medium text-sm">
-                          {(user.email || user.username || 'U').charAt(0).toUpperCase()}
+                        <div className="relative">
+                          {user.avatar_url ? (
+                            <img
+                              src={user.avatar_url}
+                              alt={user.username}
+                              className="w-10 h-10 rounded-full object-cover border-2 border-gray-200 dark:border-gray-600"
+                              onError={(e) => {
+                                const target = e.target as HTMLImageElement
+                                target.style.display = 'none'
+                                target.nextElementSibling?.classList.remove('hidden')
+                              }}
+                            />
+                          ) : null}
+                          <div className={`w-10 h-10 bg-gradient-to-br from-violet-400 to-purple-600 rounded-full flex items-center justify-center text-white font-medium text-sm ${user.avatar_url ? 'hidden' : ''}`}>
+                            {(user.email || user.username || 'U').charAt(0).toUpperCase()}
+                          </div>
                         </div>
                         <div>
                           <p className="font-medium text-gray-900 dark:text-white">{user.username}</p>
