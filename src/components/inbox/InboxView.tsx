@@ -11,25 +11,27 @@ import {
   Minus,
   Search,
   Filter,
-  Bell,
-  Users,
-  Plus
+  RefreshCw,
+  MessageSquare,
+  CheckCircle,
+  X,
+  Calendar,
+  Hash,
+  Users
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card'
 import { Button } from '../ui/Button'
 import { Input } from '../ui/Input'
 import { Badge } from '../ui/Badge'
-import { BulkNotificationModal } from '../users/BulkNotificationModal'
 import { format, formatDistanceToNow } from 'date-fns'
 import { getSupabaseClient, getSupabaseAdminClient } from '../../lib/supabase'
-import { Download } from 'lucide-react'
 
 interface SupportTicket {
   id: string
   title: string
   description: string
-  status: 'active' | 'pending' | 'answered' | 'completed' | 'closed'
-  priority: 'low' | 'medium' | 'high' | 'urgent'
+  status: 'active' | 'pending' | 'answered' | 'closed'
+  priority: 'low' | 'medium' | 'high'
   category: string
   reported_by: string
   assigned_to?: string
@@ -43,54 +45,100 @@ interface SupportTicket {
   resolution_notes?: string
 }
 
+interface TicketStats {
+  total_tickets: number
+  active_tickets: number
+  pending_tickets: number
+  answered_tickets: number
+}
+
 export function InboxView() {
   const [tickets, setTickets] = useState<SupportTicket[]>([])
-  const [isLoading, setIsLoading] = useState(false)
+  const [stats, setStats] = useState<TicketStats | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [isRefreshing, setIsRefreshing] = useState(false)
   const [selectedTicket, setSelectedTicket] = useState<SupportTicket | null>(null)
   const [replyMessage, setReplyMessage] = useState('')
-  const [filterStatus, setFilterStatus] = useState<string>('all')
   const [searchQuery, setSearchQuery] = useState('')
+  const [statusFilter, setStatusFilter] = useState('all')
+  const [priorityFilter, setPriorityFilter] = useState('all')
+  const [userProfiles, setUserProfiles] = useState<Record<string, {username: string, email: string, avatar_url?: string}>>({})
 
   useEffect(() => {
     fetchTickets()
-    
-    // Set up real-time subscription
-    const supabase = getSupabaseAdminClient()
-    if (!supabase) return
-
-    const subscription = supabase
-      .channel('support_tickets_changes')
-      .on('postgres_changes', 
-        { 
-          event: '*', 
-          schema: 'public', 
-          table: 'support_tickets' 
-        },
-        (payload) => {
-          console.log('Ticket change received:', payload)
-          if (payload.eventType === 'INSERT') {
-            setTickets(prev => [transformTicket(payload.new), ...prev])
-          } else if (payload.eventType === 'UPDATE') {
-            setTickets(prev => prev.map(t => 
-              t.id === payload.new.id ? transformTicket(payload.new) : t
-            ))
-            if (selectedTicket?.id === payload.new.id) {
-              setSelectedTicket(transformTicket(payload.new))
-            }
-          } else if (payload.eventType === 'DELETE') {
-            setTickets(prev => prev.filter(t => t.id !== payload.old.id))
-            if (selectedTicket?.id === payload.old.id) {
-              setSelectedTicket(null)
-            }
-          }
-        }
-      )
-      .subscribe()
-
-    return () => {
-      subscription.unsubscribe()
-    }
+    fetchUserProfiles()
   }, [])
+
+  useEffect(() => {
+    // Background refresh for filters
+    if (statusFilter !== 'all' || priorityFilter !== 'all' || searchQuery) {
+      fetchTickets(true)
+    }
+  }, [statusFilter, priorityFilter, searchQuery])
+
+  const fetchTickets = async (backgroundRefresh = false) => {
+    if (backgroundRefresh) {
+      setIsRefreshing(true)
+    } else {
+      setIsLoading(true)
+    }
+
+    try {
+      const supabase = getSupabaseAdminClient()
+      if (!supabase) {
+        throw new Error('Supabase not initialized')
+      }
+
+      const { data: ticketData, error } = await supabase
+        .from('support_tickets')
+        .select('*')
+        .order('created_at', { ascending: false })
+
+      if (error) {
+        // Failed to fetch support tickets
+        setTickets([])
+        return
+      }
+
+      const transformedTickets: SupportTicket[] = (ticketData || []).map(transformTicket)
+      setTickets(transformedTickets)
+      calculateStats(transformedTickets)
+    } catch (error) {
+      // Failed to fetch tickets
+      setTickets([])
+    } finally {
+      setIsLoading(false)
+      setIsRefreshing(false)
+    }
+  }
+
+  const fetchUserProfiles = async () => {
+    try {
+      const supabase = getSupabaseAdminClient()
+      if (!supabase) return
+
+      const { data: profiles, error } = await supabase
+        .from('profiles')
+        .select('id, username, email, avatar_url')
+
+      if (error) {
+        // Failed to fetch user profiles
+        return
+      }
+
+      const profileMap: Record<string, {username: string, email: string, avatar_url?: string}> = {}
+      profiles?.forEach(profile => {
+        profileMap[profile.id] = {
+          username: profile.username,
+          email: profile.email,
+          avatar_url: profile.avatar_url
+        }
+      })
+      setUserProfiles(profileMap)
+    } catch (error) {
+      // Failed to fetch user profiles
+    }
+  }
 
   const transformTicket = (ticket: any): SupportTicket => ({
     id: ticket.id,
@@ -111,45 +159,23 @@ export function InboxView() {
     resolution_notes: ticket.resolution_notes
   })
 
-  const fetchTickets = async () => {
-    setIsLoading(true)
-    try {
-      const supabase = getSupabaseAdminClient()
-      if (!supabase) {
-        throw new Error('Supabase not initialized')
-      }
-
-      // Get support tickets from database
-      const { data: ticketData, error } = await supabase
-        .from('support_tickets')
-        .select('*')
-        .order('created_at', { ascending: false })
-
-      if (error) {
-        console.error('Failed to fetch support tickets:', error)
-        setTickets([])
-        return
-      }
-
-      // Use ticket data directly from database
-      const transformedTickets: SupportTicket[] = (ticketData || []).map(transformTicket)
-
-      setTickets(transformedTickets)
-      console.log('Support tickets fetched:', transformedTickets.length)
-    } catch (error) {
-      console.error('Failed to fetch tickets:', error)
-      setTickets([])
-    } finally {
-      setIsLoading(false)
+  const calculateStats = (ticketList: SupportTicket[]) => {
+    const stats = {
+      total_tickets: ticketList.length,
+      active_tickets: ticketList.filter(t => t.status === 'active').length,
+      pending_tickets: ticketList.filter(t => t.status === 'pending').length,
+      answered_tickets: ticketList.filter(t => t.status === 'answered').length,
     }
+    setStats(stats)
   }
 
   const filteredTickets = tickets.filter(ticket => {
-    const matchesStatus = filterStatus === 'all' || ticket.status === filterStatus
+    const matchesStatus = statusFilter === 'all' || ticket.status === statusFilter
+    const matchesPriority = priorityFilter === 'all' || ticket.priority === priorityFilter
     const matchesSearch = ticket.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          ticket.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          ticket.reported_by.toLowerCase().includes(searchQuery.toLowerCase())
-    return matchesStatus && matchesSearch
+    return matchesStatus && matchesPriority && matchesSearch
   })
 
   const updateTicketStatus = async (ticketId: string, status: string) => {
@@ -167,11 +193,10 @@ export function InboxView() {
         .eq('id', ticketId)
 
       if (error) {
-        console.error('Failed to update ticket status:', error)
+        // Failed to update ticket status
         return
       }
 
-      // Update local state
       setTickets(prev => prev.map(ticket => 
         ticket.id === ticketId ? { ...ticket, status: status as any, updated_at: new Date().toISOString(), is_read: true } : ticket
       ))
@@ -179,7 +204,7 @@ export function InboxView() {
         setSelectedTicket(prev => prev ? { ...prev, status: status as any, updated_at: new Date().toISOString(), is_read: true } : null)
       }
     } catch (error) {
-      console.error('Error updating ticket status:', error)
+      // Error updating ticket status
     }
   }
 
@@ -190,35 +215,67 @@ export function InboxView() {
       const supabase = getSupabaseAdminClient()
       if (!supabase) return
 
-      // Use the RPC function to add message with proper is_admin flag
+      // Get current ticket status to determine next status
+      const { data: currentTicket } = await supabase
+        .from('support_tickets')
+        .select('status')
+        .eq('id', ticketId)
+        .single()
+
+      // Don't allow replies if ticket is closed
+      if (currentTicket?.status === 'closed') {
+        // Cannot reply to closed ticket
+        return
+      }
+
+      // Send the reply message
       const { data, error } = await supabase.rpc('add_ticket_message', {
         p_ticket_id: ticketId,
-        p_user_id: 'admin-1', // Admin user ID
+        p_user_id: 'admin-1',
         p_message: message.trim(),
-        p_is_admin: true, // Mark as admin message
+        p_is_admin: true,
         p_attachments: []
       })
 
       if (error) {
-        console.error('Failed to send reply:', error)
+        // Failed to send reply
         return
       }
 
-      // Reload tickets to get the updated data
-      await fetchTickets()
-      
-      // Clear reply message
+      // Seamlessly update ticket status to "answered" when admin replies
+      const { error: statusError } = await supabase
+        .from('support_tickets')
+        .update({ 
+          status: 'answered',
+          updated_at: new Date().toISOString(),
+          is_read: true,
+          last_admin_reply: new Date().toISOString()
+        })
+        .eq('id', ticketId)
+
+      if (statusError) {
+        // Failed to update ticket status
+      }
+
+      // Clear reply message immediately for better UX
       setReplyMessage('')
 
-      // Update local state
+      // Update local state optimistically
+      const newReply = { 
+        message: message.trim(), 
+        created_at: new Date().toISOString(),
+        id: `temp-${Date.now()}`
+      }
+
       setTickets(prev => prev.map(t => 
         t.id === ticketId 
           ? { 
               ...t, 
-              admin_replies: [...t.admin_replies, { message: message.trim(), created_at: new Date().toISOString() }],
+              admin_replies: [...t.admin_replies, newReply],
               status: 'answered' as any,
               last_admin_reply: new Date().toISOString(),
-              updated_at: new Date().toISOString()
+              updated_at: new Date().toISOString(),
+              is_read: true
             } 
           : t
       ))
@@ -226,418 +283,703 @@ export function InboxView() {
       if (selectedTicket?.id === ticketId) {
         setSelectedTicket(prev => prev ? {
           ...prev,
-          admin_replies: [...prev.admin_replies, { message: message.trim(), created_at: new Date().toISOString() }],
+          admin_replies: [...prev.admin_replies, newReply],
           status: 'answered' as any,
           last_admin_reply: new Date().toISOString(),
-          updated_at: new Date().toISOString()
+          updated_at: new Date().toISOString(),
+          is_read: true
         } : null)
       }
+
+      // Refresh data in background to sync with server
+      setTimeout(() => {
+        fetchTickets(true)
+      }, 1000)
+
     } catch (error) {
-      console.error('Error sending reply:', error)
+      // Error sending reply
     }
   }
 
-  // Removed bulk notification and email features - not needed for support tickets
+  // Function to close a ticket (admin only)
+  const closeTicket = async (ticketId: string, resolutionNotes?: string) => {
+    try {
+      const supabase = getSupabaseAdminClient()
+      if (!supabase) return
+
+      // Update ticket status to closed
+      const { error } = await supabase
+        .from('support_tickets')
+        .update({ 
+          status: 'closed',
+          updated_at: new Date().toISOString(),
+          resolution_notes: resolutionNotes || 'Ticket closed by admin'
+        })
+        .eq('id', ticketId)
+
+      if (error) {
+        // Failed to close ticket
+        return
+      }
+
+      // Update local state
+      setTickets(prev => prev.map(t => 
+        t.id === ticketId 
+          ? { 
+              ...t, 
+              status: 'closed' as any,
+              updated_at: new Date().toISOString(),
+              resolution_notes: resolutionNotes || 'Ticket closed by admin'
+            } 
+          : t
+      ))
+
+      if (selectedTicket?.id === ticketId) {
+        setSelectedTicket(prev => prev ? {
+          ...prev,
+          status: 'closed' as any,
+          updated_at: new Date().toISOString(),
+          resolution_notes: resolutionNotes || 'Ticket closed by admin'
+        } : null)
+      }
+
+      // Refresh data in background
+      setTimeout(() => {
+        fetchTickets(true)
+      }, 500)
+
+    } catch (error) {
+      // Error closing ticket
+    }
+  }
+
+  const getUserDisplayName = (userId: string): string => {
+    const profile = userProfiles[userId]
+    if (profile) {
+      return profile.username || profile.email
+    }
+    
+    const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+    if (uuidPattern.test(userId)) {
+      return `User ${userId.slice(0, 8)}`
+    }
+    
+    return userId.includes('@') ? userId : userId
+  }
+
+  // Helper function to combine admin replies and user messages
+  const getAllMessages = (ticket: SupportTicket) => {
+    const messages: any[] = []
+    
+    // Add admin replies
+    if (ticket.admin_replies) {
+      ticket.admin_replies.forEach((reply: any) => {
+        messages.push({
+          ...reply,
+          isAdmin: true,
+          sender: 'Admin Support',
+          timestamp: reply.created_at || new Date().toISOString()
+        })
+      })
+    }
+    
+    // Add user messages
+    if (ticket.user_messages) {
+      ticket.user_messages.forEach((msg: any) => {
+        messages.push({
+          ...msg,
+          isAdmin: false,
+          sender: ticket.reported_by,
+          timestamp: msg.created_at || new Date().toISOString()
+        })
+      })
+    }
+    
+    // Sort by timestamp
+    return messages.sort((a, b) => 
+      new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+    )
+  }
+
+  const getPriorityIcon = (priority: string) => {
+    switch (priority) {
+      case 'high': return <ArrowUp className="w-4 h-4 text-orange-500" />
+      case 'medium': return <Minus className="w-4 h-4 text-yellow-500" />
+      case 'low': return <ArrowDown className="w-4 h-4 text-green-500" />
+      default: return <Minus className="w-4 h-4 text-gray-500" />
+    }
+  }
+
+  const getPriorityBadge = (priority: string) => {
+    switch (priority) {
+      case 'high': return <Badge variant="warning" className="text-xs font-medium">High</Badge>
+      case 'medium': return <Badge variant="info" className="text-xs font-medium">Medium</Badge>
+      case 'low': return <Badge variant="success" className="text-xs font-medium">Low</Badge>
+      default: return <Badge variant="default" className="text-xs font-medium">{priority}</Badge>
+    }
+  }
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'active': return <Badge variant="danger" className="text-xs font-medium">Active</Badge>
+      case 'pending': return <Badge variant="warning" className="text-xs font-medium">Pending</Badge>
+      case 'answered': return <Badge variant="info" className="text-xs font-medium">Answered</Badge>
+      case 'closed': return <Badge variant="default" className="text-xs font-medium">Closed</Badge>
+      default: return <Badge variant="default" className="text-xs font-medium">{status}</Badge>
+    }
+  }
+
+  if (isLoading) {
+    return (
+      <div className="space-y-4 md:space-y-6 animate-fade-in">
+        <div className="h-8 w-48 bg-gray-200 dark:bg-slate-700 animate-pulse rounded" />
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="h-24 md:h-32 bg-gray-200 dark:bg-slate-700 animate-pulse rounded-xl" />
+          ))}
+        </div>
+        <div className="h-96 bg-gray-200 dark:bg-slate-700 animate-pulse rounded-xl" />
+      </div>
+    )
+  }
 
   return (
-    <>
-      <div className="space-y-6">
-        {/* Header with Actions */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white gaming-text-shadow">
-              Support Inbox
-            </h1>
-            <p className="text-gray-600 dark:text-gray-300">
-              Manage support tickets and send notifications
-            </p>
-          </div>
-          <div className="flex items-center space-x-3">
-            <Button
-              onClick={fetchTickets}
-              variant="outline"
-              className="flex items-center space-x-2"
-            >
-              <ArrowUp className="w-4 h-4" />
-              <span>Refresh</span>
-            </Button>
-          </div>
+    <div className="space-y-4 md:space-y-6 animate-fade-in">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white gaming-text-shadow">
+            Support Inbox
+          </h1>
+          <p className="text-sm md:text-base text-gray-600 dark:text-gray-300">
+            Manage support tickets and customer communications
+          </p>
         </div>
-
-        <div className="h-[calc(100vh-12rem)] flex gaming-card !p-0 overflow-hidden">
-      {/* Ticket List Sidebar */}
-          <div className="w-1/3 border-r border-violet-500/20 bg-violet-500/5 flex flex-col">
-            <div className="p-4 border-b border-violet-500/20 bg-gradient-to-r from-violet-500/10 to-purple-500/10">
-          <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold flex items-center gap-2 text-gray-900 dark:text-white">
-                <Mail className="h-5 w-5 text-violet-500 dark:text-violet-400 gaming-glow" />
-              Support Inbox
-            </h2>
-              <Badge variant="danger" className="gaming-pulse">
-              {tickets.filter(t => t.status === 'active').length} Active
-            </Badge>
-          </div>
-          
-          {/* Search */}
-          <div className="relative mb-3">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-            <Input
-              placeholder="Search tickets..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 !bg-violet-500/10 border-violet-500/30"
-            />
-          </div>
-          
-          {/* Status Filter */}
-          <select
-            value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value)}
-              className="w-full px-3 py-2 border border-violet-500/30 rounded-lg bg-violet-500/10 text-sm dark:text-white gaming-input"
+        <div className="flex items-center space-x-3 w-full sm:w-auto">
+          <Button 
+            onClick={() => fetchTickets()}
+            variant="outline"
+            size="sm"
+            disabled={isLoading || isRefreshing}
+            className="flex items-center space-x-2"
           >
-            <option value="all">All Tickets</option>
-            <option value="active">Active</option>
-            <option value="pending">Pending</option>
-            <option value="answered">Answered</option>
-            <option value="completed">Completed</option>
-            <option value="closed">Closed</option>
-          </select>
-        </div>
-        
-        {/* Ticket List */}
-          <div className="flex-1 overflow-y-auto gaming-scrollbar">
-          {isLoading ? (
-            <div className="p-4 text-center text-gray-500">
-              Loading tickets...
-            </div>
-          ) : tickets.length === 0 ? (
-            <div className="p-4 text-center text-gray-500">
-              <Mail className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              <p>No support tickets found</p>
-              <p className="text-sm">Tickets will appear here when submitted</p>
-            </div>
-          ) : (
-            filteredTickets.map((ticket) => (
-            <div
-              key={ticket.id}
-              onClick={() => setSelectedTicket(ticket)}
-                className={`p-4 border-b border-violet-500/10 cursor-pointer hover:bg-violet-500/10 transition-all duration-300 gaming-interactive ${
-                  selectedTicket?.id === ticket.id ? 'bg-violet-500/20 border-l-4 border-l-violet-500 gaming-glow' : ''
-              }`}
-            >
-              <div className="flex items-start justify-between mb-2">
-                <div className="flex items-center gap-2">
-                  <div className="flex items-center gap-1">
-                    {getPriorityIcon(ticket.priority)}
-                    <Badge variant={getStatusVariant(ticket.status)} className="text-xs">
-                      {ticket.status.replace('_', ' ')}
-                    </Badge>
-                  </div>
-                </div>
-                <span className="text-xs text-muted-foreground dark:text-gray-400">
-                  {formatDistanceToNow(new Date(ticket.created_at))} ago
-                </span>
-              </div>
-              
-              <h3 className="font-medium text-sm mb-1 line-clamp-1">
-                {ticket.title}
-              </h3>
-              
-              <div className="flex items-center gap-2 text-xs text-muted-foreground dark:text-gray-400">
-                <User className="h-3 w-3" />
-                <span>{ticket.reported_by}</span>
-                <span>•</span>
-                <span className="capitalize">{ticket.category.replace('_', ' ')}</span>
-              </div>
-              
-              <p className="text-xs text-muted-foreground dark:text-gray-400 mt-1 line-clamp-2">
-                {ticket.description}
-              </p>
-            </div>
-          )))}
+            <RefreshCw className={`w-4 h-4 ${isLoading || isRefreshing ? 'animate-spin' : ''}`} />
+            <span className="hidden sm:inline">Refresh</span>
+          </Button>
         </div>
       </div>
-      
-      {/* Ticket Detail View */}
-          <div className="flex-1 flex flex-col bg-white dark:bg-slate-900">
-        {selectedTicket ? (
-          <>
-            {/* Ticket Header */}
-              <div className="p-6 border-b border-violet-500/20 bg-gradient-to-r from-violet-50 to-purple-50 dark:from-violet-900/20 dark:to-purple-900/20">
-              <div className="flex items-start justify-between mb-4">
-                <div>
-                  <h1 className="text-xl font-semibold mb-2 dark:text-white">{selectedTicket.title}</h1>
-                  <div className="flex items-center gap-4 text-sm text-muted-foreground dark:text-gray-400">
-                    <div className="flex items-center gap-1">
-                      <User className="h-4 w-4" />
-                      <span>{selectedTicket.reported_by}</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Clock className="h-4 w-4" />
-                      <span>{format(new Date(selectedTicket.created_at), 'MMM dd, yyyy HH:mm')}</span>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="flex items-center gap-2">
-                  <Badge variant={getStatusVariant(selectedTicket.status)}>
-                    {selectedTicket.status.replace('_', ' ')}
-                  </Badge>
-                  <Badge variant={getPriorityVariant(selectedTicket.priority)}>
-                    {selectedTicket.priority}
-                  </Badge>
-                  <select 
-                    value={selectedTicket.status} 
-                    onChange={(e) => updateTicketStatus(selectedTicket.id, e.target.value)}
-                      className="px-3 py-1 border border-violet-500/30 rounded text-sm bg-violet-500/10 dark:text-white gaming-input"
-                  >
-                    <option value="active">Active</option>
-                    <option value="pending">Pending</option>
-                    <option value="answered">Answered</option>
-                    <option value="completed">Completed</option>
-                    <option value="closed">Closed</option>
-                  </select>
-                </div>
-              </div>
+
+      {/* Stats Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">
+        <Card className="gaming-card">
+          <CardContent className="p-4 md:p-6 text-center">
+            <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-lg flex items-center justify-center mx-auto mb-2 md:mb-3 gaming-glow">
+              <Mail className="w-5 h-5 md:w-6 md:h-6 text-white" />
+            </div>
+            <div className="text-xl md:text-2xl font-bold text-blue-600 dark:text-blue-400 gaming-text-shadow">
+              {stats?.total_tickets || 0}
+            </div>
+            <div className="text-xs md:text-sm text-gray-600 dark:text-gray-400">Total Tickets</div>
+          </CardContent>
+        </Card>
+
+        <Card className="gaming-card">
+          <CardContent className="p-4 md:p-6 text-center">
+            <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-red-500 to-rose-600 rounded-lg flex items-center justify-center mx-auto mb-2 md:mb-3 gaming-glow">
+              <AlertTriangle className="w-5 h-5 md:w-6 md:h-6 text-white" />
+            </div>
+            <div className="text-xl md:text-2xl font-bold text-red-600 dark:text-red-400 gaming-text-shadow">
+              {stats?.active_tickets || 0}
+            </div>
+            <div className="text-xs md:text-sm text-gray-600 dark:text-gray-400">Active</div>
+          </CardContent>
+        </Card>
+
+        <Card className="gaming-card">
+          <CardContent className="p-4 md:p-6 text-center">
+            <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-orange-500 to-amber-600 rounded-lg flex items-center justify-center mx-auto mb-2 md:mb-3 gaming-glow">
+              <Clock className="w-5 h-5 md:w-6 md:h-6 text-white" />
+            </div>
+            <div className="text-xl md:text-2xl font-bold text-orange-600 dark:text-orange-400 gaming-text-shadow">
+              {stats?.pending_tickets || 0}
+            </div>
+            <div className="text-xs md:text-sm text-gray-600 dark:text-gray-400">Pending</div>
+          </CardContent>
+        </Card>
+
+        <Card className="gaming-card">
+          <CardContent className="p-4 md:p-6 text-center">
+            <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-emerald-500 to-green-600 rounded-lg flex items-center justify-center mx-auto mb-2 md:mb-3 gaming-glow">
+              <CheckCircle className="w-5 h-5 md:w-6 md:h-6 text-white" />
+            </div>
+            <div className="text-xl md:text-2xl font-bold text-emerald-600 dark:text-emerald-400 gaming-text-shadow">
+              {stats?.answered_tickets || 0}
+            </div>
+            <div className="text-xs md:text-sm text-gray-600 dark:text-gray-400">Answered</div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Filters */}
+      <Card className="gaming-card-enhanced overflow-visible relative z-50">
+        <CardContent className="p-4 md:p-6 overflow-visible">
+          <div className="flex flex-col lg:flex-row gap-4 overflow-visible">
+            {/* Search */}
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Input
+                placeholder="Search tickets by title, description, or user..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 text-sm"
+              />
             </div>
             
-            {/* Conversation Thread */}
-              <div className="flex-1 p-6 overflow-y-auto gaming-scrollbar">
-              <div className="space-y-6">
-                {/* Original Message */}
-                  <div className="bg-violet-500/10 dark:bg-slate-800/50 rounded-lg p-4 gaming-card">
-                  <div className="flex items-center gap-2 mb-2">
-                      <div className="w-8 h-8 bg-violet-100 dark:bg-violet-900/50 rounded-full flex items-center justify-center">
-                        <span className="text-violet-600 dark:text-violet-400 font-medium text-sm">
-                        {selectedTicket.reported_by.charAt(0).toUpperCase()}
+            {/* Status Filter */}
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="px-3 py-2 border border-violet-500/30 rounded-lg bg-violet-500/10 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-violet-500 gaming-input min-w-[140px]"
+            >
+              <option value="all">All Status</option>
+              <option value="active">Active</option>
+              <option value="pending">Pending</option>
+              <option value="answered">Answered</option>
+              <option value="closed">Closed</option>
+            </select>
+
+            {/* Priority Filter */}
+            <select
+              value={priorityFilter}
+              onChange={(e) => setPriorityFilter(e.target.value)}
+              className="px-3 py-2 border border-violet-500/30 rounded-lg bg-violet-500/10 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-violet-500 gaming-input min-w-[140px]"
+            >
+              <option value="all">All Priority</option>
+              <option value="high">High</option>
+              <option value="medium">Medium</option>
+              <option value="low">Low</option>
+            </select>
+
+            {/* Clear Filters */}
+            <Button 
+              onClick={() => {
+                setSearchQuery('')
+                setStatusFilter('all')
+                setPriorityFilter('all')
+              }}
+              variant="outline"
+              className="flex items-center space-x-2 min-w-[120px]"
+            >
+              <X className="w-4 h-4" />
+              <span>Clear</span>
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Tickets List */}
+      <Card className="gaming-card-enhanced relative z-10">
+        <CardHeader>
+          <CardTitle className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <Mail className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+              <span>Support Tickets</span>
+              <Badge variant="default" className="text-xs">
+                {filteredTickets.length} tickets
+              </Badge>
+            </div>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
+          {/* Mobile Card View */}
+          <div className="block lg:hidden">
+            <div className="divide-y divide-violet-500/20">
+              {filteredTickets.map((ticket) => (
+                <div key={ticket.id} className="p-4 hover:bg-violet-500/5 transition-colors">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center space-x-3 flex-1 min-w-0">
+                      <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-full flex items-center justify-center text-white font-medium text-sm gaming-glow flex-shrink-0">
+                        {userProfiles[ticket.reported_by]?.avatar_url ? (
+                          <img
+                            src={userProfiles[ticket.reported_by].avatar_url}
+                            alt={userProfiles[ticket.reported_by].username}
+                            className="w-10 h-10 rounded-full object-cover"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement
+                              target.style.display = 'none'
+                              target.nextElementSibling?.classList.remove('hidden')
+                            }}
+                          />
+                        ) : (
+                          <span className="text-sm font-medium">
+                            {getUserDisplayName(ticket.reported_by).charAt(0).toUpperCase()}
+                          </span>
+                        )}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                          {ticket.title}
+                        </p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          {getUserDisplayName(ticket.reported_by)}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex flex-col items-end space-y-1">
+                      <div className="flex items-center space-x-1">
+                        {getPriorityIcon(ticket.priority)}
+                        {getStatusBadge(ticket.status)}
+                      </div>
+                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                        {formatDistanceToNow(new Date(ticket.created_at))} ago
                       </span>
                     </div>
-                    <div>
-                      <p className="font-medium text-sm dark:text-white">{selectedTicket.reported_by}</p>
-                      <p className="text-xs text-muted-foreground dark:text-gray-400">
-                        {format(new Date(selectedTicket.created_at), 'MMM dd, yyyy HH:mm')}
-                      </p>
-                    </div>
                   </div>
-                  <div className="prose prose-sm max-w-none dark:text-gray-300">
-                    <p>{selectedTicket.description}</p>
-                    {/* Show original attachments if any */}
-                    {selectedTicket.attachments && selectedTicket.attachments.length > 0 && (
-                      <div className="mt-3 space-y-2">
-                        <p className="text-xs font-medium text-gray-600 dark:text-gray-400">Attachments:</p>
-                        {selectedTicket.attachments.map((attachment: any, idx: number) => (
-                          <a
-                            key={idx}
-                            href={attachment.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-2 text-sm text-violet-600 dark:text-violet-400 hover:underline"
-                          >
-                            <Download className="w-3 h-3" />
-                            {attachment.name || `Attachment ${idx + 1}`}
-                          </a>
-                        ))}
-                      </div>
-                    )}
+                  
+                  <p className="text-sm text-gray-600 dark:text-gray-300 mb-3 line-clamp-2">
+                    {ticket.description}
+                  </p>
+                  
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2 text-xs text-gray-500 dark:text-gray-400">
+                      <Calendar className="w-3 h-3" />
+                      <span>{format(new Date(ticket.created_at), 'MMM dd, yyyy')}</span>
+                    </div>
+                    <Button 
+                      onClick={() => setSelectedTicket(ticket)}
+                      size="sm"
+                      className="text-xs"
+                    >
+                      View
+                    </Button>
                   </div>
                 </div>
-                
-                {/* Admin Replies and User Messages */}
-                {getAllMessages(selectedTicket).map((message) => (
-                  <div key={message.id} className={`rounded-lg p-4 ${
-                    message.isAdmin 
-                        ? 'bg-emerald-50 dark:bg-emerald-900/20 border-l-4 border-l-emerald-400 gaming-card' 
-                        : 'bg-violet-50 dark:bg-violet-900/20 border-l-4 border-l-violet-400 gaming-card'
-                  }`}>
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                        message.isAdmin 
-                          ? "bg-green-100 dark:bg-green-900/50" 
-                          : "bg-violet-100 dark:bg-violet-900/50"
-                      }`}>
-                        <span className={`font-medium text-sm ${
-                          message.isAdmin 
-                            ? "text-green-600 dark:text-green-400" 
-                            : "text-violet-600 dark:text-violet-400"
-                        }`}>
-                          {message.sender.charAt(0).toUpperCase()}
+              ))}
+            </div>
+          </div>
+
+          {/* Desktop Table View */}
+          <div className="hidden lg:block overflow-x-auto">
+            <table className="w-full gaming-table">
+              <thead>
+                <tr className="border-b border-violet-500/20 bg-violet-500/5">
+                  <th className="text-left py-4 px-6 font-semibold text-gray-900 dark:text-white text-sm">
+                    <div className="flex items-center space-x-2">
+                      <User className="w-4 h-4" />
+                      <span>User</span>
+                    </div>
+                  </th>
+                  <th className="text-left py-4 px-6 font-semibold text-gray-900 dark:text-white text-sm">
+                    <div className="flex items-center space-x-2">
+                      <MessageSquare className="w-4 h-4" />
+                      <span>Subject</span>
+                    </div>
+                  </th>
+                  <th className="text-left py-4 px-6 font-semibold text-gray-900 dark:text-white text-sm">
+                    <div className="flex items-center space-x-2">
+                      <Filter className="w-4 h-4" />
+                      <span>Status</span>
+                    </div>
+                  </th>
+                  <th className="text-left py-4 px-6 font-semibold text-gray-900 dark:text-white text-sm">
+                    <div className="flex items-center space-x-2">
+                      <AlertTriangle className="w-4 h-4" />
+                      <span>Priority</span>
+                    </div>
+                  </th>
+                  <th className="text-left py-4 px-6 font-semibold text-gray-900 dark:text-white text-sm">
+                    <div className="flex items-center space-x-2">
+                      <Calendar className="w-4 h-4" />
+                      <span>Created</span>
+                    </div>
+                  </th>
+                  <th className="text-left py-4 px-6 font-semibold text-gray-900 dark:text-white text-sm">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredTickets.map((ticket) => (
+                  <tr key={ticket.id} className="border-b border-violet-500/10 hover:bg-violet-500/5 transition-colors group">
+                    <td className="py-4 px-6">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-full flex items-center justify-center text-white font-medium text-xs gaming-glow flex-shrink-0">
+                          {userProfiles[ticket.reported_by]?.avatar_url ? (
+                            <img
+                              src={userProfiles[ticket.reported_by].avatar_url}
+                              alt={userProfiles[ticket.reported_by].username}
+                              className="w-8 h-8 rounded-full object-cover"
+                              onError={(e) => {
+                                const target = e.target as HTMLImageElement
+                                target.style.display = 'none'
+                                target.nextElementSibling?.classList.remove('hidden')
+                              }}
+                            />
+                          ) : (
+                            <span className="text-xs font-medium">
+                              {getUserDisplayName(ticket.reported_by).charAt(0).toUpperCase()}
+                            </span>
+                          )}
+                        </div>
+                        <span className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                          {getUserDisplayName(ticket.reported_by)}
                         </span>
                       </div>
-                      <div>
-                        <p className="font-medium text-sm flex items-center gap-2 dark:text-white">
-                          {message.sender}
-                          {message.isAdmin && (
-                            <Badge variant="success" className="text-xs">
-                              Admin Reply
-                            </Badge>
-                          )}
+                    </td>
+                    <td className="py-4 px-6">
+                      <div className="max-w-xs">
+                        <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                          {ticket.title}
                         </p>
-                        <p className="text-xs text-muted-foreground dark:text-gray-400">
-                          {format(new Date(message.timestamp), 'MMM dd, yyyy HH:mm')}
+                        <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                          {ticket.description}
                         </p>
                       </div>
-                    </div>
-                    <div className="prose prose-sm max-w-none dark:text-gray-300">
-                      <p>{message.message}</p>
-                      {/* Show attachments if any */}
-                      {message.attachments && message.attachments.length > 0 && (
-                        <div className="mt-3 space-y-2">
-                          <p className="text-xs font-medium text-gray-600 dark:text-gray-400">Attachments:</p>
-                          {message.attachments.map((attachment: any, idx: number) => (
-                            <a
-                              key={idx}
-                              href={attachment.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="flex items-center gap-2 text-sm text-violet-600 dark:text-violet-400 hover:underline"
-                            >
-                              <Download className="w-3 h-3" />
-                              {attachment.name || `Attachment ${idx + 1}`}
-                            </a>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </div>
+                    </td>
+                    <td className="py-4 px-6">
+                      {getStatusBadge(ticket.status)}
+                    </td>
+                    <td className="py-4 px-6">
+                      <div className="flex items-center space-x-2">
+                        {getPriorityIcon(ticket.priority)}
+                        {getPriorityBadge(ticket.priority)}
+                      </div>
+                    </td>
+                    <td className="py-4 px-6">
+                      <div className="text-sm text-gray-900 dark:text-white">
+                        {format(new Date(ticket.created_at), 'MMM dd, yyyy')}
+                      </div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400">
+                        {format(new Date(ticket.created_at), 'HH:mm')}
+                      </div>
+                    </td>
+                    <td className="py-4 px-6">
+                      <Button 
+                        onClick={() => setSelectedTicket(ticket)}
+                        size="sm"
+                        variant="outline"
+                        className="text-xs"
+                      >
+                        View Details
+                      </Button>
+                    </td>
+                  </tr>
                 ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Empty State */}
+          {filteredTickets.length === 0 && (
+            <div className="text-center py-12">
+              <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Mail className="w-8 h-8 text-blue-500 dark:text-blue-400" />
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                No Tickets Found
+              </h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                {searchQuery || statusFilter !== 'all' || priorityFilter !== 'all'
+                  ? 'Try adjusting your search or filters' 
+                  : 'Support tickets will appear here when submitted by users'
+                }
+              </p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* WhatsApp-Style Chat Modal */}
+      {selectedTicket && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="gaming-modal max-w-4xl w-full h-[85vh] flex flex-col">
+            {/* Minimized Header */}
+            <div className="flex items-center justify-between p-3 border-b border-violet-500/20 bg-gradient-to-r from-violet-900/50 to-purple-900/50">
+              <div className="flex items-center space-x-3">
+                <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-full flex items-center justify-center">
+                  {userProfiles[selectedTicket.reported_by]?.avatar_url ? (
+                    <img
+                      src={userProfiles[selectedTicket.reported_by].avatar_url}
+                      alt={userProfiles[selectedTicket.reported_by].username}
+                      className="w-8 h-8 rounded-full object-cover"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement
+                        target.style.display = 'none'
+                        target.nextElementSibling?.classList.remove('hidden')
+                      }}
+                    />
+                  ) : (
+                    <span className="text-xs font-medium text-white">
+                      {getUserDisplayName(selectedTicket.reported_by).charAt(0).toUpperCase()}
+                    </span>
+                  )}
+                </div>
+                <div>
+                  <h2 className="text-sm font-semibold text-white">{getUserDisplayName(selectedTicket.reported_by)}</h2>
+                  <p className="text-xs text-gray-400">{selectedTicket.title}</p>
+                </div>
+              </div>
+              <div className="flex items-center space-x-2">
+                <select 
+                  value={selectedTicket.status} 
+                  onChange={(e) => {
+                    if (e.target.value === 'closed') {
+                      closeTicket(selectedTicket.id)
+                    } else {
+                      updateTicketStatus(selectedTicket.id, e.target.value)
+                    }
+                  }}
+                  className="px-2 py-1 border border-violet-500/30 rounded bg-violet-500/10 text-white text-xs gaming-input"
+                >
+                  <option value="active">Active</option>
+                  <option value="pending">Pending</option>
+                  <option value="answered">Answered</option>
+                  <option value="closed">Closed</option>
+                </select>
+                <Button variant="ghost" size="icon" onClick={() => setSelectedTicket(null)} className="h-8 w-8">
+                  <X className="w-4 h-4 text-white" />
+                </Button>
               </div>
             </div>
-            
-            {/* Reply Section */}
-              <div className="p-6 border-t border-violet-500/20 bg-violet-500/5 dark:bg-slate-800/30">
+
+            {/* Professional Chat Area */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50 dark:bg-gray-900/50">
+              {/* Initial Message - User Left Side */}
+              <div className="flex justify-start mb-4">
+                <div className="flex items-start space-x-3 max-w-[75%]">
+                  <div className="w-8 h-8 bg-blue-500 dark:bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                    {userProfiles[selectedTicket.reported_by]?.avatar_url ? (
+                      <img
+                        src={userProfiles[selectedTicket.reported_by].avatar_url}
+                        alt={userProfiles[selectedTicket.reported_by].username}
+                        className="w-8 h-8 rounded-full object-cover"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement
+                          target.style.display = 'none'
+                          target.nextElementSibling?.classList.remove('hidden')
+                        }}
+                      />
+                    ) : (
+                      <span className="text-sm font-medium text-white">
+                        {getUserDisplayName(selectedTicket.reported_by).charAt(0).toUpperCase()}
+                      </span>
+                    )}
+                  </div>
+                  <div className="bg-white dark:bg-gray-800 rounded-lg rounded-tl-sm px-4 py-3 shadow-sm border border-gray-200 dark:border-gray-700">
+                    <div className="mb-2">
+                      <span className="text-xs font-medium text-gray-600 dark:text-gray-400">{getUserDisplayName(selectedTicket.reported_by)}</span>
+                      <span className="text-xs text-gray-400 dark:text-gray-500 ml-2">
+                        {format(new Date(selectedTicket.created_at), 'MMM d, HH:mm')}
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-900 dark:text-gray-100 leading-relaxed">{selectedTicket.description}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Professional Chat Messages */}
+              {getAllMessages(selectedTicket).map((message: any, index: number) => (
+                <div key={message.id || index} className={`flex mb-4 ${
+                  message.isAdmin ? 'justify-end' : 'justify-start'
+                }`}>
+                  <div className={`flex items-start space-x-3 max-w-[75%] ${
+                    message.isAdmin ? 'flex-row-reverse space-x-reverse' : 'flex-row'
+                  }`}>
+                    {/* Avatar */}
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-1 ${
+                      message.isAdmin 
+                        ? 'bg-emerald-500 dark:bg-emerald-600' 
+                        : 'bg-blue-500 dark:bg-blue-600'
+                    }`}>
+                      {!message.isAdmin && userProfiles[message.sender]?.avatar_url ? (
+                        <img
+                          src={userProfiles[message.sender].avatar_url}
+                          alt={userProfiles[message.sender].username}
+                          className="w-8 h-8 rounded-full object-cover"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement
+                            target.style.display = 'none'
+                            target.nextElementSibling?.classList.remove('hidden')
+                          }}
+                        />
+                      ) : (
+                        <span className="text-sm font-medium text-white">
+                          {message.isAdmin ? 'A' : getUserDisplayName(message.sender).charAt(0).toUpperCase()}
+                        </span>
+                      )}
+                    </div>
+                    
+                    {/* Message Bubble */}
+                    <div className={`rounded-lg px-4 py-3 shadow-sm ${
+                      message.isAdmin 
+                        ? 'bg-emerald-500 dark:bg-emerald-600 text-white rounded-tr-sm' 
+                        : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-tl-sm border border-gray-200 dark:border-gray-700'
+                    }`}>
+                      <div className="mb-2">
+                        <span className={`text-xs font-medium ${
+                          message.isAdmin ? 'text-emerald-100' : 'text-gray-600 dark:text-gray-400'
+                        }`}>
+                          {message.isAdmin ? 'Admin' : getUserDisplayName(message.sender)}
+                        </span>
+                        <span className={`text-xs ml-2 ${
+                          message.isAdmin ? 'text-emerald-200' : 'text-gray-400 dark:text-gray-500'
+                        }`}>
+                          {format(new Date(message.timestamp), 'MMM d, HH:mm')}
+                        </span>
+                      </div>
+                      <p className="text-sm leading-relaxed">{message.message}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Professional Reply Box */}
+            <div className="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4">
               {selectedTicket.status === 'closed' && (
-                <div className="mb-4 p-3 bg-yellow-100 dark:bg-yellow-900/20 border border-yellow-300 dark:border-yellow-700 rounded-lg">
-                  <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                <div className="mb-3 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+                  <p className="text-sm text-yellow-800 dark:text-yellow-200 text-center font-medium">
                     This ticket is closed. Replies are disabled.
                   </p>
                 </div>
               )}
-              <div className="space-y-4">
-                <div className="flex items-center gap-4">
-                  <h3 className="font-medium dark:text-white">Reply to {selectedTicket.reported_by}</h3>
+              
+              <div className="flex items-end space-x-3">
+                <div className="flex-1">
+                  <textarea
+                    placeholder={selectedTicket.status === 'closed' ? "Ticket is closed" : "Type your message..."}
+                    value={replyMessage}
+                    onChange={(e) => setReplyMessage(e.target.value)}
+                    disabled={selectedTicket.status === 'closed'}
+                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent min-h-[44px] max-h-[120px] disabled:opacity-50 disabled:cursor-not-allowed resize-none text-sm transition-colors"
+                    rows={1}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault()
+                        if (replyMessage.trim() && selectedTicket.status !== 'closed') {
+                          sendReply(selectedTicket.id, replyMessage)
+                        }
+                      }
+                    }}
+                  />
                 </div>
                 
-                <textarea
-                  placeholder={selectedTicket.status === 'closed' ? "Ticket is closed" : "Type your response..."}
-                  value={replyMessage}
-                  onChange={(e) => setReplyMessage(e.target.value)}
-                  disabled={selectedTicket.status === 'closed'}
-                  className="w-full px-3 py-2 border border-violet-500/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500 min-h-[100px] bg-violet-500/10 dark:text-white gaming-input disabled:opacity-50 disabled:cursor-not-allowed"
-                />
+                <Button variant="outline" size="icon" className="h-11 w-11 rounded-lg border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800">
+                  <Paperclip className="w-4 h-4" />
+                </Button>
                 
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm">
-                      <Paperclip className="h-4 w-4 mr-1" />
-                      Attach File
-                    </Button>
-                    <Button variant="outline" onClick={() => setReplyMessage('')}>
-                      Cancel
-                    </Button>
-                  </div>
-                  
-                  <div className="flex items-center gap-2">
-                    <Button
-                    onClick={() => sendReply(selectedTicket.id, replyMessage)}
-                    disabled={!replyMessage.trim() || selectedTicket.status === 'closed'}
-                    className="gaming-button"
-                  >
-                    <Send className="h-4 w-4 mr-2" />
-                    {selectedTicket.status === 'closed' ? 'Ticket Closed' : 'Send Reply'}
-                  </Button>
-                  </div>
-                </div>
+                <Button
+                  onClick={() => sendReply(selectedTicket.id, replyMessage)}
+                  disabled={!replyMessage.trim() || selectedTicket.status === 'closed'}
+                  className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700 text-white disabled:opacity-50 disabled:cursor-not-allowed h-11 px-6 rounded-lg transition-colors"
+                >
+                  <Send className="w-4 h-4" />
+                </Button>
               </div>
             </div>
-          </>
-        ) : (
-            <div className="flex-1 flex items-center justify-center text-gray-500 dark:text-gray-400">
-            <div className="text-center">
-                <Mail className="h-12 w-12 mb-4 mx-auto opacity-50 text-violet-500" />
-              <p>Select a ticket to view details</p>
-            </div>
           </div>
-        )}
-      </div>
         </div>
-      </div>
-
-      {/* Removed bulk notification modal - not needed */}
-    </>
+      )}
+    </div>
   )
-}
-
-const getPriorityIcon = (priority: string) => {
-  switch (priority) {
-    case 'urgent': return <AlertTriangle className="h-3 w-3 text-red-500" />
-    case 'high': return <ArrowUp className="h-3 w-3 text-orange-500" />
-    case 'medium': return <Minus className="h-3 w-3 text-yellow-500" />
-    case 'low': return <ArrowDown className="h-3 w-3 text-green-500" />
-    default: return <Minus className="h-3 w-3 text-gray-500" />
-  }
-}
-
-const getStatusVariant = (status: string) => {
-  switch (status) {
-    case 'active': return 'danger'
-    case 'pending': return 'warning'
-    case 'answered': return 'info'
-    case 'completed': return 'success'
-    case 'closed': return 'default'
-    default: return 'default'
-  }
-}
-
-// Helper function to combine admin replies and user messages
-const getAllMessages = (ticket: SupportTicket) => {
-  const messages: any[] = []
-  
-  // Add admin replies
-  if (ticket.admin_replies) {
-    ticket.admin_replies.forEach(reply => {
-      messages.push({
-        ...reply,
-        isAdmin: true,
-        sender: 'Admin Support',
-        timestamp: reply.created_at || new Date().toISOString()
-      })
-    })
-  }
-  
-  // Add user messages
-  if (ticket.user_messages) {
-    ticket.user_messages.forEach(msg => {
-      messages.push({
-        ...msg,
-        isAdmin: false,
-        sender: ticket.reported_by,
-        timestamp: msg.created_at || new Date().toISOString()
-      })
-    })
-  }
-  
-  // Add initial ticket message
-  messages.push({
-    id: 'initial',
-    message: ticket.description,
-    isAdmin: false,
-    sender: ticket.reported_by,
-    timestamp: ticket.created_at || new Date().toISOString(),
-    attachments: ticket.attachments || []
-  })
-  
-  // Sort by timestamp
-  return messages.sort((a, b) => 
-    new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
-  )
-}
-
-const getPriorityVariant = (priority: string) => {
-  switch (priority) {
-    case 'urgent': return 'danger'
-    case 'high': return 'warning'
-    case 'medium': return 'default'
-    case 'low': return 'success'
-    default: return 'default'
-  }
 }
