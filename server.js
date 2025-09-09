@@ -1084,11 +1084,6 @@ app.get('*', (req, res, next) => {
 const PORT = process.env.PORT || 3001; // Use port 3001 for API server
 
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`🚀 Admin Panel API Server running on port ${PORT}`);
-  console.log(`📊 Health check: http://localhost:${PORT}/health`);
-  console.log(`🔧 Runtime config: http://localhost:${PORT}/api/client-runtime-config`);
-  console.log(`🖥️ Admin Panel UI: http://localhost:5173 (via Vite proxy)`);
-  console.log(`⚙️ Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`🌐 Network URL: http://10.50.139.117:${PORT}`);
-  console.log(`🔗 API requests will be proxied from Vite dev server`);
+  // Admin Panel API Server running
+  // Server started successfully
 });
