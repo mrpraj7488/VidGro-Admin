@@ -232,7 +232,7 @@ class BackupService {
   }
 
   private notifyBackupUpdate(backupId: string): void {
-    console.log(`Backup status updated for ${backupId}:`, this.backupQueue.get(backupId));
+    // Backup status updated
   }
 }
 
