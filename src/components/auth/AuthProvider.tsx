@@ -51,13 +51,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Check for default admin credentials
       const envVars = envManager.getEnvironmentVariables()
       console.log('Environment variables loaded:', {
-        VITE_ADMIN_EMAIL: envVars.VITE_ADMIN_EMAIL,
-        VITE_ADMIN_SECRET_KEY: envVars.VITE_ADMIN_SECRET_KEY ? '***' : 'undefined'
+        adminEmail: envVars.adminEmail,
+        adminSecretKey: envVars.adminSecretKey ? '***' : 'undefined'
       })
       console.log('Login attempt:', { email, password: password ? '***' : 'undefined' })
       
-      const isDefaultAdmin = email === envVars.VITE_ADMIN_EMAIL && 
-                            password === envVars.VITE_ADMIN_SECRET_KEY
+      const isDefaultAdmin = email === envVars.adminEmail && 
+                            password === envVars.adminSecretKey
       
       if (!isDefaultAdmin) {
         throw new Error('Invalid credentials. Please check your email and password.')
