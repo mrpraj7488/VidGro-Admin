@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react'
-import { Users, Video, Crown, DollarSign, TrendingUp, RefreshCw, AlertTriangle } from 'lucide-react'
+import { Users, Video, Crown, DollarSign, TrendingUp, RefreshCw, AlertTriangle, Calendar } from 'lucide-react'
 import { LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from 'recharts'
 import { useAdminStore } from '../../stores/adminStore'
 import { StatsCard } from './StatsCard'
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card'
 import { Button } from '../ui/Button'
+import { DateRangePicker } from '../ui/DateRangePicker'
 import { format, subDays } from 'date-fns'
 
 export function DashboardView() {
@@ -18,6 +19,14 @@ export function DashboardView() {
 
   const [refreshing, setRefreshing] = useState(false)
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date())
+  const [userGrowthDateRange, setUserGrowthDateRange] = useState<[Date | null, Date | null]>([
+    subDays(new Date(), 30),
+    new Date()
+  ])
+  const [revenueDateRange, setRevenueDateRange] = useState<[Date | null, Date | null]>([
+    subDays(new Date(), 30),
+    new Date()
+  ])
 
   useEffect(() => {
     const loadData = async () => {
@@ -27,13 +36,28 @@ export function DashboardView() {
           fetchAnalytics([subDays(new Date(), 30), new Date()])
         ])
       } catch (error) {
-        console.error('Failed to load dashboard data:', error)
+        // Failed to load dashboard data
       }
       setLastRefresh(new Date())
     }
     
     loadData()
   }, [fetchDashboardStats, fetchAnalytics])
+
+  // Update analytics data when date ranges change
+  useEffect(() => {
+    if (userGrowthDateRange[0] && userGrowthDateRange[1]) {
+      fetchAnalytics(userGrowthDateRange)
+    }
+  }, [userGrowthDateRange, fetchAnalytics])
+
+  useEffect(() => {
+    if (revenueDateRange[0] && revenueDateRange[1]) {
+      // For now, we'll use the same analytics data for revenue
+      // In a real implementation, you'd have separate revenue analytics
+      fetchAnalytics(revenueDateRange)
+    }
+  }, [revenueDateRange, fetchAnalytics])
 
   const handleRefresh = async () => {
     setRefreshing(true)
@@ -44,17 +68,20 @@ export function DashboardView() {
       ])
       setLastRefresh(new Date())
     } catch (error) {
-      console.error('Failed to refresh dashboard:', error)
+      // Failed to refresh dashboard
     } finally {
       setRefreshing(false)
     }
   }
 
-  // Generate mock chart data if real data is not available
-  const generateMockChartData = () => {
+  // Generate mock chart data based on date range
+  const generateMockChartData = (startDate: Date, endDate: Date) => {
     const data = []
-    for (let i = 29; i >= 0; i--) {
-      const date = subDays(new Date(), i)
+    const daysDiff = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24))
+    
+    for (let i = 0; i <= daysDiff; i++) {
+      const date = new Date(startDate)
+      date.setDate(startDate.getDate() + i)
       data.push({
         date: format(date, 'MMM dd'),
         users: Math.floor(Math.random() * 50) + 20,
@@ -66,9 +93,19 @@ export function DashboardView() {
     return data
   }
 
-  const mockChartData = generateMockChartData()
+  // Generate chart data based on selected date ranges
+  const userGrowthMockData = generateMockChartData(
+    userGrowthDateRange[0] || subDays(new Date(), 30),
+    userGrowthDateRange[1] || new Date()
+  )
+  const revenueMockData = generateMockChartData(
+    revenueDateRange[0] || subDays(new Date(), 30),
+    revenueDateRange[1] || new Date()
+  )
+  
   const hasRealChartData = analyticsData?.userGrowthData && analyticsData.userGrowthData.length > 0
-  const displayChartData = hasRealChartData ? analyticsData.userGrowthData : mockChartData
+  const userGrowthDisplayData = hasRealChartData ? analyticsData.userGrowthData : userGrowthMockData
+  const revenueDisplayData = hasRealChartData ? analyticsData.userGrowthData : revenueMockData
 
   if (dashboardLoading && !dashboardStats) {
     return (
@@ -143,8 +180,8 @@ export function DashboardView() {
           color="emerald"
         />
         <StatsCard
-          title="Monthly Revenue"
-          value={dashboardStats?.monthly_revenue || 0}
+          title="Total Revenue"
+          value={dashboardStats?.total_revenue || 0}
           icon={DollarSign}
           format="currency"
           color="blue"
@@ -159,17 +196,25 @@ export function DashboardView() {
                 <TrendingUp className="w-4 h-4 md:w-5 md:h-5 text-violet-600 dark:text-violet-400 gaming-glow" />
                 <span className="text-sm md:text-base">User Growth</span>
               </div>
-              {!hasRealChartData && (
-                <div className="text-xs text-orange-500 dark:text-orange-400 bg-orange-100 dark:bg-orange-900/30 px-2 py-1 rounded">
-                  Demo Data
+              <div className="flex items-center space-x-2">
+                <div className="relative z-50">
+                  <DateRangePicker
+                    value={userGrowthDateRange}
+                    onChange={setUserGrowthDateRange}
+                  />
                 </div>
-              )}
+                {!hasRealChartData && (
+                  <div className="text-xs text-orange-500 dark:text-orange-400 bg-orange-100 dark:bg-orange-900/30 px-2 py-1 rounded">
+                    Demo Data
+                  </div>
+                )}
+              </div>
             </CardTitle>
           </CardHeader>
           <CardContent className="p-2 md:p-6">
             <div className="h-48 md:h-64 lg:h-72">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={displayChartData}>
+                <AreaChart data={userGrowthDisplayData}>
                   <defs>
                     <linearGradient id="colorUsers" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3}/>
@@ -215,15 +260,23 @@ export function DashboardView() {
 
         <Card className="gaming-card-enhanced">
           <CardHeader className="pb-2 md:pb-4">
-            <CardTitle className="flex items-center space-x-2 gaming-text-shadow">
-              <DollarSign className="w-4 h-4 md:w-5 md:h-5 text-blue-600 dark:text-blue-400 gaming-glow" />
-              <span className="text-sm md:text-base">Revenue Trend</span>
+            <CardTitle className="flex items-center justify-between">
+              <div className="flex items-center space-x-2 gaming-text-shadow">
+                <DollarSign className="w-4 h-4 md:w-5 md:h-5 text-blue-600 dark:text-blue-400 gaming-glow" />
+                <span className="text-sm md:text-base">Revenue Trend</span>
+              </div>
+              <div className="relative z-50">
+                <DateRangePicker
+                  value={revenueDateRange}
+                  onChange={setRevenueDateRange}
+                />
+              </div>
             </CardTitle>
           </CardHeader>
           <CardContent className="p-2 md:p-6">
             <div className="h-48 md:h-64">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={displayChartData}>
+                <LineChart data={revenueDisplayData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" opacity={0.5} />
                   <XAxis 
                     dataKey="date" 
