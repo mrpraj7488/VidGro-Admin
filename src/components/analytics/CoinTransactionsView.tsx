@@ -35,6 +35,7 @@ export function CoinTransactionsView() {
   const [transactions, setTransactions] = useState<CoinTransaction[]>([])
   const [stats, setStats] = useState<TransactionStats | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [isRefreshing, setIsRefreshing] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [typeFilter, setTypeFilter] = useState('all')
   const [dateRange, setDateRange] = useState<[Date | null, Date | null]>([
@@ -45,11 +46,21 @@ export function CoinTransactionsView() {
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc')
 
   useEffect(() => {
-    fetchTransactions()
-  }, [dateRange, typeFilter])
+    // Always use background refresh for date range changes
+    fetchTransactions(true)
+  }, [dateRange])
 
-  const fetchTransactions = async () => {
-    setIsLoading(true)
+  useEffect(() => {
+    // Always use background refresh for type filter changes
+    fetchTransactions(true)
+  }, [typeFilter])
+
+  const fetchTransactions = async (backgroundRefresh = false) => {
+    if (backgroundRefresh) {
+      setIsRefreshing(true)
+    } else {
+      setIsLoading(true)
+    }
     try {
       const supabase = getSupabaseAdminClient()
       if (!supabase) {
@@ -59,64 +70,76 @@ export function CoinTransactionsView() {
       const startDate = dateRange[0] || subDays(new Date(), 30)
       const endDate = dateRange[1] || new Date()
 
-      // Build query
+      // Build query with optimized selection
       let query = supabase
         .from('transactions')
-        .select('*')
+        .select('id, transaction_id, user_id, transaction_type, amount, description, admin_id, created_at, updated_at')
         .gte('created_at', startDate.toISOString())
         .lte('created_at', endDate.toISOString())
         .order(sortField, { ascending: sortDirection === 'asc' })
+        .limit(500) // Reduced limit for faster loading
 
       // Apply type filter
       if (typeFilter !== 'all') {
         query = query.eq('transaction_type', typeFilter)
       }
 
-      const { data: transactionData, error } = await query.limit(1000)
-
-      if (error) throw error
-
-      // Get user emails separately to avoid join issues
-      const userIds = [...new Set(transactionData?.map(tx => tx.user_id).filter(Boolean))]
-      let userEmails: Record<string, string> = {}
-      
-      if (userIds.length > 0) {
-        const { data: usersData, error: usersError } = await supabase
+      // Fetch transactions and user emails in parallel
+      const [transactionResult, usersResult] = await Promise.allSettled([
+        query,
+        supabase
           .from('profiles')
           .select('id, email')
-          .in('id', userIds)
-        
-        if (!usersError && usersData) {
-          userEmails = usersData.reduce((acc, user) => {
-            acc[user.id] = user.email
-            return acc
-          }, {} as Record<string, string>)
-        }
+          .limit(1000)
+      ])
+
+      const transactionData = transactionResult.status === 'fulfilled' ? transactionResult.value.data : []
+      const usersData = usersResult.status === 'fulfilled' ? usersResult.value.data : []
+
+      // Create user email lookup
+      const userEmails: Record<string, string> = {}
+      if (usersData) {
+        usersData.forEach(user => {
+          userEmails[user.id] = user.email
+        })
       }
 
-      // Transform data to include user email
-      const transformedTransactions: CoinTransaction[] = transactionData?.map(tx => ({
-        id: tx.id,
-        transaction_id: tx.transaction_id || tx.id,
-        user_id: tx.user_id,
-        user_email: userEmails[tx.user_id] || 'Unknown',
-        transaction_type: tx.transaction_type,
-        amount: tx.amount,
-        description: tx.description,
-        admin_id: tx.admin_id,
-        created_at: tx.created_at,
-        updated_at: tx.updated_at
-      })) || []
+      // Transform data and calculate stats in single pass
+      const transformedTransactions: CoinTransaction[] = []
+      let totalVolume = 0
+      let refunds = 0
+      let purchases = 0
+      let promotions = 0
+      let bonuses = 0
+
+      transactionData?.forEach(tx => {
+        const transformed = {
+          id: tx.id,
+          transaction_id: tx.transaction_id || tx.id,
+          user_id: tx.user_id,
+          user_email: userEmails[tx.user_id] || `User ${tx.user_id?.slice(0, 8) || 'Unknown'}`,
+          transaction_type: tx.transaction_type,
+          amount: tx.amount,
+          description: tx.description,
+          admin_id: tx.admin_id,
+          created_at: tx.created_at,
+          updated_at: tx.updated_at
+        }
+        
+        transformedTransactions.push(transformed)
+        totalVolume += Math.abs(tx.amount)
+        
+        // Count by type
+        switch (tx.transaction_type) {
+          case 'refund': refunds++; break
+          case 'coin_purchase': purchases++; break
+          case 'video_promotion': promotions++; break
+          case 'bonus': bonuses++; break
+        }
+      })
 
       setTransactions(transformedTransactions)
-
-      // Calculate stats
       const totalTransactions = transformedTransactions.length
-      const totalVolume = transformedTransactions.reduce((sum, tx) => sum + Math.abs(tx.amount), 0)
-      const refunds = transformedTransactions.filter(tx => tx.transaction_type === 'refund').length
-      const purchases = transformedTransactions.filter(tx => tx.transaction_type === 'coin_purchase').length
-      const promotions = transformedTransactions.filter(tx => tx.transaction_type === 'video_promotion').length
-      const bonuses = transformedTransactions.filter(tx => tx.transaction_type === 'bonus').length
 
       setStats({
         totalTransactions,
@@ -133,6 +156,7 @@ export function CoinTransactionsView() {
       setStats(null)
     } finally {
       setIsLoading(false)
+      setIsRefreshing(false)
     }
   }
 
@@ -234,13 +258,13 @@ export function CoinTransactionsView() {
         </div>
         <div className="flex items-center space-x-3 w-full sm:w-auto">
           <Button 
-            onClick={fetchTransactions}
+            onClick={() => fetchTransactions()}
             variant="outline"
             size="sm"
-            disabled={isLoading}
+            disabled={isLoading || isRefreshing}
             className="flex items-center space-x-2"
           >
-            <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`w-4 h-4 ${isLoading || isRefreshing ? 'animate-spin' : ''}`} />
             <span className="hidden sm:inline">Refresh</span>
           </Button>
           <Button 
@@ -255,8 +279,8 @@ export function CoinTransactionsView() {
       </div>
 
       {/* Transaction Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6 animate-stagger-children">
-        <Card className="gaming-card-enhanced">
+<div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">
+        <Card className="gaming-card">
           <CardContent className="p-4 md:p-6 text-center">
             <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-violet-500 to-purple-600 rounded-lg flex items-center justify-center mx-auto mb-2 md:mb-3 gaming-glow">
               <Hash className="w-5 h-5 md:w-6 md:h-6 text-white" />
@@ -268,7 +292,7 @@ export function CoinTransactionsView() {
           </CardContent>
         </Card>
 
-        <Card className="gaming-card-enhanced">
+        <Card className="gaming-card">
           <CardContent className="p-4 md:p-6 text-center">
             <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-orange-500 to-amber-600 rounded-lg flex items-center justify-center mx-auto mb-2 md:mb-3 gaming-glow">
               <Coins className="w-5 h-5 md:w-6 md:h-6 text-white" />
@@ -280,7 +304,7 @@ export function CoinTransactionsView() {
           </CardContent>
         </Card>
 
-        <Card className="gaming-card-enhanced">
+        <Card className="gaming-card">
           <CardContent className="p-4 md:p-6 text-center">
             <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-emerald-500 to-green-600 rounded-lg flex items-center justify-center mx-auto mb-2 md:mb-3 gaming-glow">
               <DollarSign className="w-5 h-5 md:w-6 md:h-6 text-white" />
@@ -292,7 +316,7 @@ export function CoinTransactionsView() {
           </CardContent>
         </Card>
 
-        <Card className="gaming-card-enhanced">
+        <Card className="gaming-card">
           <CardContent className="p-4 md:p-6 text-center">
             <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-lg flex items-center justify-center mx-auto mb-2 md:mb-3 gaming-glow">
               <TrendingUp className="w-5 h-5 md:w-6 md:h-6 text-white" />
@@ -306,9 +330,9 @@ export function CoinTransactionsView() {
       </div>
 
       {/* Filters */}
-      <Card className="gaming-card-enhanced">
-        <CardContent className="p-4 md:p-6">
-          <div className="flex flex-col lg:flex-row gap-4">
+      <Card className="gaming-card-enhanced overflow-visible relative z-50">
+        <CardContent className="p-4 md:p-6 overflow-visible">
+          <div className="flex flex-col lg:flex-row gap-4 overflow-visible">
             {/* Search */}
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -336,16 +360,18 @@ export function CoinTransactionsView() {
             </select>
 
             {/* Date Range */}
-            <DateRangePicker
-              value={dateRange}
-              onChange={setDateRange}
-            />
+            <div className="relative z-[9999] overflow-visible">
+              <DateRangePicker
+                value={dateRange}
+                onChange={setDateRange}
+              />
+            </div>
           </div>
         </CardContent>
       </Card>
 
       {/* Transactions Table */}
-      <Card className="gaming-card-enhanced">
+      <Card className="gaming-card-enhanced relative z-10">
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
