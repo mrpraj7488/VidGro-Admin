@@ -46,7 +46,7 @@ export function EnhancedSystemHealth() {
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [healthChecks, setHealthChecks] = useState<HealthCheck[]>([])
   const [systemMetrics, setSystemMetrics] = useState<SystemMetrics | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
+  const [isLoading, setIsLoading] = useState(false)
   const { addAlert } = useHealthAlerts()
 
   useEffect(() => {
@@ -70,7 +70,7 @@ export function EnhancedSystemHealth() {
       // Run initial health checks
       setTimeout(() => runHealthCheck(), 1000)
     } catch (error) {
-      console.error('Failed to load health checks:', error)
+      // Failed to load health checks
       setHealthChecks([])
     }
   }
@@ -80,10 +80,8 @@ export function EnhancedSystemHealth() {
       const metrics = await fetchSystemMetrics()
       setSystemMetrics(metrics)
     } catch (error) {
-      console.error('Failed to load system metrics:', error)
+      // Failed to load system metrics
       setSystemMetrics(null)
-    } finally {
-      setIsLoading(false)
     }
   }
 
@@ -141,7 +139,7 @@ export function EnhancedSystemHealth() {
         return await response.json()
       }
     } catch (error) {
-      console.error('Failed to fetch system metrics:', error)
+      // Failed to fetch system metrics
     }
     
     // Return mock metrics if API is not available
@@ -282,7 +280,7 @@ export function EnhancedSystemHealth() {
         }
       }
     } catch (error) {
-      console.error('Health check failed:', error)
+      // Health check failed
     } finally {
       setIsRefreshing(false)
     }
@@ -351,14 +349,6 @@ export function EnhancedSystemHealth() {
     }
   }
 
-  if (isLoading) {
-    return (
-      <div className="space-y-6">
-        <div className="h-8 bg-gray-200 dark:bg-gray-700 animate-pulse rounded" />
-        <div className="h-64 bg-gray-200 dark:bg-gray-700 animate-pulse rounded" />
-      </div>
-    )
-  }
 
   return (
     <div className="space-y-6">
