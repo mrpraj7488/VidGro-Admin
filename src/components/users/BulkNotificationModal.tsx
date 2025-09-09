@@ -46,7 +46,7 @@ export function BulkNotificationModal({ isOpen, onClose, onSend }: BulkNotificat
       setFormData({ title: '', message: '', targetUsers: 'all', type: 'push' })
       onClose()
     } catch (error) {
-      console.error('Failed to send notification:', error)
+      // Failed to send notification
     } finally {
       setIsSending(false)
     }
