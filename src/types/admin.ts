@@ -3,6 +3,7 @@ export interface DashboardStats {
   active_videos: number
   vip_users: number
   monthly_revenue: number
+  total_revenue: number
   user_growth_rate: number
   daily_active_users: number
   coin_transactions: number
@@ -24,6 +25,7 @@ export interface User {
   referred_by?: string
   created_at: string
   updated_at: string
+  avatar_url?: string
 }
 
 export interface Video {
@@ -147,36 +149,3 @@ export interface SystemSettings {
     ipWhitelist: string[]
   }
 }
-
-export interface RuntimeConfig {
-  id: string
-  key: string
-  value: string
-  isPublic: boolean
-  environment: string
-  description?: string
-  category: string
-  createdAt: string
-  updatedAt: string
-}
-
-export interface ConfigAuditLog {
-  id: string
-  configKey: string
-  environment: string
-  action: 'create' | 'update' | 'delete'
-  oldValue?: string
-  newValue?: string
-  adminEmail: string
-  ipAddress?: string
-  timestamp: string
-  reason?: string
-}
-
-export interface ClientRuntimeConfig {
-  config: Record<string, string>
-  categories: Record<string, Record<string, string>>
-  environment: string
-  timestamp: string
-}
-
