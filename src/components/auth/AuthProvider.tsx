@@ -34,7 +34,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setUser(JSON.parse(savedUser))
         }
       } catch (error) {
-        console.error('Auth check failed:', error)
+        // Auth check failed
         localStorage.removeItem('vidgro_admin_user')
       } finally {
         setIsLoading(false)
@@ -50,11 +50,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       // Check for default admin credentials
       const envVars = envManager.getEnvironmentVariables()
-      console.log('Environment variables loaded:', {
-        adminEmail: envVars.adminEmail,
-        adminSecretKey: envVars.adminSecretKey ? '***' : 'undefined'
-      })
-      console.log('Login attempt:', { email, password: password ? '***' : 'undefined' })
+      // Environment variables loaded
+      // Login attempt
       
       const isDefaultAdmin = email === envVars.adminEmail && 
                             password === envVars.adminSecretKey
@@ -79,7 +76,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Don't redirect - let the app handle the state change
       // The App component will automatically show the dashboard when isAuthenticated becomes true
     } catch (error) {
-      console.error('Login error:', error)
+      // Login error
       if (error instanceof Error) {
         throw error
       }
@@ -116,7 +113,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       })
     } catch (error) {
-      console.error('Error clearing storage:', error)
+      // Error clearing storage
     }
     
     // Don't redirect - let the app handle the state change
