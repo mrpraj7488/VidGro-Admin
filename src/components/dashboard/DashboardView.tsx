@@ -168,8 +168,8 @@ export function DashboardView() {
           color="violet"
         />
         <StatsCard
-          title="Active Videos"
-          value={dashboardStats?.active_videos || 0}
+          title="Total Videos"
+          value={dashboardStats?.total_videos || 0}
           icon={Video}
           color="orange"
         />
