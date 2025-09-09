@@ -73,7 +73,7 @@ export function DatabaseBackupScreen() {
           setBackups(formattedBackups)
         }
       } catch (error) {
-        console.error('Failed to load existing backups:', error)
+        // Failed to load existing backups
       }
     }
 
@@ -698,10 +698,10 @@ CREATE TABLE IF NOT EXISTS videos (
                           onClick={async () => {
                             if (!confirm('Delete this backup from storage?')) return
                             const id = backup.id
-                            console.log('Attempting to delete backup:', { id, storagePath: backup.storagePath, backup })
+                            // Attempting to delete backup
                             try {
                               const del = await (await import('../../services/backupService')).backupService.deleteBackup(id, backup.storagePath)
-                              console.log('Delete result:', del)
+                              // Delete result
                               if (del.success) {
                                 setBackups(prev => prev.filter(b => b.id !== id))
                                 showNotification('Backup Deleted', 'Backup removed from storage', 'success')
@@ -709,7 +709,7 @@ CREATE TABLE IF NOT EXISTS videos (
                                 showNotification('Delete Failed', del.message || 'Could not delete backup', 'error')
                               }
                             } catch (e) {
-                              console.error('Delete error:', e)
+                              // Delete error
                               const msg = e instanceof Error ? e.message : 'Delete failed'
                               showNotification('Delete Failed', msg, 'error')
                             }
