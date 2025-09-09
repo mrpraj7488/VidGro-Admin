@@ -11,10 +11,18 @@ export function EnvironmentVariablesScreen() {
   const [showSecrets, setShowSecrets] = useState<Record<string, boolean>>({})
   const [isSaving, setIsSaving] = useState(false)
   const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error'>('idle')
-  const [configStatus, setConfigStatus] = useState(envManager.getConfigurationStatus())
+  const [configStatus, setConfigStatus] = useState<{ isConfigured: boolean; missingVars: string[] }>({ isConfigured: true, missingVars: [] })
 
   useEffect(() => {
-    setConfigStatus(envManager.getConfigurationStatus())
+    // Configuration status is now handled internally by envManager
+    const envVars = envManager.getEnvironmentVariables()
+    const criticalVars = ['supabaseUrl', 'supabaseAnonKey', 'adminEmail', 'adminSecretKey']
+    const missingVars = criticalVars.filter(varName => !envVars[varName as keyof EnvironmentVariables] || envVars[varName as keyof EnvironmentVariables] === '')
+    
+    setConfigStatus({
+      isConfigured: missingVars.length === 0,
+      missingVars
+    })
   }, [envVars])
 
   const handleInputChange = (key: keyof EnvironmentVariables, value: string) => {
@@ -33,7 +41,13 @@ export function EnvironmentVariablesScreen() {
       const result = await envManager.saveEnvironmentVariables(envVars)
       if (result.success) {
         setSaveStatus('success')
-        setConfigStatus(envManager.getConfigurationStatus())
+        // Recalculate config status after save
+        const criticalVars = ['supabaseUrl', 'supabaseAnonKey', 'adminEmail', 'adminSecretKey']
+        const missingVars = criticalVars.filter(varName => !envVars[varName as keyof EnvironmentVariables] || envVars[varName as keyof EnvironmentVariables] === '')
+        setConfigStatus({
+          isConfigured: missingVars.length === 0,
+          missingVars
+        })
       } else {
         setSaveStatus('error')
       }
@@ -54,9 +68,17 @@ export function EnvironmentVariablesScreen() {
   }
 
   const handleForceReload = () => {
-    envManager.forceReloadFromEnv()
-    setEnvVars(envManager.getEnvironmentVariables())
-    setConfigStatus(envManager.getConfigurationStatus())
+    envManager.reload()
+    const newEnvVars = envManager.getEnvironmentVariables()
+    setEnvVars(newEnvVars)
+    
+    // Recalculate config status after reload
+    const criticalVars = ['supabaseUrl', 'supabaseAnonKey', 'adminEmail', 'adminSecretKey']
+    const missingVars = criticalVars.filter(varName => !newEnvVars[varName as keyof EnvironmentVariables] || newEnvVars[varName as keyof EnvironmentVariables] === '')
+    setConfigStatus({
+      isConfigured: missingVars.length === 0,
+      missingVars
+    })
   }
 
   const isSecretField = (key: string) => {
@@ -66,14 +88,54 @@ export function EnvironmentVariablesScreen() {
   }
 
   const getFieldCategory = (key: string) => {
-    if (key.includes('SUPABASE')) return 'Supabase'
-    if (key.includes('FIREBASE') || key.includes('FCM')) return 'Firebase'
-    if (key.includes('ADMOB')) return 'AdMob'
-    if (key.includes('ADMIN')) return 'Admin'
-    return 'General'
+    if (key.includes('supabase')) return 'Database'
+    if (key.includes('admob')) return 'Monetization'
+    if (key.includes('admin')) return 'Admin'
+    if (key.includes('jwt')) return 'Security'
+    if (key.includes('node') || key.includes('env')) return 'Environment'
+    return 'Application'
   }
 
-  const categories = ['Supabase', 'Firebase', 'AdMob', 'Admin', 'General']
+  const variableCategories = {
+    database: {
+      title: 'Database & Backend',
+      description: 'Supabase database and authentication settings',
+      icon: '🗄️',
+      variables: ['supabaseUrl', 'supabaseAnonKey', 'supabaseServiceRoleKey']
+    },
+    admin: {
+      title: 'Admin Access', 
+      description: 'Admin panel login credentials',
+      icon: '👤',
+      variables: ['adminEmail', 'adminSecretKey']
+    },
+    application: {
+      title: 'Application Config',
+      description: 'Core app settings and API endpoints',
+      icon: '⚙️',
+      variables: ['appName', 'apiBaseUrl']
+    },
+    monetization: {
+      title: 'AdMob Monetization',
+      description: 'Mobile app advertising configuration',
+      icon: '💰',
+      variables: ['admobAppId', 'admobBannerId', 'admobInterstitialId', 'admobRewardedId']
+    },
+    security: {
+      title: 'Security & Auth',
+      description: 'JWT tokens and security keys',
+      icon: '🔐',
+      variables: ['jwtSecret']
+    },
+    environment: {
+      title: 'Environment',
+      description: 'Runtime environment settings',
+      icon: '🌍',
+      variables: ['nodeEnv']
+    }
+  }
+
+  const categories = Object.keys(variableCategories)
 
   return (
     <div className="space-y-6">
@@ -149,7 +211,7 @@ export function EnvironmentVariablesScreen() {
             </div>
             <div className="text-right">
               <div className="text-2xl font-bold text-gray-900 dark:text-white">
-                {configStatus.configuredVars.length}/{configStatus.configuredVars.length + configStatus.missingVars.length}
+                {Object.keys(envVars).length - configStatus.missingVars.length} configured, {configStatus.missingVars.length} missing
               </div>
               <div className="text-sm text-gray-500 dark:text-gray-400">Configured</div>
             </div>
@@ -183,22 +245,29 @@ export function EnvironmentVariablesScreen() {
       )}
 
       {/* Environment Variables by Category */}
-      {categories.map(category => {
+      {categories.map(categoryKey => {
+        const category = variableCategories[categoryKey as keyof typeof variableCategories]
         const categoryVars = Object.entries(envVars).filter(([key]) => 
-          getFieldCategory(key) === category
+          category.variables.includes(key)
         )
         
         if (categoryVars.length === 0) return null
 
         return (
-          <Card key={category}>
+          <Card key={categoryKey}>
             <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <span>{category} Configuration</span>
+              <CardTitle className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <span>{category.icon}</span>
+                  <span>{category.title}</span>
+                </div>
                 <Badge variant="default" className="text-xs">
                   {categoryVars.length} variables
                 </Badge>
               </CardTitle>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                {category.description}
+              </p>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
