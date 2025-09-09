@@ -12,24 +12,28 @@ import {
   Coins
 } from 'lucide-react'
 import { cn } from '../../lib/utils'
+import { useInboxCount } from '../../hooks/useInboxCount'
 
 interface SidebarProps {
   activeTab: string
   onTabChange: (tab: string) => void
 }
 
-const menuItems = [
+const getMenuItems = (inboxCount: number) => [
   { id: 'dashboard', label: 'Dashboard', icon: Home },
   { id: 'users', label: 'Users', icon: Users },
   { id: 'videos', label: 'Videos', icon: Video },
   { id: 'analytics', label: 'Analytics', icon: BarChart3 },
   { id: 'coin-transactions', label: 'Coin Transactions', icon: Coins },
   { id: 'reports', label: 'Bug Reports', icon: Bug },
-  { id: 'inbox', label: 'Inbox', icon: Mail, badge: 5 },
+  { id: 'inbox', label: 'Inbox', icon: Mail, badge: inboxCount },
   { id: 'settings', label: 'System Config', icon: Settings }
 ]
 
 export function Sidebar({ activeTab, onTabChange }: SidebarProps) {
+  const { count: inboxCount } = useInboxCount()
+  const menuItems = getMenuItems(inboxCount)
+
   // Listen for navigation events from dashboard quick actions
   React.useEffect(() => {
     const handleNavigateToTab = (event: CustomEvent) => {
@@ -41,7 +45,7 @@ export function Sidebar({ activeTab, onTabChange }: SidebarProps) {
   }, [onTabChange])
 
   return (
-    <div className="w-16 md:w-64 gaming-card border-r border-violet-200/50 dark:border-violet-500/30 h-screen sticky top-0 transition-all duration-300 shadow-xl z-20 flex flex-col">
+    <div className="w-16 md:w-64 gaming-card border-r border-violet-200/50 dark:border-violet-500/30 h-screen sticky top-0 shadow-xl z-20 flex flex-col flex-shrink-0">
       <div className="p-6">
         <div className="flex items-center space-x-3">
           <div className="w-10 h-10 bg-gradient-to-br from-violet-600 via-purple-600 to-violet-700 rounded-xl flex items-center justify-center shadow-lg gaming-pulse gaming-shine-enhanced">
@@ -72,9 +76,9 @@ export function Sidebar({ activeTab, onTabChange }: SidebarProps) {
             >
               <Icon className="w-5 h-5 transition-all duration-300 flex-shrink-0 gaming-icon-glow" strokeWidth={2} />
               <span className="font-medium hidden md:block">{item.label}</span>
-              {item.badge && (
+              {item.badge && item.badge > 0 && (
                 <div className="ml-auto min-w-[20px] h-5 bg-gradient-to-r from-red-500 to-red-600 text-white text-xs rounded-full flex items-center justify-center shadow-lg shadow-red-500/50 hidden md:flex gaming-pulse gaming-sparkle gaming-shine-enhanced px-1">
-                  {item.badge > 9 ? '9+' : item.badge}
+                  {item.badge > 99 ? '99+' : item.badge}
                 </div>
               )}
             </button>
