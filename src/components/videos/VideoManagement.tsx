@@ -18,6 +18,7 @@ export function VideoManagement() {
   const [videoToDelete, setVideoToDelete] = useState(null)
   const [userEmails, setUserEmails] = useState<Record<string, string>>({})
   const [userNames, setUserNames] = useState<Record<string, string>>({})
+  const [userAvatars, setUserAvatars] = useState<Record<string, string>>({})
   const [copiedUrl, setCopiedUrl] = useState<string | null>(null)
 
   useEffect(() => {
@@ -33,14 +34,19 @@ export function VideoManagement() {
       const { users } = useAdminStore.getState()
       const emailMap: Record<string, string> = {}
       const nameMap: Record<string, string> = {}
+      const avatarMap: Record<string, string> = {}
       users.forEach(user => {
         emailMap[user.id] = user.email
         nameMap[user.id] = user.username
+        if (user.avatar_url) {
+          avatarMap[user.id] = user.avatar_url
+        }
       })
       setUserEmails(emailMap)
       setUserNames(nameMap)
+      setUserAvatars(avatarMap)
     } catch (error) {
-      console.error('Failed to fetch user data:', error)
+      // Failed to fetch user data
     }
   }
 
@@ -116,7 +122,7 @@ export function VideoManagement() {
       setVideoToDelete(null)
       await fetchVideos()
     } catch (error) {
-      console.error('Failed to delete video:', error)
+      // Failed to delete video
     }
   }
 
@@ -126,7 +132,7 @@ export function VideoManagement() {
       setCopiedUrl(url)
       setTimeout(() => setCopiedUrl(null), 2000)
     } catch (error) {
-      console.error('Failed to copy URL:', error)
+      // Failed to copy URL
     }
   }
 
@@ -213,8 +219,22 @@ export function VideoManagement() {
                   {/* User Info Header */}
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center space-x-3 flex-1 min-w-0">
-                      <div className="w-10 h-10 bg-gradient-to-br from-violet-400 to-purple-600 rounded-full flex items-center justify-center text-white font-medium text-sm gaming-glow flex-shrink-0">
-                        {(userEmails[video.user_id] || userNames[video.user_id] || 'U').charAt(0).toUpperCase()}
+                      <div className="relative flex-shrink-0">
+                        {userAvatars[video.user_id] ? (
+                          <img
+                            src={userAvatars[video.user_id]}
+                            alt={userNames[video.user_id] || 'User'}
+                            className="w-10 h-10 rounded-full object-cover border-2 border-gray-200 dark:border-gray-600"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement
+                              target.style.display = 'none'
+                              target.nextElementSibling?.classList.remove('hidden')
+                            }}
+                          />
+                        ) : null}
+                        <div className={`w-10 h-10 bg-gradient-to-br from-violet-400 to-purple-600 rounded-full flex items-center justify-center text-white font-medium text-sm gaming-glow ${userAvatars[video.user_id] ? 'hidden' : ''}`}>
+                          {(userEmails[video.user_id] || userNames[video.user_id] || 'U').charAt(0).toUpperCase()}
+                        </div>
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
@@ -331,8 +351,22 @@ export function VideoManagement() {
                     {/* User Column - Email + Name */}
                     <td className="py-4 px-6">
                       <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 bg-gradient-to-br from-violet-400 to-purple-600 rounded-full flex items-center justify-center text-white font-medium text-sm gaming-glow flex-shrink-0">
-                          {(userEmails[video.user_id] || userNames[video.user_id] || 'U').charAt(0).toUpperCase()}
+                        <div className="relative flex-shrink-0">
+                          {userAvatars[video.user_id] ? (
+                            <img
+                              src={userAvatars[video.user_id]}
+                              alt={userNames[video.user_id] || 'User'}
+                              className="w-10 h-10 rounded-full object-cover border-2 border-gray-200 dark:border-gray-600"
+                              onError={(e) => {
+                                const target = e.target as HTMLImageElement
+                                target.style.display = 'none'
+                                target.nextElementSibling?.classList.remove('hidden')
+                              }}
+                            />
+                          ) : null}
+                          <div className={`w-10 h-10 bg-gradient-to-br from-violet-400 to-purple-600 rounded-full flex items-center justify-center text-white font-medium text-sm gaming-glow ${userAvatars[video.user_id] ? 'hidden' : ''}`}>
+                            {(userEmails[video.user_id] || userNames[video.user_id] || 'U').charAt(0).toUpperCase()}
+                          </div>
                         </div>
                         <div className="min-w-0 flex-1">
                           <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
