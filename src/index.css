@@ -215,20 +215,12 @@
   
   .gaming-glow {
     filter: drop-shadow(0 0 8px rgba(139, 92, 246, 0.6));
-    transition: filter 0.3s ease;
-  }
-  
-  .gaming-glow:hover {
-    filter: drop-shadow(0 0 12px rgba(139, 92, 246, 0.8));
   }
   
   .dark .gaming-glow {
     filter: drop-shadow(0 0 8px rgba(139, 92, 246, 0.8));
   }
   
-  .dark .gaming-glow:hover {
-    filter: drop-shadow(0 0 12px rgba(139, 92, 246, 1));
-  }
   
   .gaming-pulse {
     animation: gaming-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
@@ -429,7 +421,6 @@
   }
   
   .gaming-card-enhanced:hover {
-    transform: translateY(-6px) scale(1.02);
     box-shadow: 0 15px 35px rgba(139, 92, 246, 0.25), 
                 0 5px 15px rgba(139, 92, 246, 0.15);
   }
@@ -508,7 +499,6 @@
   
   .gaming-sidebar-item:hover:not(.active) {
     background: rgba(139, 92, 246, 0.08);
-    transform: translateX(2px);
   }
   
   .gaming-stats-grid {
@@ -930,7 +920,7 @@
 }
 
 .gaming-interactive:hover {
-  transform: translateY(-1px);
+  background-color: rgba(139, 92, 246, 0.05);
 }
 
 .gaming-interactive:active {
