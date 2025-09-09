@@ -49,7 +49,7 @@ export class ErrorBoundary extends Component<Props, State> {
         }
       })
     } catch (handlerError) {
-      console.error('Error handler failed:', handlerError)
+      // Error handler failed
     }
 
     // Call custom error handler if provided
@@ -57,7 +57,7 @@ export class ErrorBoundary extends Component<Props, State> {
       this.props.onError(error, errorInfo)
     }
 
-    console.error('ErrorBoundary caught an error:', error, errorInfo)
+    // ErrorBoundary caught an error
   }
 
   handleRetry = () => {
