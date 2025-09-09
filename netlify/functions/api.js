@@ -26,9 +26,9 @@ const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 // Helper function to get client IP
 const getClientIP = (req) => {
   return req.headers['x-forwarded-for'] || 
-         req.connection.remoteAddress || 
-         req.socket.remoteAddress ||
-         (req.connection.socket ? req.connection.socket.remoteAddress : null);
+         req.connection?.remoteAddress || 
+         req.socket?.remoteAddress ||
+         '0.0.0.0';
 };
 
 // Simple test endpoint
@@ -114,7 +114,7 @@ app.get('/client-runtime-config', async (req, res) => {
     const clientIP = getClientIP(req);
     const cacheKey = `public-config-${environment}`;
     
-    console.log(`[CONFIG ACCESS] ${clientIP} requested ${environment} config (v${appVersion || 'unknown'})`);
+    // Config access logged
     
     const cached = configCache.get(cacheKey);
     if (cached && (Date.now() - cached.timestamp) < CACHE_TTL) {
@@ -174,13 +174,13 @@ app.get('/client-runtime-config', async (req, res) => {
       return res.json({ data: productionConfig, cached: false, environment });
     }
 
-    console.error('[CONFIG ERROR] No valid Supabase configuration available');
+    // Config error - no valid Supabase configuration
     return res.status(503).json({
       error: 'Service temporarily unavailable',
       message: 'Application configuration not properly set up. Please contact administrator.'
     });
   } catch (error) {
-    console.error('Error fetching client runtime config:', error);
+    // Error fetching client runtime config
     return res.status(500).json({ error: 'Failed to fetch runtime configuration' });
   }
 });
@@ -224,12 +224,7 @@ app.get('/api/config', (req, res) => {
   const clientIP = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
   const userAgent = req.headers['user-agent'] || '';
   
-  console.warn('🚨 HONEYPOT TRIGGERED - Unauthorized access attempt:', {
-    ip: clientIP,
-    userAgent: userAgent.substring(0, 100),
-    endpoint: '/api/config',
-    timestamp: new Date().toISOString()
-  });
+  // Honeypot triggered - unauthorized access attempt
   
   res.status(404).json({
     error: 'Not found',
