@@ -23,12 +23,26 @@ export function formatNumber(num: number): string {
 export function formatCurrency(amount: number): string {
   // Handle undefined, null, or non-numeric values
   if (amount === undefined || amount === null || isNaN(amount)) {
-    return '$0.00'
+    return '₹0.00'
   }
   
-  return new Intl.NumberFormat('en-US', {
+  return new Intl.NumberFormat('en-IN', {
     style: 'currency',
-    currency: 'USD',
+    currency: 'INR',
+  }).format(amount)
+}
+
+// Format currency in Indian Rupees with proper formatting
+export function formatINR(amount: number): string {
+  if (amount === undefined || amount === null || isNaN(amount)) {
+    return '₹0.00'
+  }
+  
+  return new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: 'INR',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
   }).format(amount)
 }
 
