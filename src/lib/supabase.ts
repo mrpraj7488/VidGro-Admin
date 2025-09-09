@@ -7,11 +7,11 @@ let supabaseAdmin: SupabaseClient | null = null
 
 // Initialize Supabase with environment variables
 export function initializeSupabase(): SupabaseClient | null {
-  const supabaseUrl = envManager.getEnvVar('VITE_SUPABASE_URL')
-  const supabaseAnonKey = envManager.getEnvVar('VITE_SUPABASE_ANON_KEY')
+  const supabaseUrl = envManager.getVariable('supabaseUrl')
+  const supabaseAnonKey = envManager.getVariable('supabaseAnonKey')
 
   if (!supabaseUrl || !supabaseAnonKey || supabaseUrl.includes('your-project')) {
-    console.warn('Supabase not configured. Please set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY')
+    // Supabase not configured
     return null
   }
 
@@ -19,18 +19,18 @@ export function initializeSupabase(): SupabaseClient | null {
     supabase = createClient(supabaseUrl, supabaseAnonKey)
     return supabase
   } catch (error) {
-    console.error('Failed to initialize Supabase:', error)
+    // Failed to initialize Supabase
     return null
   }
 }
 
 // Initialize Supabase Admin client with service role key
 export function initializeSupabaseAdmin(): SupabaseClient | null {
-  const supabaseUrl = envManager.getEnvVar('VITE_SUPABASE_URL')
-  const supabaseServiceKey = envManager.getEnvVar('VITE_SUPABASE_SERVICE_ROLE_KEY')
+  const supabaseUrl = envManager.getVariable('supabaseUrl')
+  const supabaseServiceKey = envManager.getVariable('supabaseServiceRoleKey')
 
   if (!supabaseUrl || !supabaseServiceKey || supabaseUrl.includes('your-project')) {
-    console.warn('Supabase Admin not configured. Please set VITE_SUPABASE_URL and VITE_SUPABASE_SERVICE_ROLE_KEY')
+    // Supabase Admin not configured
     return null
   }
 
@@ -43,7 +43,7 @@ export function initializeSupabaseAdmin(): SupabaseClient | null {
     })
     return supabaseAdmin
   } catch (error) {
-    console.error('Failed to initialize Supabase Admin:', error)
+    // Failed to initialize Supabase Admin
     return null
   }
 }
@@ -164,7 +164,7 @@ export async function getDashboardStats(): Promise<DashboardStats> {
 
     return stats[0]
   } catch (error) {
-    console.error('Error fetching dashboard stats:', error)
+    // Error fetching dashboard stats
     throw error
   }
 }
@@ -178,7 +178,7 @@ export async function getUsers(
 ): Promise<Profile[]> {
   const client = getSupabaseClient()
   if (!client) {
-    console.warn('Cannot fetch users - Supabase not configured')
+    // Cannot fetch users - Supabase not configured
     return []
   }
 
@@ -204,13 +204,13 @@ export async function getUsers(
     const { data, error } = await query
 
     if (error) {
-      console.error('Failed to fetch users:', error)
+      // Failed to fetch users
       return []
     }
 
     return data || []
   } catch (error) {
-    console.error('Error fetching users:', error)
+    // Error fetching users
     return []
   }
 }
@@ -224,7 +224,7 @@ export async function getVideos(
 ): Promise<Video[]> {
   const client = getSupabaseClient()
   if (!client) {
-    console.warn('Cannot fetch videos - Supabase not configured')
+    // Cannot fetch videos - Supabase not configured
     return []
   }
 
@@ -252,13 +252,13 @@ export async function getVideos(
     const { data, error } = await query
 
     if (error) {
-      console.error('Failed to fetch videos:', error)
+      // Failed to fetch videos
       return []
     }
 
     return data || []
   } catch (error) {
-    console.error('Error fetching videos:', error)
+    // Error fetching videos
     return []
   }
 }
@@ -266,7 +266,7 @@ export async function getVideos(
 export async function getUserProfile(userId: string): Promise<Profile | null> {
   const client = getSupabaseClient()
   if (!client) {
-    console.warn('Cannot fetch user profile - Supabase not configured')
+    // Cannot fetch user profile - Supabase not configured
     return null
   }
 
@@ -278,13 +278,13 @@ export async function getUserProfile(userId: string): Promise<Profile | null> {
       .single()
 
     if (error) {
-      console.error('Failed to fetch user profile:', error)
+      // Failed to fetch user profile
       return null
     }
 
     return data
   } catch (error) {
-    console.error('Error fetching user profile:', error)
+    // Error fetching user profile
     return null
   }
 }
@@ -309,13 +309,13 @@ export async function adjustUserCoins(
     })
 
     if (error) {
-      console.error('Failed to adjust user coins:', error)
+      // Failed to adjust user coins
       return { success: false, message: error.message }
     }
 
     return { success: true, message: 'Coins adjusted successfully', newBalance: data?.new_balance }
   } catch (error) {
-    console.error('Error adjusting user coins:', error)
+    // Error adjusting user coins
     return { success: false, message: 'Failed to adjust coins' }
   }
 }
@@ -323,7 +323,7 @@ export async function adjustUserCoins(
 export async function getUserGrowthAnalytics(days: number) {
   const client = getSupabaseClient()
   if (!client) {
-    console.warn('Cannot fetch analytics - Supabase not configured')
+    // Cannot fetch analytics - Supabase not configured
     return []
   }
 
@@ -331,13 +331,13 @@ export async function getUserGrowthAnalytics(days: number) {
     const { data, error } = await client.rpc('get_user_growth_analytics', { days_back: days })
     
     if (error) {
-      console.error('Failed to fetch user growth analytics:', error)
+      // Failed to fetch user growth analytics
       return []
     }
 
     return data || []
   } catch (error) {
-    console.error('Error fetching user growth analytics:', error)
+    // Error fetching user growth analytics
     return []
   }
 }
