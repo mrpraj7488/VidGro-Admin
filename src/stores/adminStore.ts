@@ -6,10 +6,6 @@ import {
   UserFilters, 
   VideoFilters, 
   AnalyticsData,
-  SystemSettings,
-  RuntimeConfig,
-  ConfigAuditLog,
-  ClientRuntimeConfig
 } from '../types/admin'
 import { getSupabaseAdminClient } from '../lib/supabase'
 import { format, subDays, startOfDay, endOfDay } from 'date-fns'
@@ -39,14 +35,7 @@ interface AdminState {
   bugReportData: BugReportData | null
   bugReportsLoading: boolean
   
-  // System Settings
-  systemSettings: SystemSettings | null
   
-  // Runtime Configuration
-  runtimeConfig: RuntimeConfig[]
-  configAuditLogs: ConfigAuditLog[]
-  clientConfig: ClientRuntimeConfig | null
-  selectedEnvironment: string
   isLoading: boolean
   
   // Actions
@@ -55,8 +44,6 @@ interface AdminState {
   fetchVideos: () => Promise<void>
   fetchAnalytics: (dateRange: [Date | null, Date | null]) => Promise<void>
   fetchBugReports: () => Promise<void>
-  fetchSystemSettings: () => Promise<void>
-  fetchRuntimeConfig: (environment: string) => Promise<void>
   setUserFilters: (filters: Partial<UserFilters>) => void
   adjustUserCoins: (userId: string, amount: number, reason: string) => Promise<void>
   toggleUserVip: (userId: string) => Promise<void>
@@ -65,14 +52,7 @@ interface AdminState {
   setVideoFilters: (filters: Partial<VideoFilters>) => void
   deleteVideo: (videoId: string, reason: string) => Promise<void>
   
-  // Settings actions
-  updateSystemSettings: (settings: SystemSettings) => Promise<void>
   
-  // Runtime config actions
-  saveRuntimeConfig: (key: string, value: string, isPublic: boolean, environment: string, description?: string, category?: string, reason?: string) => Promise<void>
-  deleteRuntimeConfigItem: (key: string, environment: string, reason?: string) => Promise<void>
-  clearConfigCache: () => Promise<void>
-  setSelectedEnvironment: (environment: string) => void
   // Utility actions
   copyToClipboard: (text: string) => Promise<void>
 }
@@ -118,7 +98,7 @@ export const useAdminStore = create<AdminState>((set, get) => ({
   fetchDashboardStats: async () => {
     set({ dashboardLoading: true })
     try {
-      console.log('Fetching dashboard stats...')
+      // Fetching dashboard stats
       const supabase = getSupabaseAdminClient()
       if (!supabase) {
         throw new Error('Supabase not initialized')
@@ -130,7 +110,7 @@ export const useAdminStore = create<AdminState>((set, get) => ({
         .select('id, is_vip, coins, created_at')
 
       if (usersError) {
-        console.error('Error fetching users for dashboard:', usersError)
+        // Error fetching users for dashboard
         throw usersError
       }
 
@@ -140,41 +120,62 @@ export const useAdminStore = create<AdminState>((set, get) => ({
         .select('id, status, coin_cost, created_at')
 
       if (videosError) {
-        console.error('Error fetching videos for dashboard:', videosError)
+        // Error fetching videos for dashboard
         throw videosError
       }
 
-      // Get transactions for revenue calculation
+      // Get all revenue-generating transactions
       const { data: transactionsData, error: transactionsError } = await supabase
         .from('transactions')
-        .select('amount, transaction_type, created_at')
-        .eq('transaction_type', 'coin_purchase')
+        .select('amount, transaction_type, created_at, coin_cost_inr')
+        .in('transaction_type', ['coin_purchase', 'vip_subscription'])
         .gte('created_at', new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString())
 
       if (transactionsError) {
-        console.error('Error fetching transactions for dashboard:', transactionsError)
+        // Error fetching transactions for dashboard
       }
 
       // Calculate stats
       const totalUsers = usersData?.length || 0
       const vipUsers = usersData?.filter(u => u.is_vip).length || 0
       const activeVideos = videosData?.filter(v => v.status === 'active').length || 0
-      const monthlyRevenue = transactionsData?.reduce((sum, t) => sum + (t.amount * 0.01), 0) || 0
+      
+      // Calculate revenue from coin purchases and VIP subscriptions (already in INR)
+      const monthlyRevenue = transactionsData?.reduce((sum, t) => {
+        if (t.transaction_type === 'coin_purchase') {
+          // Use coin_cost_inr (already in INR) or amount field
+          return sum + (t.coin_cost_inr || t.amount || 0)
+        } else if (t.transaction_type === 'vip_subscription') {
+          return sum + (t.coin_cost_inr || t.amount || 0)
+        }
+        return sum
+      }, 0) || 0
+      
       const totalCoinsDistributed = usersData?.reduce((sum, u) => sum + (u.coins || 0), 0) || 0
       
-      console.log('Dashboard stats calculated:', {
-        totalUsers,
-        vipUsers,
-        activeVideos,
-        monthlyRevenue,
-        totalCoinsDistributed
-      })
+      // Dashboard stats calculated
+
+      // Get total revenue (all time)
+      const { data: allTransactionsData } = await supabase
+        .from('transactions')
+        .select('amount, transaction_type, coin_cost_inr')
+        .in('transaction_type', ['coin_purchase', 'vip_subscription'])
+      
+      const totalRevenue = allTransactionsData?.reduce((sum, t) => {
+        if (t.transaction_type === 'coin_purchase') {
+          return sum + (t.coin_cost_inr || t.amount || 0)
+        } else if (t.transaction_type === 'vip_subscription') {
+          return sum + (t.coin_cost_inr || t.amount || 0)
+        }
+        return sum
+      }, 0) || 0
 
       const stats: DashboardStats = {
         total_users: totalUsers,
         active_videos: activeVideos,
         vip_users: vipUsers,
         monthly_revenue: monthlyRevenue,
+        total_revenue: totalRevenue,
         user_growth_rate: 12.5,
         daily_active_users: Math.floor(totalUsers * 0.3),
         coin_transactions: transactionsData?.length || 0,
@@ -187,7 +188,7 @@ export const useAdminStore = create<AdminState>((set, get) => ({
 
       set({ dashboardStats: stats })
     } catch (error) {
-      console.error('Failed to fetch dashboard stats:', error)
+      // Failed to fetch dashboard stats
       // Set empty stats on error
       set({ 
         dashboardStats: {
@@ -195,6 +196,7 @@ export const useAdminStore = create<AdminState>((set, get) => ({
           active_videos: 0,
           vip_users: 0,
           monthly_revenue: 0,
+          total_revenue: 0,
           user_growth_rate: 0,
           daily_active_users: 0,
           coin_transactions: 0,
@@ -225,15 +227,15 @@ export const useAdminStore = create<AdminState>((set, get) => ({
         .order('created_at', { ascending: false })
 
       if (error) {
-        console.error('Database error fetching users:', error)
+        // Database error fetching users
         throw error
       }
 
       const users = data || []
-      console.log('Users fetched from database:', users.length)
+      // Users fetched from database
       set({ users })
     } catch (error) {
-      console.error('Failed to fetch users:', error)
+      // Failed to fetch users
       set({ 
         users: [],
         usersError: error instanceof Error ? error.message : 'Failed to fetch users'
@@ -296,7 +298,7 @@ export const useAdminStore = create<AdminState>((set, get) => ({
         )
       }))
     } catch (error) {
-      console.error('Failed to adjust user coins:', error)
+      // Failed to adjust user coins
       throw error
     }
   },
@@ -327,7 +329,7 @@ export const useAdminStore = create<AdminState>((set, get) => ({
         )
       }))
     } catch (error) {
-      console.error('Failed to toggle VIP status:', error)
+      // Failed to toggle VIP status
       throw error
     }
   },
@@ -347,15 +349,15 @@ export const useAdminStore = create<AdminState>((set, get) => ({
         .order('created_at', { ascending: false })
 
       if (error) {
-        console.error('Database error fetching videos:', error)
+        // Database error fetching videos
         throw error
       }
 
       const videos = data || []
-      console.log('Videos fetched from database:', videos.length)
+      // Videos fetched from database
       set({ videos })
     } catch (error) {
-      console.error('Failed to fetch videos:', error)
+      // Failed to fetch videos
       set({ videos: [] })
     } finally {
       set({ videosLoading: false })
@@ -412,7 +414,7 @@ export const useAdminStore = create<AdminState>((set, get) => ({
         videos: state.videos.filter(v => v.id !== videoId)
       }))
     } catch (error) {
-      console.error('Failed to delete video:', error)
+      // Failed to delete video
       throw error
     }
   },
@@ -421,7 +423,7 @@ export const useAdminStore = create<AdminState>((set, get) => ({
   fetchAnalytics: async (dateRange: [Date | null, Date | null]) => {
     set({ analyticsLoading: true })
     try {
-      console.log('Fetching analytics data...')
+      // Fetching analytics data
       const supabase = getSupabaseAdminClient()
       if (!supabase) {
         throw new Error('Supabase not initialized')
@@ -430,7 +432,7 @@ export const useAdminStore = create<AdminState>((set, get) => ({
       const startDate = dateRange[0] || subDays(new Date(), 30)
       const endDate = dateRange[1] || new Date()
       
-      console.log('Analytics date range:', { startDate, endDate })
+      // Analytics date range set
 
       // Fetch users active in the date range
       const { data: activeUsersData, error: activeUsersError } = await supabase
@@ -440,9 +442,9 @@ export const useAdminStore = create<AdminState>((set, get) => ({
         .lte('updated_at', endDate.toISOString())
 
       if (activeUsersError) {
-        console.warn('Failed to fetch active users:', activeUsersError)
+        // Failed to fetch active users
       } else {
-        console.log('Active users data:', activeUsersData?.length || 0)
+        // Active users data loaded
       }
 
       // Fetch transactions in the date range
@@ -453,9 +455,9 @@ export const useAdminStore = create<AdminState>((set, get) => ({
         .lte('created_at', endDate.toISOString())
 
       if (transactionsError) {
-        console.warn('Failed to fetch transactions:', transactionsError)
+        // Failed to fetch transactions
       } else {
-        console.log('Transactions data:', transactionsData?.length || 0)
+        // Transactions data loaded
       }
 
       // Fetch videos promoted in the date range
@@ -466,9 +468,9 @@ export const useAdminStore = create<AdminState>((set, get) => ({
         .lte('created_at', endDate.toISOString())
 
       if (videosError) {
-        console.warn('Failed to fetch videos:', videosError)
+        // Failed to fetch videos
       } else {
-        console.log('Videos data:', videosData?.length || 0)
+        // Videos data loaded
       }
 
       // Fetch video deletions
@@ -479,9 +481,9 @@ export const useAdminStore = create<AdminState>((set, get) => ({
         .lte('deleted_at', endDate.toISOString())
 
       if (deletionsError) {
-        console.warn('Failed to fetch deletions:', deletionsError)
+        // Failed to fetch deletions
       } else {
-        console.log('Deletions data:', deletionsData?.length || 0)
+        // Deletions data loaded
       }
 
       // Generate user growth data
@@ -513,10 +515,10 @@ export const useAdminStore = create<AdminState>((set, get) => ({
         recentActivity: []
       }
 
-      console.log('Analytics data compiled:', analyticsData)
+      // Analytics data compiled
       set({ analyticsData })
     } catch (error) {
-      console.error('Failed to fetch analytics:', error)
+      // Failed to fetch analytics
       set({ analyticsData: null })
     } finally {
       set({ analyticsLoading: false })
@@ -575,7 +577,7 @@ export const useAdminStore = create<AdminState>((set, get) => ({
 
       set({ systemSettings: settings })
     } catch (error) {
-      console.error('Failed to fetch system settings:', error)
+      // Failed to fetch system settings
       set({ systemSettings: null })
     } finally {
       set({ settingsLoading: false })
@@ -586,7 +588,7 @@ export const useAdminStore = create<AdminState>((set, get) => ({
     try {
       set({ systemSettings: settings })
     } catch (error) {
-      console.error('Failed to update system settings:', error)
+      // Failed to update system settings
       throw error
     }
   },
@@ -622,7 +624,7 @@ export const useAdminStore = create<AdminState>((set, get) => ({
 
       set({ runtimeConfig: configs })
     } catch (error) {
-      console.error('Failed to fetch runtime config:', error)
+      // Failed to fetch runtime config
       set({ runtimeConfig: [] })
     } finally {
       set({ isLoading: false })
@@ -648,7 +650,7 @@ export const useAdminStore = create<AdminState>((set, get) => ({
 
       set({ configAuditLogs: logs })
     } catch (error) {
-      console.error('Failed to fetch config audit logs:', error)
+      // Failed to fetch config audit logs
       set({ configAuditLogs: [] })
     }
   },
@@ -676,7 +678,7 @@ export const useAdminStore = create<AdminState>((set, get) => ({
 
       set({ clientConfig })
     } catch (error) {
-      console.error('Failed to fetch client config:', error)
+      // Failed to fetch client config
       set({ clientConfig: null })
     }
   },
@@ -699,7 +701,7 @@ export const useAdminStore = create<AdminState>((set, get) => ({
         runtimeConfig: [newConfig, ...state.runtimeConfig.filter(c => c.key !== key)]
       }))
     } catch (error) {
-      console.error('Failed to save runtime config:', error)
+      // Failed to save runtime config
       throw error
     }
   },
@@ -710,7 +712,7 @@ export const useAdminStore = create<AdminState>((set, get) => ({
         runtimeConfig: state.runtimeConfig.filter(c => c.key !== key)
       }))
     } catch (error) {
-      console.error('Failed to delete runtime config:', error)
+      // Failed to delete runtime config
       throw error
     }
   },
@@ -719,7 +721,7 @@ export const useAdminStore = create<AdminState>((set, get) => ({
     try {
       await fetch('/api/admin/clear-config-cache', { method: 'POST' })
     } catch (error) {
-      console.error('Failed to clear config cache:', error)
+      // Failed to clear config cache
     }
   },
 
@@ -732,7 +734,7 @@ export const useAdminStore = create<AdminState>((set, get) => ({
     try {
       await navigator.clipboard.writeText(text)
     } catch (error) {
-      console.error('Failed to copy to clipboard:', error)
+      // Failed to copy to clipboard
       throw error
     }
   }
